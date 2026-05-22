@@ -1,0 +1,98 @@
+[
+  {
+    "nome": "EDENIAS GONZAGA LEÃO",
+    "email": "edenias.leao@tjmg.jus.br",
+    "senha": "410872",
+    "regiao": "MASTER"
+  },
+  {
+    "nome": "EDENIAS GONZAGA LEÃO",
+    "email": "comap.norte@tjmg.jus.br",
+    "senha": "410872",
+    "regiao": "NORTE"
+  },
+  {
+    "nome": "LUCIANO",
+    "email": "comap@tjmg.jus.br",
+    "senha": "comap2026*",
+    "regiao": "MASTER"
+  },
+  {
+    "nome": "WYLLER",
+    "email": "wyller.silveira@tjmg.jus.br",
+    "senha": "comap6380",
+    "regiao": "MASTER"
+  },
+  {
+    "nome": "DIEGO",
+    "email": "comap.sul@tjmg.jus.br",
+    "senha": "sul2026*",
+    "regiao": "SUL"
+  },
+  {
+    "nome": "DIEGO",
+    "email": "diego.henrique@tjmg.jus.br",
+    "senha": "sul2026*",
+    "regiao": "SUL"
+  },
+  {
+    "nome": "JOSÉ LUIZ",
+    "email": "jose.luiz@tjmg.jus.br",
+    "senha": "joseluiz2026",
+    "regiao": "MASTER"
+  },
+  {
+    "nome": "JOSÉ LUIZ",
+    "email": "gemap@tjmg.jus.br",
+    "senha": "joseluiz2026",
+    "regiao": "MASTER"
+  },
+  {
+    "nome": "GUILHERME ALENCAR",
+    "email": "comap.leste@tjmg.jus.br",
+    "senha": "leste2026*",
+    "regiao": "LESTE"
+  },
+  {
+    "nome": "FLÁVIO RIBEIRO",
+    "email": "comap.triangulo@tjmg.jus.br",
+    "senha": "triangulo2026",
+    "regiao": "TRIÂNGULO"
+  },
+  {
+    "nome": "LUIS",
+    "email": "comap.central@tjmg.jus.br",
+    "senha": "central2026*",
+    "regiao": "CENTRAL"
+  },
+  {
+    "nome": "JOSÉ AGOSTINHO",
+    "email": "comap.zonadamata@tjmg.jus.br",
+    "senha": "Agostinho",
+    "regiao": "ZONA DA MATA"
+  },
+  {
+    "nome": "VANDERLÚCIO",
+    "email": "comap.sudoeste@tjmg.jus.br",
+    "senha": "sudoeste2025*",
+    "regiao": "SUDOESTE"
+  },
+  {
+    "nome": "VANDERLÚCIO",
+    "email": "vanderlucio.ferreira@tjmg.jus.br",
+    "senha": "ferreira2026*",
+    "regiao": "SUDOESTE"
+  },
+  {
+    "nome": "TACIANO",
+    "email": "taciano.bastos@tjmg.jus.br",
+    "senha": "sudoeste2024*",
+    "regiao": "SUDOESTE"
+  },
+  {
+    "nome": "Rui Cassiano",
+    "email": "rui.lima@tjmg.jus.br",
+    "senha": "Amor@2010",
+    "regiao": "LESTE"
+  }
+]

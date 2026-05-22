@@ -1,0 +1,2611 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+<script>
+/* COMAP UNIFICADO — bootstrap de sessão v2 (servidor injetou via window.__COMAP_SESSAO__) */
+(function(){
+  try {
+    var s = window.__COMAP_SESSAO__ || {};
+    // Se servidor não injetou (acesso direto sem login), redireciona para shell
+    if (!s.email) {
+      // Tenta query string como fallback
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('email')) {
+        s = {
+          nome: p.get('n') || '',
+          email: p.get('email') || '',
+          regiao: (p.get('r') || '').toUpperCase(),
+          global: p.get('g') === '1'
+        };
+      } else {
+        // Sem sessão de jeito nenhum — manda pro shell sem o ?modulo
+        window.location.href = window.location.pathname;
+        return;
+      }
+    }
+    // Garante que esteja no formato esperado pelos sistemas originais
+    var compat = {
+      nome: s.nome || '',
+      regiao: (s.regiao || '').toUpperCase(),
+      login: s.email || '',
+      email: s.email || '',
+      global: !!s.global,
+      timestamp: Date.now()
+    };
+    if (compat.global && compat.regiao !== 'MASTER') compat.regiao = 'MASTER';
+    try {
+      localStorage.setItem('comap_session', JSON.stringify(compat));
+      localStorage.setItem('comap_unificado', JSON.stringify(s));
+    } catch(e) {}
+    window.__COMAP_SESSAO__ = s;
+  } catch(e) { console.error('Bootstrap COMAP:', e); }
+})();
+</script>
+
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#003366">
+  <title>COMAP | GESTÃO DE LAUDOS - TJMG</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --tjmg-primary:   #003366;
+      --tjmg-secondary: #c89c31;
+      --tjmg-accent:    #0056b3;
+      --tjmg-bg:        #f0f2f5;
+      --tjmg-surface:   #ffffff;
+      --danger:         #c62828;
+      --danger-soft:    #ffebee;
+      --warn:           #e65100;
+      --warn-soft:      #fff3e0;
+      --ok:             #1b5e20;
+      --ok-soft:        #e8f5e9;
+      --neutral:        #546e7a;
+      --radius-lg:      14px;
+      --radius-md:      10px;
+      --shadow-sm:      0 2px 8px rgba(0,0,0,0.07);
+      --shadow-md:      0 6px 20px rgba(0,0,0,0.1);
+    }
+    *{box-sizing:border-box}
+    body{background:var(--tjmg-bg);font-family:'Inter',sans-serif;color:#1a2332;overflow-x:hidden}
+
+    /* HEADER */
+    .header-pci{background:linear-gradient(135deg,#003366 0%,#00234d 100%);color:white;padding:1.2rem 2rem;border-bottom:3px solid var(--tjmg-secondary);box-shadow:0 4px 20px rgba(0,0,0,0.25);position:sticky;top:0;z-index:1000}
+    .header-pci h2{font-family:'DM Sans',sans-serif;font-weight:700;font-size:1.35rem;margin:0;letter-spacing:-0.3px}
+    .header-pci small{font-size:0.72rem;opacity:0.65;letter-spacing:0.5px}
+    .header-badge{background:var(--tjmg-secondary);color:#1a0f00;font-size:0.68rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.5px}
+
+    /* TABS */
+    .tabs-wrapper{background:var(--tjmg-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);padding:6px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+    .tabs-wrapper::-webkit-scrollbar{display:none}
+    .nav-tab-btn{background:none;border:none;padding:9px 16px;border-radius:9px;font-size:0.78rem;font-weight:600;color:var(--neutral);cursor:pointer;white-space:nowrap;transition:all 0.2s;display:flex;align-items:center;gap:6px;letter-spacing:0.2px}
+    .nav-tab-btn:hover{background:#f0f4f8;color:var(--tjmg-primary)}
+    .nav-tab-btn.active{background:var(--tjmg-primary);color:white;box-shadow:0 3px 10px rgba(0,51,102,0.35)}
+    .nav-tab-btn .bi{font-size:0.9rem}
+
+    /* CARDS */
+    .card-surface{background:var(--tjmg-surface);border-radius:var(--radius-lg);border:1px solid rgba(0,0,0,0.07);box-shadow:var(--shadow-sm);padding:22px;margin-bottom:18px}
+    .section-title{font-family:'DM Sans',sans-serif;color:var(--tjmg-primary);font-weight:700;font-size:0.8rem;letter-spacing:1.2px;text-transform:uppercase;border-bottom:2px solid var(--tjmg-secondary);padding-bottom:8px;margin-bottom:18px}
+
+    /* KPI */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:20px}
+    .kpi-card{background:var(--tjmg-surface);border-radius:var(--radius-md);padding:16px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,0.07);cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden}
+    .kpi-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .kpi-card.danger::before{background:var(--danger)}
+    .kpi-card.warn::before{background:#ff9800}
+    .kpi-card.ok::before{background:#2e7d32}
+    .kpi-card.info::before{background:var(--tjmg-primary)}
+    .kpi-card.gold::before{background:var(--tjmg-secondary)}
+    .kpi-label{font-size:0.68rem;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--neutral);margin-bottom:8px}
+    .kpi-value{font-family:'DM Sans',sans-serif;font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px}
+    .kpi-card.danger .kpi-value{color:var(--danger)}
+    .kpi-card.warn .kpi-value{color:var(--warn)}
+    .kpi-card.ok .kpi-value{color:var(--ok)}
+    .kpi-card.info .kpi-value{color:var(--tjmg-primary)}
+    .kpi-card.gold .kpi-value{color:#8a6a00}
+    .kpi-sub{font-size:0.68rem;color:var(--neutral)}
+    .kpi-icon{position:absolute;top:14px;right:14px;font-size:1.4rem;opacity:0.12}
+
+    /* CONFORMIDADE */
+    .conformidade-bar-wrapper{background:var(--tjmg-surface);border-radius:var(--radius-md);padding:18px 22px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,0.07);margin-bottom:18px}
+    .conf-label{font-size:0.75rem;font-weight:600;color:var(--neutral);letter-spacing:0.5px;text-transform:uppercase}
+    .conf-percent{font-family:'DM Sans',sans-serif;font-size:1.8rem;font-weight:700;color:var(--tjmg-primary)}
+    .conf-bar-track{height:10px;background:#e9ecef;border-radius:10px;overflow:hidden}
+    .conf-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,#1b5e20,#4caf50);transition:width 0.8s cubic-bezier(0.4,0,0.2,1)}
+
+    /* LAUDO CARD */
+    .card-laudo{background:#fcfcfd;border:1px solid #e5e8ec;border-top:3px solid var(--tjmg-accent);border-radius:var(--radius-md);padding:14px;transition:0.25s}
+    .card-laudo:hover{box-shadow:var(--shadow-sm)}
+    .card-laudo h6{font-weight:700;font-size:0.78rem;letter-spacing:0.8px;text-transform:uppercase;color:var(--tjmg-primary);margin-bottom:10px}
+
+    /* BADGES */
+    .badge-status{display:inline-block;padding:3px 9px;border-radius:5px;font-size:0.68rem;font-weight:700;letter-spacing:0.4px}
+    .badge-vencido{background:var(--danger-soft);color:var(--danger);border:1px solid #ef9a9a}
+    .badge-30d{background:var(--warn-soft);color:var(--warn);border:1px solid #ffcc80}
+    .badge-60d{background:#fff8e1;color:#f57f17;border:1px solid #ffe082}
+    .badge-ok{background:var(--ok-soft);color:var(--ok);border:1px solid #a5d6a7}
+    .badge-na{background:#f5f5f5;color:#9e9e9e;border:1px solid #e0e0e0}
+
+    /* TABLE */
+    .table-tjmg thead th{background:#f8f9fb;color:var(--tjmg-primary);font-size:0.7rem;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;border-bottom:2px solid #e0e4ea;padding:12px 14px;white-space:nowrap}
+    .table-tjmg tbody td{padding:11px 14px;vertical-align:middle;border-bottom:1px solid #f0f2f5;font-size:0.85rem}
+    .table-tjmg tbody tr:hover{background:#f8f9fb}
+    .laudos-dots{display:flex;gap:4px;align-items:center}
+    .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .dot-vencido{background:var(--danger)}
+    .dot-30d{background:#ff9800}
+    .dot-ok{background:#4caf50}
+    .dot-na{background:#ccc}
+    .dot-pend{background:#90a4ae}
+
+    /* SUBESTAÇÃO ORIGINAL */
+    .sub-section-header{background:var(--tjmg-primary);color:white;padding:10px 16px;font-weight:700;font-size:0.82rem;letter-spacing:0.5px;border-radius:8px;margin-top:20px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+    .label-tecnica{font-size:0.65rem;font-weight:700;color:#546e7a;margin-bottom:3px;display:block;text-transform:uppercase;letter-spacing:0.3px}
+    .bg-amarelo{background-color:#fffde7!important;border-color:#f9a825!important}
+    .u-sel{max-width:62px;font-size:0.65rem;background:#f5f5f5;border:1px solid #ced4da;border-left:none;padding:0 3px;border-radius:0 4px 4px 0}
+    .equipamento-card{border:1px solid #dde3ec;padding:16px;margin-bottom:16px;border-radius:10px;position:relative;background:#fff;box-shadow:var(--shadow-sm)}
+    .group-title{font-family:'DM Sans',sans-serif;font-size:0.78rem;font-weight:700;color:var(--tjmg-primary);border-bottom:2px solid var(--tjmg-secondary);padding-bottom:5px;margin-bottom:12px;display:block;text-transform:uppercase}
+    .btn-remover{position:absolute;right:10px;top:10px;color:#ef9a9a;cursor:pointer;border:1px solid #ef9a9a;background:none;border-radius:6px;padding:2px 7px;font-size:0.75rem;transition:0.2s}
+    .btn-remover:hover{background:var(--danger);color:white;border-color:var(--danger)}
+    .variacao-box{font-size:0.75rem;font-weight:700;padding:5px 10px;border-radius:6px;text-align:center;margin-top:8px;transition:all 0.3s}
+    .variacao-ok{background:var(--ok-soft);color:var(--ok)}
+    .variacao-fail{background:var(--danger-soft);color:var(--danger)}
+    .variacao-neutral{background:#f5f5f5;color:#9e9e9e}
+
+    /* FORM */
+    .form-control,.form-select{font-size:0.85rem;border-color:#dde2ea;border-radius:7px;transition:0.2s}
+    .form-control:focus,.form-select:focus{border-color:var(--tjmg-primary);box-shadow:0 0 0 3px rgba(0,51,102,0.1)}
+    .form-control.is-invalid{border-color:var(--danger)}
+    .form-control.is-valid{border-color:#4caf50}
+    .date-validation-msg{font-size:0.65rem;color:var(--danger);display:none;margin-top:2px}
+
+    /* BUTTONS */
+    .btn-tjmg{background:var(--tjmg-primary);color:white;border:none;padding:10px 26px;font-weight:600;font-size:0.85rem;border-radius:8px;letter-spacing:0.3px;transition:0.2s}
+    .btn-tjmg:hover{background:#00245a;color:white;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,51,102,0.3)}
+    .btn-tjmg-gold{background:var(--tjmg-secondary);color:#1a0f00;border:none;padding:10px 26px;font-weight:700;font-size:0.85rem;border-radius:8px;transition:0.2s}
+    .btn-tjmg-gold:hover{background:#b8880a;transform:translateY(-1px)}
+
+    /* CHART */
+    .chart-card{background:var(--tjmg-surface);border-radius:var(--radius-md);padding:18px;box-shadow:var(--shadow-sm);border:1px solid rgba(0,0,0,0.06);height:100%}
+    .chart-title{font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--neutral);margin-bottom:14px}
+
+    /* MISC */
+    tbody tr.row-vencido{background:rgba(198,40,40,0.04)}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:#f0f2f5}
+    ::-webkit-scrollbar-thumb{background:#b0bec5;border-radius:4px}
+    .empty-state{text-align:center;padding:50px 20px;color:var(--neutral)}
+    .empty-state i{font-size:3rem;opacity:0.3;display:block;margin-bottom:10px}
+    .tab-pane{animation:fadeIn 0.2s ease}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+    @media(max-width:576px){.header-pci{padding:1rem}.header-pci h2{font-size:1.1rem}.kpi-value{font-size:1.6rem}}
+
+    /* ══════════════════════════════════════════════════════
+       SISTEMA RESPONSIVO COMPLETO
+       XS  < 480px    → celular pequeno
+       SM  480–767px  → celular grande / phablet
+       MD  768–991px  → tablet / iPad
+       LG  992–1279px → laptop / monitor padrão
+       XL  1280–1535px→ monitor grande / projetor
+       XXL > 1536px   → TV / monitor ultrawide
+    ══════════════════════════════════════════════════════ */
+
+    /* ─── VARIÁVEIS DE ESCALA ─── */
+    :root {
+      --fs-base: 14px;
+      --fs-sm:   12px;
+      --fs-xs:   11px;
+      --tap-min: 44px;          /* toque mínimo iOS/Android */
+      --nav-bottom-h: 0px;      /* altura da nav bottom (ativada no mobile) */
+    }
+    @media (min-width: 992px)  { :root { --fs-base: 14px; } }
+    @media (min-width: 1280px) { :root { --fs-base: 15px; } }
+    @media (min-width: 1536px) { :root { --fs-base: 16px; } }
+
+    /* ─── TIPOGRAFIA FLUIDA ─── */
+    body { font-size: var(--fs-base); }
+    .form-control, .form-select { font-size: var(--fs-base) !important; }
+    .label-tecnica { font-size: 0.68rem; }
+    @media (max-width: 767px) {
+      .label-tecnica { font-size: 0.72rem; }   /* mais legível no celular */
+      .form-control, .form-select { font-size: 16px !important; } /* evita zoom no iOS */
+    }
+
+    /* ─── HEADER RESPONSIVO ─── */
+    @media (max-width: 767px) {
+      .header-pci { padding: 0.75rem 1rem; }
+      .header-pci h2 { font-size: 1rem; letter-spacing: -0.2px; }
+      .header-pci small { display: none; }
+      .header-badge { font-size: 0.65rem; padding: 2px 8px; }
+    }
+    @media (min-width: 1536px) {
+      .header-pci { padding: 1.4rem 3rem; }
+      .header-pci h2 { font-size: 1.6rem; }
+    }
+
+    /* ─── TABS: DESKTOP = linha topo | MOBILE = bottom nav ─── */
+    @media (max-width: 767px) {
+      :root { --nav-bottom-h: 60px; }
+      .tabs-wrapper {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        z-index: 1100;
+        border-radius: 0;
+        padding: 4px 0 env(safe-area-inset-bottom, 4px);
+        border-top: 1px solid rgba(0,0,0,0.12);
+        box-shadow: 0 -4px 16px rgba(0,0,0,0.1);
+        justify-content: space-around;
+        gap: 0;
+      }
+      .nav-tab-btn {
+        flex: 1;
+        flex-direction: column;
+        padding: 6px 4px;
+        font-size: 0.6rem;
+        gap: 2px;
+        min-height: var(--tap-min);
+        border-radius: 0;
+        justify-content: center;
+        letter-spacing: 0;
+      }
+      .nav-tab-btn .bi { font-size: 1.2rem; }
+      .nav-tab-btn span.tab-label { display: block; }
+      /* Espaço para não ficar escondido atrás da nav bottom */
+      .container-fluid { padding-bottom: calc(var(--nav-bottom-h) + 16px) !important; }
+    }
+    @media (min-width: 768px) {
+      .nav-tab-btn span.tab-label { display: inline; }
+    }
+
+    /* ─── CARDS E PADDING ─── */
+    @media (max-width: 479px) {
+      .card-surface { padding: 14px; border-radius: 10px; }
+    }
+    @media (min-width: 1280px) {
+      .card-surface { padding: 28px 32px; }
+    }
+    @media (min-width: 1536px) {
+      .card-surface { padding: 32px 40px; border-radius: 18px; }
+      .container-fluid { max-width: 1600px; margin: 0 auto; }
+    }
+
+    /* ─── KPI GRID RESPONSIVO ─── */
+    @media (max-width: 479px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .kpi-value { font-size: 1.5rem; }
+      .kpi-label { font-size: 0.62rem; }
+    }
+    @media (min-width: 480px) and (max-width: 767px) {
+      .kpi-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .kpi-value { font-size: 1.7rem; }
+    }
+    @media (min-width: 1536px) {
+      .kpi-grid { grid-template-columns: repeat(8, 1fr); }
+      .kpi-value { font-size: 2.4rem; }
+      .kpi-card { padding: 20px; }
+    }
+
+    /* ─── TABELAS: SCROLL HORIZONTAL EM TELAS MENORES ─── */
+    .table-responsive-force { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 767px) {
+      .table-tjmg thead th { font-size: 0.62rem; padding: 10px 10px; }
+      .table-tjmg tbody td { font-size: 0.78rem; padding: 10px 10px; }
+      /* Esconde colunas menos críticas no mobile */
+      .col-hide-mobile { display: none; }
+    }
+    @media (min-width: 1536px) {
+      .table-tjmg thead th { font-size: 0.75rem; padding: 14px 18px; }
+      .table-tjmg tbody td { font-size: 0.9rem; padding: 14px 18px; }
+    }
+
+    /* ─── BOTÕES TOUCH-FRIENDLY ─── */
+    @media (max-width: 767px) {
+      .btn-tjmg, .btn-tjmg-gold {
+        padding: 13px 20px;
+        font-size: 0.9rem;
+        min-height: var(--tap-min);
+        width: 100%;
+      }
+      .btn { min-height: var(--tap-min); }
+      /* Botões de ação da tabela: maiores para toque */
+      .table-tjmg .btn { min-height: 38px; min-width: 38px; padding: 6px 10px; }
+    }
+    @media (min-width: 1536px) {
+      .btn-tjmg, .btn-tjmg-gold { padding: 13px 36px; font-size: 1rem; }
+    }
+
+    /* ─── FORMULÁRIO PRINCIPAL ─── */
+    @media (max-width: 767px) {
+      /* Select do grupo ocupa linha inteira */
+      .form-select, .form-control { min-height: var(--tap-min); border-radius: 8px; }
+      /* Seção de laudos: 1 coluna */
+      .row-cols-lg-5.row-cols-sm-2 { --bs-columns: 1; }
+      .card-laudo { margin-bottom: 12px; }
+      .card-laudo h6 { font-size: 0.85rem; }
+    }
+    @media (min-width: 768px) and (max-width: 991px) {
+      /* Tablet: 2 laudos por linha */
+      .row-cols-lg-5 { --bs-columns: 2; }
+    }
+
+    /* ─── SUBESTAÇÃO: CAMPOS NUMÉRICOS ─── */
+    @media (max-width: 479px) {
+      .u-sel { max-width: 52px; font-size: 0.6rem; }
+      .equipamento-card { padding: 12px; }
+      .sub-section-header { font-size: 0.75rem; padding: 8px 12px; flex-direction: column; align-items: flex-start; gap: 8px; }
+      .sub-section-header .btn { width: 100%; }
+    }
+    @media (min-width: 480px) and (max-width: 767px) {
+      /* Phablet: 2 cols por grupo */
+      .col-4.col-md-2 { flex: 0 0 50%; max-width: 50%; }
+    }
+
+    /* ─── CHECKLIST: LEGIBILIDADE MOBILE ─── */
+    @media (max-width: 767px) {
+      .chk-section-title { font-size: 0.72rem; }
+      .chk-item label { font-size: 0.8rem; line-height: 1.5; }
+      .chk-item input[type="checkbox"] { width: 20px; height: 20px; margin-top: 1px; }
+      .progresso-wrap { top: 60px; }  /* abaixo do header no mobile */
+    }
+
+    /* ─── TIPO SUBESTAÇÃO CARDS ─── */
+    @media (max-width: 479px) {
+      .tipo-sub-card .icon { font-size: 1.4rem; }
+      .tipo-sub-card .label { font-size: 0.75rem; }
+      .tipo-sub-card { padding: 10px 8px; }
+    }
+
+    /* ─── DASHBOARD: GRÁFICOS ─── */
+    @media (max-width: 767px) {
+      #chartLaudos, #chartPizza { height: 220px !important; }
+      .chart-card { padding: 12px; }
+    }
+    @media (min-width: 1536px) {
+      #chartLaudos { height: 380px !important; }
+      #chartPizza  { height: 380px !important; }
+    }
+
+    /* ─── CONFORMIDADE BAR ─── */
+    @media (max-width: 479px) {
+      .conf-percent { font-size: 1.4rem; }
+      .conf-bar-track { height: 8px; }
+    }
+    @media (min-width: 1536px) {
+      .conf-percent { font-size: 2.4rem; }
+      .conf-bar-track { height: 14px; }
+    }
+
+    /* ─── CONTAINER MÁXIMO POR TELA ─── */
+    @media (min-width: 1280px) {
+      .col-xl-11 { flex: 0 0 95%; max-width: 95%; }
+    }
+    @media (min-width: 1536px) {
+      .col-xl-11 { flex: 0 0 100%; max-width: 1560px; margin: 0 auto; }
+    }
+
+    /* ─── SCROLL SUAVE GLOBAL ─── */
+    html { scroll-behavior: smooth; }
+    * { -webkit-tap-highlight-color: transparent; }
+
+    /* ─── FOCO VISÍVEL PARA ACESSIBILIDADE ─── */
+    :focus-visible { outline: 3px solid var(--tjmg-secondary); outline-offset: 2px; }
+
+    /* ─── MODO PAISAGEM EM CELULAR (rotação) ─── */
+    @media (max-width: 767px) and (orientation: landscape) {
+      .header-pci { padding: 0.5rem 1rem; }
+      :root { --nav-bottom-h: 52px; }
+      .nav-tab-btn { min-height: 40px; padding: 4px; }
+    }
+
+    /* ─── PROJETOR / TV (tela grande, distância de visualização) ─── */
+    @media (min-width: 1920px) {
+      :root { --fs-base: 17px; }
+      .header-pci h2 { font-size: 1.8rem; }
+      .kpi-value { font-size: 2.8rem; }
+      .section-title { font-size: 0.95rem; letter-spacing: 1.5px; }
+      .table-tjmg thead th { font-size: 0.8rem; padding: 16px 20px; }
+      .table-tjmg tbody td { font-size: 1rem; padding: 16px 20px; }
+      .nav-tab-btn { font-size: 0.9rem; padding: 12px 24px; }
+      .card-surface { padding: 36px 48px; }
+    }
+
+    /* ─── IMPRESSÃO ─── */
+    @media print {
+      .header-pci, .tabs-wrapper, .btn, button { display: none !important; }
+      .tab-pane { display: block !important; }
+      .card-surface { box-shadow: none; border: 1px solid #ccc; }
+    }
+
+    /* ═══ SUBESTAÇÃO APRIMORADA — ESTILOS ADICIONAIS ═══ */
+    .chk-section{border:1px solid #dde3ec;border-radius:10px;overflow:hidden;margin-bottom:14px}
+    .chk-section-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8f9fb;border-bottom:1px solid #e9ecef;cursor:pointer;user-select:none}
+    .chk-section-header:hover{background:#eef1f5}
+    .chk-section-title{font-size:0.8rem;font-weight:700;color:var(--tjmg-primary);text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:8px}
+    .chk-section-body{padding:12px 16px;background:#fff}
+    .chk-item{display:flex;align-items:flex-start;gap:10px;padding:7px 0;border-bottom:1px solid #f5f5f5}
+    .chk-item:last-child{border-bottom:none}
+    .chk-item input[type="checkbox"]{width:16px;height:16px;margin-top:2px;flex-shrink:0;accent-color:var(--tjmg-primary);cursor:pointer}
+    .chk-item label{font-size:0.82rem;color:#334;line-height:1.4;cursor:pointer}
+    .chk-item.checked label{text-decoration:line-through;color:#aaa}
+    .chk-badge-count{font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#e9ecef;color:#666;white-space:nowrap}
+    .chk-badge-count.completo{background:var(--ok-soft);color:var(--ok)}
+    .chk-badge-count.parcial{background:#fff3e0;color:#e65100}
+    .progresso-wrap{background:var(--tjmg-surface);border:1px solid #dde3ec;border-radius:10px;padding:14px 18px;margin-bottom:18px;position:sticky;top:70px;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .prog-bar-track{height:8px;background:#e9ecef;border-radius:8px;overflow:hidden}
+    .prog-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#003366,#0056b3);transition:width .5s}
+    .val-hint{font-size:0.65rem;color:#888;margin-top:1px;display:block}
+    .val-hint.danger{color:var(--danger);font-weight:700}
+    .val-hint.warn{color:#e65100;font-weight:700}
+    .val-hint.ok{color:var(--ok);font-weight:600}
+    .val-ref{font-size:0.6rem;color:#aaa;display:block;margin-bottom:1px}
+    /* PAINEL RESUMO NÃO CONFORMIDADES */
+    .nc-panel{background:#fff5f5;border:1px solid #ef9a9a;border-left:4px solid #c62828;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:none}
+    .nc-panel.visible{display:block}
+    .nc-panel-title{font-size:0.78rem;font-weight:700;color:#c62828;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .nc-list{list-style:none;padding:0;margin:0}
+    .nc-list li{font-size:0.75rem;color:#b71c1c;padding:3px 0;border-bottom:1px solid #ffcdd2;display:flex;align-items:flex-start;gap:6px}
+    .nc-list li:last-child{border-bottom:none}
+    .nc-list li::before{content:"✗";font-weight:700;color:#c62828;flex-shrink:0}
+    .nc-warn-list li{color:#bf360c}
+    .nc-warn-list li::before{content:"⚠";color:#e65100}
+    .obs-field{border:1px solid #dde3ec;border-radius:8px;width:100%;padding:8px 10px;font-size:0.82rem;min-height:56px;resize:vertical;font-family:inherit}
+    .obs-field:focus{outline:none;border-color:var(--tjmg-primary);box-shadow:0 0 0 3px rgba(0,51,102,0.1)}
+    .tipo-sub-card{border:2px solid #e9ecef;border-radius:10px;padding:12px 16px;cursor:pointer;transition:all .2s;background:#fff;text-align:center;flex:1}
+    .tipo-sub-card:hover{border-color:var(--tjmg-primary);background:#f0f4f8}
+    .tipo-sub-card.selected{border-color:var(--tjmg-primary);background:#e8f0fb}
+    .tipo-sub-card .icon{font-size:1.8rem;display:block;margin-bottom:6px}
+    .tipo-sub-card .label{font-weight:700;font-size:0.82rem;color:var(--tjmg-primary);text-transform:uppercase}
+    .tipo-sub-card .desc{font-size:0.68rem;color:#777;margin-top:2px}
+    .sec-abrigada{display:none}
+    .sub-sec-label{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin:14px 0 6px;display:flex;align-items:center;gap:6px}
+    .sub-sec-label::after{content:'';flex:1;height:1px;background:#e9ecef}
+    .collapse-toggle{transition:transform .2s}
+    .collapsed .collapse-toggle{transform:rotate(-90deg)}
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style id="tjmg-design-system">
+/* ─── TOKENS GLOBAIS ─────────────────────────────────────── */
+:root {
+  --tjmg-blue:        #003366 !important;
+  --tjmg-blue-dark:   #00234d !important;
+  --tjmg-blue-mid:    #004080 !important;
+  --tjmg-blue-light:  #0a4f8a !important;
+  --tjmg-blue-pale:   #e8f0fb !important;
+  --tjmg-gold:        #c5a059 !important;
+  --tjmg-gold-light:  #d4b06a !important;
+  --tjmg-gold-pale:   #fdf6e8 !important;
+  --tjmg-success:     #1b7a3e !important;
+  --tjmg-success-bg:  #e8f5ee !important;
+  --tjmg-warning:     #b45309 !important;
+  --tjmg-warning-bg:  #fef3c7 !important;
+  --tjmg-danger:      #b91c1c !important;
+  --tjmg-danger-bg:   #fee2e2 !important;
+  --tjmg-gray-50:     #f8fafc !important;
+  --tjmg-gray-100:    #f1f5f9 !important;
+  --tjmg-gray-200:    #e2e8f0 !important;
+  --tjmg-gray-300:    #cbd5e1 !important;
+  --tjmg-gray-400:    #94a3b8 !important;
+  --tjmg-gray-500:    #64748b !important;
+  --tjmg-gray-600:    #475569 !important;
+  --tjmg-gray-700:    #334155 !important;
+  --tjmg-gray-900:    #0f172a !important;
+  --tjmg-radius-sm:   6px !important;
+  --tjmg-radius:      10px !important;
+  --tjmg-radius-lg:   14px !important;
+  --tjmg-shadow-sm:   0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04) !important;
+  --tjmg-shadow:      0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04) !important;
+  --tjmg-shadow-lg:   0 10px 28px rgba(0,0,0,.10) !important;
+  --tjmg-topbar-h:    62px !important;
+  --tjmg-font:        'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif !important;
+}
+
+/* ─── RESET TIPOGRÁFICO ──────────────────────────────────── */
+html, body, button, input, select, textarea, table, td, th,
+.top-bar, .navbar-tjmg, .header-pci, .topo,
+.kpi-card, .card-kpi, .card-surface, .card-pci, .card,
+.btn, .btn-topbar, .nav-tab-btn, .nav-link,
+.modal-header, .modal-body, .modal-footer, .modal-content,
+.form-control, .form-select, .form-label,
+h1, h2, h3, h4, h5, h6, p, span, div, label, small, strong, b {
+  font-family: var(--tjmg-font);
+}
+body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; font-size: 14px !important; line-height: 1.55 !important; }
+
+/* Desativa cores de tema escuro (Emergencial) — fallback se sobrar algo */
+html[data-theme="dark"], html[data-theme="dark"] body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR — altura 62px, azul TJMG + borda dourada
+═══════════════════════════════════════════════════════════ */
+.top-bar, .navbar-tjmg, .header-pci, .topo, header.top-bar, header.header-pci, nav.navbar-tjmg {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,.18) !important;
+  position: sticky !important;
+  top: 34px !important;
+  z-index: 200 !important;
+  color: #fff !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+.top-bar *, .navbar-tjmg *, .header-pci *, .topo * { color: inherit; }
+.top-bar h2, .navbar-tjmg h2, .header-pci h2, .topo h2,
+.top-bar-title, .brand,
+.header-pci .brand, .navbar-tjmg .brand {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: .02em !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+.top-bar-sub, .header-pci .sub, .navbar-tjmg .sub, .topo .sub,
+.top-bar small, .header-pci small {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.55) !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+  display: block !important;
+  margin-top: 1px !important;
+}
+/* Ícone "C" do topbar */
+.top-bar-icon, .login-badge-icon {
+  width: 34px !important; height: 34px !important;
+  background: var(--tjmg-gold) !important;
+  border-radius: 8px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 15px !important; font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  flex-shrink: 0 !important;
+}
+.top-bar-brand, .header-pci > div:first-child { display: flex !important; align-items: center !important; gap: 14px !important; }
+.top-bar-right, .header-pci > div:last-child { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+
+/* Chips do topbar (relógio, data, região) */
+.top-bar-clock, .last-update-chip, .header-badge, #dataRefBadge, #chip_regiao {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.85) !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+}
+
+/* Botões do topbar */
+.btn-topbar {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  padding: 7px 14px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .03em !important;
+  height: 32px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  transition: background .15s !important;
+}
+.btn-topbar:hover { background: rgba(255,255,255,.20) !important; }
+.btn-topbar-gold {
+  background: var(--tjmg-gold) !important;
+  border-color: var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-topbar-gold:hover { background: var(--tjmg-gold-light) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PCI: navbar Bootstrap → topbar TJMG (overrides estruturais)
+═══════════════════════════════════════════════════════════ */
+.navbar-tjmg .container-fluid { padding: 0 !important; width: 100% !important; max-width: none !important; }
+.navbar-tjmg .brand { display: flex !important; align-items: center !important; gap: 10px !important; font-size: 15px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.navbar-tjmg .brand::before { content: "C"; display:flex; align-items:center; justify-content:center; width:32px; height:32px; background: var(--tjmg-gold); color: var(--tjmg-blue); border-radius:8px; font-weight:800; font-size:14px; }
+.navbar-tjmg .brand .fa-fire-extinguisher,
+.navbar-tjmg .brand i.fas { display: none !important; }
+.navbar-tjmg .sub { font-size: 10px !important; color: rgba(255,255,255,.55) !important; letter-spacing: .04em !important; margin-top: 1px !important; text-transform: uppercase !important; }
+.navbar-tjmg .text-end small { color: rgba(255,255,255,.70) !important; font-size: 11px !important; font-weight: 500 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAUDOS: header-pci gradient → solid TJMG
+═══════════════════════════════════════════════════════════ */
+.header-pci h2 { font-size: 16px !important; font-weight: 800 !important; letter-spacing: .02em !important; margin: 0 !important; color: #fff !important; }
+.header-pci h2 i.bi { color: var(--tjmg-gold) !important; font-size: 18px !important; margin-right: 6px !important; }
+.header-pci small { font-size: 11px !important; opacity: .55 !important; letter-spacing: .04em !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABS DE NAVEGAÇÃO
+═══════════════════════════════════════════════════════════ */
+.nav-tabs-bar {
+  background: var(--tjmg-blue-mid) !important;
+  border-bottom: 1px solid rgba(255,255,255,.1) !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  gap: 0 !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  position: sticky !important;
+  top: calc(34px + var(--tjmg-topbar-h)) !important;
+  z-index: 190 !important;
+}
+.nav-tabs-bar::-webkit-scrollbar { display: none; }
+.nav-tab {
+  padding: 12px 22px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.55) !important;
+  cursor: pointer !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  background: transparent !important;
+  transition: all .15s !important;
+  white-space: nowrap !important;
+  letter-spacing: .03em !important;
+  text-transform: uppercase !important;
+  user-select: none !important;
+  line-height: 1.2 !important;
+}
+.nav-tab:hover { color: rgba(255,255,255,.9) !important; background: rgba(255,255,255,.05) !important; }
+.nav-tab.active { color: var(--tjmg-gold) !important; border-bottom-color: var(--tjmg-gold) !important; font-weight: 700 !important; background: transparent !important; }
+
+/* Bootstrap nav-tabs (PCI) e tabs-wrapper (Laudos) */
+.nav.nav-tabs, .tabs-wrapper {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  padding: 4px !important;
+  display: flex !important;
+  gap: 2px !important;
+  margin-bottom: 18px !important;
+}
+.nav.nav-tabs .nav-link, .tabs-wrapper .nav-tab-btn {
+  color: var(--tjmg-gray-500) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  letter-spacing: .02em !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+  transition: all .15s !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.nav.nav-tabs .nav-link:hover, .tabs-wrapper .nav-tab-btn:hover { color: var(--tjmg-blue) !important; background: var(--tjmg-gray-100) !important; }
+.nav.nav-tabs .nav-link.active, .tabs-wrapper .nav-tab-btn.active {
+  background: var(--tjmg-blue) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(0,51,102,.25) !important;
+}
+
+/* Inner tabs (Periódica: cadastro/atualização) */
+.inner-tab {
+  padding: 10px 18px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  cursor: pointer !important;
+  border-radius: 8px 8px 0 0 !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  transition: all .15s !important;
+}
+.inner-tab-inactive { background: var(--tjmg-gray-200) !important; color: var(--tjmg-gray-500) !important; }
+.inner-tab-active   { background: var(--tjmg-blue) !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   CARDS / SURFACES
+═══════════════════════════════════════════════════════════ */
+.kpi-card, .card-kpi, .card-pci, .card-surface, .form-section, .chart-box, .search-container, .dash-filter-bar, .filter-bar {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card, .card-kpi {
+  padding: 16px 18px !important;
+  border-top: 4px solid var(--tjmg-blue) !important;
+  transition: transform .15s, box-shadow .15s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.kpi-card:hover, .card-kpi:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.kpi-card h3, .card-kpi h3, .kpi-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-gray-400) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card .value, .card-kpi h2, .kpi-value {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1 !important;
+  letter-spacing: -.02em !important;
+  font-family: var(--tjmg-font) !important;
+  margin: 0 !important;
+}
+.kpi-card .kpi-sub, .card-kpi small, .kpi-sub {
+  font-size: 10px !important;
+  color: var(--tjmg-gray-400) !important;
+  margin-top: 4px !important;
+  font-weight: 500 !important;
+  font-family: var(--tjmg-font) !important;
+  display: block !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+/* Variantes de cor KPI */
+.kpi-aberto, .kpi-success { border-top-color: var(--tjmg-success) !important; }
+.kpi-aberto .value, .kpi-success .kpi-value { color: var(--tjmg-success) !important; }
+.kpi-concluidas { border-top-color: #0369a1 !important; }
+.kpi-concluidas .value { color: #0369a1 !important; }
+.kpi-repro, .kpi-warning { border-top-color: #d97706 !important; }
+.kpi-repro .value, .kpi-warning .kpi-value { color: #d97706 !important; }
+.kpi-atraso, .kpi-danger { border-top-color: var(--tjmg-danger) !important; }
+.kpi-atraso .value, .kpi-danger .kpi-value { color: var(--tjmg-danger) !important; }
+.kpi-canceladas { border-top-color: var(--tjmg-gray-400) !important; }
+.kpi-canceladas .value { color: var(--tjmg-gray-500) !important; }
+.kpi-info { border-top-color: var(--tjmg-blue) !important; }
+.kpi-info .kpi-value { color: var(--tjmg-blue) !important; }
+.kpi-gold { border-top-color: var(--tjmg-gold) !important; }
+.kpi-gold .kpi-value { color: #8a6a00 !important; }
+
+/* PCI: card-kpi com background colorido — manter, mas com radius/sombra padronizados */
+.card-kpi[style*="background"] { border: none !important; border-top: none !important; }
+.card-kpi[style*="background"] h2 { color: inherit !important; }
+
+/* Form sections */
+.form-section, .card-surface, .chart-box {
+  padding: 22px !important;
+  margin-bottom: 18px !important;
+}
+.form-section-title, .section-title, .card-title, .chart-box-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 2px solid var(--tjmg-gray-100) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.form-section-title::after, .section-title::after { content: none !important; }
+.chart-box-title .dot, .card-title .dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; background: var(--tjmg-gold) !important; flex-shrink: 0 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   FORM CONTROLS — Inputs, selects, textareas
+═══════════════════════════════════════════════════════════ */
+input[type="text"], input[type="email"], input[type="password"], input[type="date"],
+input[type="time"], input[type="number"], input[type="search"], textarea,
+select, .form-control, .form-select, .filtro-tabela-select, .search-box {
+  font-family: var(--tjmg-font) !important;
+  font-size: 13px !important;
+  color: var(--tjmg-gray-700) !important;
+  background: #fff !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 9px 12px !important;
+  outline: none !important;
+  transition: border-color .15s, box-shadow .15s !important;
+  line-height: 1.4 !important;
+}
+input:focus, textarea:focus, select:focus, .form-control:focus, .form-select:focus {
+  border-color: var(--tjmg-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0,51,102,.10) !important;
+}
+input:disabled, select:disabled, textarea:disabled,
+.form-control:disabled, .form-select:disabled {
+  background: var(--tjmg-gray-100) !important;
+  color: var(--tjmg-gray-400) !important;
+  border-style: dashed !important;
+  cursor: not-allowed !important;
+}
+label, .form-label, .filter-item label, .form-group label, .label-tecnica, .dash-filter-item label, .mf-group label, .rel-filter-item label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  margin-bottom: 5px !important;
+  display: block !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTÕES (Bootstrap + custom)
+═══════════════════════════════════════════════════════════ */
+.btn {
+  font-family: var(--tjmg-font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 8px 16px !important;
+  letter-spacing: .02em !important;
+  transition: all .15s !important;
+  line-height: 1.3 !important;
+  cursor: pointer !important;
+}
+.btn-primary, .btn-tjmg, .btn-save, .btn-login {
+  background: var(--tjmg-blue) !important;
+  border: 1px solid var(--tjmg-blue) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+.btn-primary:hover, .btn-tjmg:hover, .btn-save:hover, .btn-login:hover {
+  background: var(--tjmg-blue-light) !important;
+  border-color: var(--tjmg-blue-light) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,51,102,.25) !important;
+}
+.btn-tjmg-gold, .btn-primary-gold, .btn-repro {
+  background: var(--tjmg-gold) !important;
+  border: 1px solid var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-tjmg-gold:hover, .btn-primary-gold:hover, .btn-repro:hover {
+  background: var(--tjmg-gold-light) !important;
+  border-color: var(--tjmg-gold-light) !important;
+}
+.btn-danger { background: var(--tjmg-danger) !important; border-color: var(--tjmg-danger) !important; color: #fff !important; }
+.btn-success { background: var(--tjmg-success) !important; border-color: var(--tjmg-success) !important; color: #fff !important; }
+.btn-warning { background: #d97706 !important; border-color: #d97706 !important; color: #fff !important; }
+.btn-secondary { background: var(--tjmg-gray-500) !important; border-color: var(--tjmg-gray-500) !important; color: #fff !important; }
+.btn-outline-primary { background: transparent !important; border: 1.5px solid var(--tjmg-blue) !important; color: var(--tjmg-blue) !important; }
+.btn-outline-primary:hover { background: var(--tjmg-blue-pale) !important; }
+.btn-outline-secondary { background: #fff !important; border: 1.5px solid var(--tjmg-gray-200) !important; color: var(--tjmg-gray-600) !important; }
+.btn-outline-secondary:hover { background: var(--tjmg-gray-100) !important; }
+.btn-outline-warning { background: transparent !important; border: 1.5px solid #d97706 !important; color: #d97706 !important; }
+.btn-outline-warning:hover { background: #fef3c7 !important; }
+.btn-outline-danger { background: transparent !important; border: 1.5px solid var(--tjmg-danger) !important; color: var(--tjmg-danger) !important; }
+.btn-outline-danger:hover { background: var(--tjmg-danger-bg) !important; }
+.btn-outline-success { background: transparent !important; border: 1.5px solid var(--tjmg-success) !important; color: var(--tjmg-success) !important; }
+.btn-sm { padding: 6px 12px !important; font-size: 11px !important; }
+.btn-lg { padding: 11px 20px !important; font-size: 13px !important; }
+
+.btn-limpar-filtro, .btn-rel-limpar {
+  background: var(--tjmg-gray-100) !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  color: var(--tjmg-gray-600) !important;
+  padding: 9px 16px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-family: var(--tjmg-font) !important;
+}
+.btn-limpar-filtro:hover, .btn-rel-limpar:hover { background: var(--tjmg-gray-200) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABELAS
+═══════════════════════════════════════════════════════════ */
+table, .table, .table-tjmg, .rel-table, .preview-table {
+  font-family: var(--tjmg-font) !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+table thead tr, .table thead tr, .table-tjmg thead tr {
+  background: var(--tjmg-blue) !important;
+}
+table thead th, .table thead th, .table-tjmg thead th, .rel-table thead th, .preview-table thead th {
+  background: var(--tjmg-blue) !important;
+  color: rgba(255,255,255,.92) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  padding: 10px 14px !important;
+  text-align: left !important;
+  border-bottom: 2px solid var(--tjmg-gold) !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody td, .table tbody td, .table-tjmg tbody td {
+  padding: 9px 14px !important;
+  font-size: 12.5px !important;
+  color: var(--tjmg-gray-700) !important;
+  border-bottom: 1px solid var(--tjmg-gray-100) !important;
+  vertical-align: middle !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody tr:hover, .table tbody tr:hover { background: var(--tjmg-blue-pale) !important; }
+.table-tjmg tbody tr:hover { background: var(--tjmg-gray-50) !important; }
+tbody tr.row-atraso, tbody tr.row-vencido { background: #fff5f5 !important; }
+tbody tr.row-atraso:hover, tbody tr.row-vencido:hover { background: var(--tjmg-danger-bg) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   BADGES / STATUS
+═══════════════════════════════════════════════════════════ */
+.badge, .badge-status, .badge-item, .rel-badge, .section-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  line-height: 1.4 !important;
+}
+.section-badge { background: var(--tjmg-blue) !important; color: #fff !important; }
+.section-badge-danger { background: var(--tjmg-danger) !important; }
+.status-aberto, .badge-agendado { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.status-aberto::before, .badge-agendado::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-reprogramado, .badge-30d, .badge-andamento {
+  background: var(--tjmg-warning-bg) !important;
+  color: var(--tjmg-warning) !important;
+}
+.status-reprogramado::before, .badge-andamento::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-alert, .badge-vencido, .badge-atraso {
+  background: var(--tjmg-danger-bg) !important;
+  color: var(--tjmg-danger) !important;
+}
+.status-alert::before, .badge-atraso::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.badge-ok, .badge-vigente { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.badge-60d { background: #fef9c3 !important; color: #854d0e !important; }
+.badge-90d { background: #dbeafe !important; color: #1e40af !important; }
+.badge-suspenso { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-500) !important; border: 1.5px dashed var(--tjmg-gray-300) !important; }
+.badge-na { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-400) !important; }
+
+/* Tempo-chip (prazo) — preserva cores semânticas */
+.tempo-chip { font-family: var(--tjmg-font) !important; padding: 4px 10px !important; border-radius: 20px !important; font-size: 11px !important; font-weight: 600 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   MODAIS
+═══════════════════════════════════════════════════════════ */
+.modal-content, .modal-relatorio-content, .modal-email {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: none !important;
+  box-shadow: var(--tjmg-shadow-lg) !important;
+  overflow: hidden !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header, .rel-header, .modal-edicao-header {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 16px 22px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+.modal-header h2, .modal-header h5, .rel-header h2 {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin: 0 !important;
+  letter-spacing: .02em !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header p, .rel-header p {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.6) !important;
+  margin: 2px 0 0 !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-close, .btn-close {
+  background: rgba(255,255,255,.15) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+.modal-close:hover, .btn-close:hover { background: rgba(255,255,255,.28) !important; opacity: 1 !important; }
+.modal-body, .rel-body { padding: 22px !important; background: #fff !important; font-family: var(--tjmg-font) !important; }
+.modal-footer, .modal-edicao-footer { background: var(--tjmg-gray-50) !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding: 14px 22px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE / CONTAINER
+═══════════════════════════════════════════════════════════ */
+.container, .container-fluid, main.container {
+  max-width: 1800px !important;
+  margin: 0 auto !important;
+  padding: 22px 24px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.welcome h2 { font-size: 22px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; }
+.welcome .sub { color: var(--tjmg-gray-500) !important; font-size: 13px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════════════════════════ */
+#login_screen, #tela-login {
+  background: var(--tjmg-blue) !important;
+  background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(197,160,89,.20) 0%, transparent 60%) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 32px 28px !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  border-top: 4px solid var(--tjmg-gold) !important;
+  color: #fff !important;
+}
+.login-card h1, .login-card h2 { color: #fff !important; font-weight: 800 !important; font-size: 18px !important; }
+.login-card .login-sub, .login-card > p { color: rgba(255,255,255,.55) !important; font-size: 12px !important; }
+.login-field label, .login-card label, .login-card label span {
+  color: rgba(255,255,255,.65) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  font-weight: 700 !important;
+}
+.login-card input, .login-field input, #form-login input {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  color: #fff !important;
+  padding: 12px 14px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 14px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card input::placeholder { color: rgba(255,255,255,.30) !important; }
+.login-card input:focus { border-color: var(--tjmg-gold) !important; background: rgba(255,255,255,.14) !important; box-shadow: none !important; }
+.btn-login, #btn_acessar, #btn-login {
+  background: var(--tjmg-gold) !important;
+  border: none !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  padding: 13px !important;
+  border-radius: var(--tjmg-radius) !important;
+  box-shadow: 0 4px 14px rgba(197,160,89,.4) !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+  cursor: pointer !important;
+}
+.btn-login:hover, #btn_acessar:hover, #btn-login:hover { background: var(--tjmg-gold-light) !important; transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════════════════════
+   SHELL HOME (index.html — cards de módulos)
+═══════════════════════════════════════════════════════════ */
+.topo {
+  background: var(--tjmg-blue) !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.topo .marca { font-size: 16px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.topo .versao { font-size: 11px !important; color: rgba(255,255,255,.5) !important; }
+.topo .info-user { font-size: 12px !important; color: rgba(255,255,255,.85) !important; font-weight: 500 !important; }
+.topo .btn-icon {
+  background: rgba(255,255,255,.10) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  padding: 7px 14px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  height: 32px !important;
+}
+.cards .card {
+  background: #fff !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  padding: 22px !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  transition: transform .15s, box-shadow .15s !important;
+}
+.cards .card:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.card-titulo { font-weight: 700 !important; font-size: 15px !important; color: var(--tjmg-blue) !important; font-family: var(--tjmg-font) !important; }
+.card-total { font-size: 32px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; line-height: 1 !important; font-family: var(--tjmg-font) !important; }
+.card-rotulo { font-size: 10px !important; color: var(--tjmg-gray-400) !important; text-transform: uppercase !important; letter-spacing: .07em !important; font-weight: 600 !important; }
+.card-acessar { color: var(--tjmg-blue) !important; font-size: 12px !important; font-weight: 700 !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding-top: 12px !important; margin-top: 12px !important; }
+
+/* Welcome */
+.welcome { margin-bottom: 24px !important; }
+.welcome h2 { color: var(--tjmg-blue) !important; }
+
+.info-box {
+  background: var(--tjmg-blue-pale) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  padding: 14px 18px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 12px !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1.6 !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ELEMENTOS QUE NÃO DEVEM SER ALTERADOS
+═══════════════════════════════════════════════════════════ */
+/* Gráficos preservam visual original — Google Charts / Chart.js renderizam canvas próprio */
+#chartHist, #chartLaudos, #chartPizza,
+#chart_concluidos, #chart_comarcas_total, #chart_pendentes, #chart_sis, #chart_ele,
+#grafico_gauge, #grafico_barras, #grafico_pizza_tipo {
+  font-family: var(--tjmg-font) !important;
+}
+
+/* Login do PCI/Laudos: o body com gradient azul precisa de margem para a navbar superior */
+body { padding-top: 34px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVO
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .top-bar, .navbar-tjmg, .header-pci, .topo {
+    height: auto !important;
+    min-height: var(--tjmg-topbar-h) !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap !important;
+  }
+  .top-bar-sub, .header-pci small, .navbar-tjmg .sub, #data_atual, .last-update-chip { display: none !important; }
+  .btn-topbar { padding: 6px 10px !important; font-size: 10px !important; height: 30px !important; }
+  table thead th { padding: 8px 10px !important; font-size: 9px !important; }
+  table tbody td { padding: 7px 10px !important; font-size: 11.5px !important; }
+  .kpi-card .value, .card-kpi h2, .kpi-value { font-size: 22px !important; }
+  .container, .container-fluid { padding: 14px 12px !important; }
+}
+</style>
+</head>
+<body>
+
+<style>
+#comap-unif-nav {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  background: #0a1929 !important;
+  color: #fff !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  gap: 10px !important;
+  z-index: 99999 !important;
+  font: 600 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  border-bottom: 1px solid #c5a059 !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+#comap-unif-nav * {
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+#comap-unif-nav a {
+  color: #fff !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+#comap-unif-nav .comap-sep {
+  opacity: .3 !important;
+  color: #fff !important;
+}
+#comap-unif-nav select {
+  background: rgba(255,255,255,.1) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  /* FIX: força largura fixa — sobrescreve width:100% do CSS do módulo */
+  width: 180px !important;
+  min-width: 140px !important;
+  max-width: 180px !important;
+  flex: 0 0 180px !important;
+  margin: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+}
+#comap-unif-nav select option {
+  background: #0a1929 !important;
+  color: #fff !important;
+}
+#comap-unif-nav .comap-spacer {
+  flex: 1 1 auto !important;
+}
+#comap-unif-nav button.comap-sair {
+  background: rgba(220,38,38,.2) !important;
+  color: #fff !important;
+  border: 1px solid rgba(220,38,38,.5) !important;
+  padding: 3px 10px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+#comap-unif-nav .comap-mod-label {
+  opacity: .7 !important;
+  font-size: 11px !important;
+  margin-left: 6px !important;
+  color: #fff !important;
+}
+#comap-loading {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(10,25,41,.92) !important;
+  z-index: 100000 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  color: #fff !important;
+  font: 600 14px sans-serif !important;
+}
+#comap-loading.show {
+  display: flex !important;
+}
+#comap-loading .comap-spin {
+  width: 40px !important;
+  height: 40px !important;
+  border: 3px solid rgba(197,160,89,.3) !important;
+  border-top-color: #c5a059 !important;
+  border-radius: 50% !important;
+  animation: comap-spin 0.8s linear infinite !important;
+  margin-bottom: 14px !important;
+}
+@keyframes comap-spin { to { transform: rotate(360deg) } }
+body { padding-top: 34px !important; }
+</style>
+<div id="comap-unif-nav">
+  <a href="#" onclick="event.preventDefault();if(window.__COMAP_HOME__)window.__COMAP_HOME__();else{var a=document.createElement('a');a.href=window.__COMAP_URL__||'/';a.target='_top';document.body.appendChild(a);a.click();}return false;">🏠 <span>COMAP</span></a>
+  <span class="comap-sep">│</span>
+  <select id="comap-unif-sel" onchange="(function(sel){if(!sel.value)return;var ov=document.getElementById('comap-loading');if(ov)ov.classList.add('show');var s=window.__COMAP_SESSAO__||{};var p=new URLSearchParams({modulo:sel.value,n:s.nome||'',email:s.email||'',r:s.regiao||'',g:s.global?'1':'0'});var a=document.createElement('a');a.href=(window.__COMAP_URL__||window.location.pathname)+'?'+p.toString();a.target='_top';document.body.appendChild(a);a.click();})(this)">
+    <option value="">— Trocar módulo —</option>
+    <option value="emergencial" >🚨 Emergencial</option>
+    <option value="periodica"   >🔄 Periódica</option>
+    <option value="pci"         >🔥 PCI</option>
+    <option value="laudos"      selected>📋 Laudos</option>
+  </select>
+  <span class="comap-spacer"></span>
+  <button class="comap-sair" onclick="if(window.__COMAP_LOGOUT__)window.__COMAP_LOGOUT__();">⏻ SAIR</button>
+  <span class="comap-mod-label">LAUDOS</span>
+</div>
+<div id="comap-loading">
+  <div class="comap-spin"></div>
+  <div>Carregando módulo...</div>
+</div>
+
+
+
+
+
+<!-- HEADER -->
+<div class="header-pci">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <div>
+      <h2><i class="bi bi-shield-check me-2"></i>COMAP | GESTÃO DE LAUDOS TÉCNICOS</h2>
+      <small>SISTEMA INTEGRADO DE MONITORAMENTO — COMAP | GEMAP / TJMG</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="header-badge" id="dataRefBadge">Carregando...</span>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-3 px-md-4 pb-5 mt-4">
+<div class="row justify-content-center">
+<div class="col-12 col-xl-11">
+
+  <!-- TABS -->
+  <div class="tabs-wrapper mb-4">
+    <button class="nav-tab-btn active" onclick="trocarTab('tab-lancamento',this)">
+      <i class="bi bi-plus-circle"></i><span class="tab-label"> LANÇAR</span>
+    </button>
+    <button class="nav-tab-btn" onclick="trocarTab('tab-consulta',this);carregarDados()">
+      <i class="bi bi-table"></i><span class="tab-label"> CONSULTAR</span>
+    </button>
+    <button class="nav-tab-btn" onclick="trocarTab('tab-dash',this);renderizarDash()">
+      <i class="bi bi-graph-up-arrow"></i><span class="tab-label"> DASH</span>
+    </button>
+    <button class="nav-tab-btn" onclick="trocarTab('tab-exportar',this);filtrarExportacao()">
+      <i class="bi bi-send"></i><span class="tab-label"> RELATÓRIOS</span>
+    </button>
+    <button class="nav-tab-btn" onclick="trocarTab('tab-subestacao',this)">
+      <i class="bi bi-lightning-charge"></i><span class="tab-label"> SUBEST.</span>
+    </button>
+  </div>
+
+  <!-- ═══ ABA: LANÇAMENTO ═══ -->
+  <div id="tab-lancamento" class="tab-pane show">
+    <form id="formPci" class="card-surface" novalidate>
+      <input type="hidden" id="edit_id" name="id">
+      <h5 class="section-title"><i class="bi bi-building me-1"></i> Dados da Unidade</h5>
+      <div class="row g-3">
+        <div class="col-6 col-md-2"><label class="form-label label-tecnica">CONTRATO</label><input type="text" class="form-control" name="contrato" id="f_contrato" required placeholder="Nº"></div>
+        <div class="col-6 col-md-2"><label class="form-label label-tecnica">REGIÃO</label><select class="form-select" name="regiao" id="f_regiao" required onchange="lau_onRegiaoChange(this.value)"><option value="">Selecione...</option><option value="CENTRAL">CENTRAL</option><option value="SUL">SUL</option><option value="NORTE">NORTE</option><option value="ZONA_DA_MATA">ZONA DA MATA</option><option value="SUDOESTE">SUDOESTE</option><option value="LESTE">LESTE</option><option value="TRIANGULO">TRIÂNGULO</option></select></div>
+        <div class="col-md-3"><label class="form-label label-tecnica">COMARCA</label><select class="form-select" name="comarca" id="f_comarca" required onchange="lau_onComarcaChange(this.value)"><option value="">Selecione a região primeiro</option></select></div>
+        <div class="col-md-3"><label class="form-label label-tecnica">EDIFICAÇÃO</label><select class="form-select" name="edificacao" id="f_edificacao" required><option value="">Selecione a comarca primeiro</option></select></div>
+        <div class="col-md-2"><label class="form-label label-tecnica">GRUPO</label><select class="form-select" name="grupo"><option value="A">Grupo A</option><option value="B">Grupo B</option><option value="C">Grupo C</option></select></div>
+      </div>
+      <h5 class="section-title mt-4"><i class="bi bi-clipboard-check me-1"></i> Status dos Laudos</h5>
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-5 g-3">
+        <!-- SPDA -->
+        <div class="col"><div class="card-laudo" id="card-spda"><h6><i class="bi bi-lightning-fill me-1"></i> SPDA</h6><select class="form-select form-select-sm mb-2" name="st_spda" onchange="onStatusChange(this,'spda')"><option value="ENTREGUE">ENTREGUE</option><option value="PENDENTE">PENDENTE</option><option value="N/A">N/A</option></select><div id="datas-spda"><label class="label-tecnica">ENTREGA</label><input type="date" class="form-control form-control-sm mb-1" name="dt_ent_spda" id="ent_spda" onchange="autoData(this,'val_spda',1);validarDatas('spda')"><label class="label-tecnica">VALIDADE</label><input type="date" class="form-control form-control-sm" name="dt_val_spda" id="val_spda" onchange="validarDatas('spda')"><div class="date-validation-msg" id="err-spda">⚠ Validade anterior à entrega</div></div></div></div>
+        <!-- UNIFILAR -->
+        <div class="col"><div class="card-laudo" id="card-unif"><h6><i class="bi bi-diagram-3 me-1"></i> UNIFILAR</h6><select class="form-select form-select-sm mb-2" name="st_unif" onchange="onStatusChange(this,'unif')"><option value="ENTREGUE">ENTREGUE</option><option value="PENDENTE">PENDENTE</option><option value="N/A">N/A</option></select><div id="datas-unif"><label class="label-tecnica">ENTREGA</label><input type="date" class="form-control form-control-sm mb-1" name="dt_ent_unif" id="ent_unif" onchange="autoData(this,'val_unif',1);validarDatas('unif')"><label class="label-tecnica">VALIDADE</label><input type="date" class="form-control form-control-sm" name="dt_val_unif" id="val_unif" onchange="validarDatas('unif')"><div class="date-validation-msg" id="err-unif">⚠ Validade anterior à entrega</div></div></div></div>
+        <!-- PIE -->
+        <div class="col"><div class="card-laudo" id="card-pie"><h6><i class="bi bi-file-earmark-check me-1"></i> PIE</h6><select class="form-select form-select-sm mb-2" name="st_pie" onchange="onStatusChange(this,'pie')"><option value="ENTREGUE">ENTREGUE</option><option value="PENDENTE">PENDENTE</option><option value="N/A">N/A</option></select><div id="datas-pie"><label class="label-tecnica">ENTREGA</label><input type="date" class="form-control form-control-sm mb-1" name="dt_ent_pie" id="ent_pie" onchange="autoData(this,'val_pie',1);validarDatas('pie')"><label class="label-tecnica">VALIDADE</label><input type="date" class="form-control form-control-sm" name="dt_val_pie" id="val_pie" onchange="validarDatas('pie')"><div class="date-validation-msg" id="err-pie">⚠ Validade anterior à entrega</div></div></div></div>
+        <!-- FACHADA -->
+        <div class="col"><div class="card-laudo" id="card-fach"><h6><i class="bi bi-building me-1"></i> FACHADA</h6><select class="form-select form-select-sm mb-2" name="st_fach" onchange="onStatusChange(this,'fach')"><option value="ENTREGUE">ENTREGUE</option><option value="PENDENTE">PENDENTE</option><option value="N/A">N/A</option></select><div id="datas-fach"><label class="label-tecnica">ENTREGA</label><input type="date" class="form-control form-control-sm mb-1" name="dt_ent_fach" id="ent_fach" onchange="autoData(this,'val_fach',1);validarDatas('fach')"><label class="label-tecnica">VALIDADE</label><input type="date" class="form-control form-control-sm" name="dt_val_fach" id="val_fach" onchange="validarDatas('fach')"><div class="date-validation-msg" id="err-fach">⚠ Validade anterior à entrega</div></div></div></div>
+        <!-- SUBESTAÇÃO (laudo) -->
+        <div class="col"><div class="card-laudo" id="card-sub"><h6><i class="bi bi-outlet me-1"></i> SUBESTAÇÃO</h6><select class="form-select form-select-sm mb-2" name="st_sub" onchange="onStatusChange(this,'sub')"><option value="ENTREGUE">ENTREGUE</option><option value="PENDENTE">PENDENTE</option><option value="N/A">N/A</option></select><div id="datas-sub"><label class="label-tecnica">ENTREGA</label><input type="date" class="form-control form-control-sm mb-1" name="dt_ent_sub" id="ent_sub" onchange="autoData(this,'val_sub',1);validarDatas('sub')"><label class="label-tecnica">VALIDADE</label><input type="date" class="form-control form-control-sm" name="dt_val_sub" id="val_sub" onchange="validarDatas('sub')"><div class="date-validation-msg" id="err-sub">⚠ Validade anterior à entrega</div></div></div></div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top flex-wrap gap-2">
+        <div id="edit-indicator" style="display:none;" class="badge-status badge-30d px-3 py-2"><i class="bi bi-pencil-fill me-1"></i> Modo edição — ID: <span id="edit-id-display"></span></div>
+        <div class="ms-auto d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" onclick="limpar()"><i class="bi bi-eraser me-1"></i> LIMPAR</button>
+          <button type="submit" class="btn-tjmg"><i class="bi bi-save me-1"></i> SALVAR REGISTRO</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ═══ ABA: CONSULTA ═══ -->
+  <div id="tab-consulta" class="tab-pane" style="display:none;">
+    <div class="card-surface mb-3 py-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-5"><div class="input-group"><span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span><input type="text" id="filtroEdif" class="form-control border-start-0 ps-1" placeholder="Buscar comarca ou edificação..." onkeyup="filtrar()"></div></div>
+        <div class="col-md-4"><select id="filtroComarca" class="form-select" onchange="filtrar()"><option value="">Todas as Comarcas</option></select></div>
+        <div class="col-md-3 text-end"><small class="text-muted" id="contador-registros">— registros</small><button class="btn btn-sm btn-outline-secondary ms-2" onclick="carregarDados()"><i class="bi bi-arrow-clockwise"></i></button></div>
+      </div>
+    </div>
+    <div class="card-surface p-0 overflow-hidden">
+      <div class="table-responsive table-responsive-force">
+        <table class="table table-tjmg table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th style="width:50px">ID</th>
+              <th>COMARCA</th>
+              <th class="col-hide-mobile">EDIFICAÇÃO</th>
+              <th class="col-hide-mobile">GRUPO</th>
+              <th>LAUDOS</th>
+              <th class="text-center">STATUS</th>
+              <th class="text-center" style="width:100px">AÇÕES</th>
+            </tr>
+          </thead>
+          <tbody id="corpoTabela"><tr><td colspan="7"><div class="empty-state"><i class="bi bi-hourglass-split"></i>Carregando dados...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ABA: DASHBOARD ═══ -->
+  <div id="tab-dash" class="tab-pane" style="display:none;">
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi-card danger" onclick="filtrarPorKpi('vencidos')"><i class="bi bi-exclamation-triangle-fill kpi-icon"></i><div class="kpi-label">SPDA Vencido</div><div class="kpi-value" id="venc-spda">0</div><div class="kpi-sub">laudos vencidos</div></div>
+      <div class="kpi-card danger" onclick="filtrarPorKpi('vencidos')"><i class="bi bi-exclamation-triangle-fill kpi-icon"></i><div class="kpi-label">UNIFILAR Vencido</div><div class="kpi-value" id="venc-unif">0</div><div class="kpi-sub">laudos vencidos</div></div>
+      <div class="kpi-card danger" onclick="filtrarPorKpi('vencidos')"><i class="bi bi-exclamation-triangle-fill kpi-icon"></i><div class="kpi-label">PIE Vencido</div><div class="kpi-value" id="venc-pie">0</div><div class="kpi-sub">laudos vencidos</div></div>
+      <div class="kpi-card danger" onclick="filtrarPorKpi('vencidos')"><i class="bi bi-exclamation-triangle-fill kpi-icon"></i><div class="kpi-label">FACHADA Vencida</div><div class="kpi-value" id="venc-fach">0</div><div class="kpi-sub">laudos vencidos</div></div>
+      <div class="kpi-card danger" onclick="filtrarPorKpi('vencidos')"><i class="bi bi-exclamation-triangle-fill kpi-icon"></i><div class="kpi-label">SUBESTAÇÃO Vencida</div><div class="kpi-value" id="venc-sub">0</div><div class="kpi-sub">laudos vencidos</div></div>
+      <div class="kpi-card warn" onclick="filtrarPorKpi('30')"><i class="bi bi-clock-history kpi-icon"></i><div class="kpi-label">Vencem em 30d</div><div class="kpi-value" id="kpi-30d">0</div><div class="kpi-sub">laudos próximos</div></div>
+      <div class="kpi-card info" onclick="filtrarPorKpi('todos')"><i class="bi bi-buildings kpi-icon"></i><div class="kpi-label">Total Imóveis</div><div class="kpi-value" id="kpi-total">0</div><div class="kpi-sub">cadastrados</div></div>
+      <div class="kpi-card gold"><i class="bi bi-percent kpi-icon"></i><div class="kpi-label">Conformidade</div><div class="kpi-value" id="kpi-conformidade">0%</div><div class="kpi-sub">laudos em dia</div></div>
+    </div>
+    <div class="conformidade-bar-wrapper">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="conf-label"><i class="bi bi-bar-chart-line me-1"></i> Índice Geral de Conformidade</span>
+        <span class="conf-percent" id="conf-percent-big">0%</span>
+      </div>
+      <div class="conf-bar-track"><div class="conf-bar-fill" id="conf-bar" style="width:0%"></div></div>
+      <div class="d-flex justify-content-between mt-1"><small class="text-muted" id="conf-ok-count">0 em dia</small><small class="text-muted" id="conf-venc-count">0 vencidos</small></div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-12 col-lg-8"><div class="chart-card"><div class="chart-title"><i class="bi bi-bar-chart me-1"></i> Composição por Tipo de Laudo</div><div style="position:relative;height:280px;"><canvas id="chartLaudos"></canvas></div></div></div>
+      <div class="col-12 col-lg-4"><div class="chart-card"><div class="chart-title"><i class="bi bi-pie-chart me-1"></i> Situação Geral</div><div style="position:relative;height:280px;"><canvas id="chartPizza"></canvas></div></div></div>
+    </div>
+    <div class="card-surface">
+      <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h6 class="m-0 fw-bold" style="color:var(--tjmg-primary)"><i class="bi bi-bell-fill me-1"></i> DETALHAMENTO DE ALERTAS</h6>
+        <div class="d-flex gap-2 flex-wrap">
+          <select id="filtroComarcaDash" class="form-select form-select-sm" style="width:auto" onchange="renderizarDash()"><option value="">Todas as Comarcas</option></select>
+          <select id="filtroCritico" class="form-select form-select-sm" style="width:auto" onchange="renderizarDash()"><option value="todos">Todos os Alertas</option><option value="vencidos">Já Vencidos</option><option value="30">Vencem em 30 dias</option><option value="60">Vencem em 60 dias</option><option value="superior60">Em dia (+60d)</option></select>
+        </div>
+      </div>
+      <div class="table-responsive table-responsive-force">
+        <table class="table table-tjmg table-sm table-hover mb-0">
+          <thead><tr><th>REGIÃO</th><th class="col-hide-mobile">COMARCA</th><th>EDIFICAÇÃO</th><th>LAUDO</th><th>VALIDADE</th><th>SITUAÇÃO</th></tr></thead>
+          <tbody id="corpoAlertas"><tr><td colspan="6"><div class="empty-state"><i class="bi bi-bar-chart"></i>Clique em DASHBOARD para carregar</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ABA: RELATÓRIOS ═══ -->
+  <div id="tab-exportar" class="tab-pane" style="display:none;">
+    <div class="card-surface">
+      <h5 class="section-title"><i class="bi bi-send me-1"></i> Relatório Executivo por E-mail</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-md-6"><label class="label-tecnica">Filtrar por Prazo</label><select id="filtroPrazo" class="form-select" onchange="filtrarExportacao()"><option value="todos">Todos os Registros</option><option value="vencidos">Apenas Vencidos</option><option value="30">Vencem em 30 dias</option></select></div>
+        <div class="col-12 col-md-6 d-flex align-items-end"><button class="btn-tjmg w-100" onclick="gerarRelatorio()"><i class="bi bi-send-check me-1"></i> ENVIAR RELATÓRIO POR E-MAIL</button></div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-tjmg table-hover border-top">
+          <thead><tr><th style="width:40px"><input type="checkbox" id="checkTodos" onclick="marcarTodos(this)" class="form-check-input"></th><th>REGIÃO</th><th>COMARCA</th><th>EDIFICAÇÃO</th><th>GRUPO</th></tr></thead>
+          <tbody id="corpoExport"><tr><td colspan="5"><div class="empty-state"><i class="bi bi-hourglass-split"></i>Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ABA: SUBESTAÇÃO (VERSÃO APRIMORADA) ═══ -->
+  <div id="tab-subestacao" class="tab-pane" style="display:none;">
+
+    <!-- 1. IDENTIFICAÇÃO -->
+    <div class="card-surface mb-3">
+      <h5 class="section-title"><i class="bi bi-lightning-charge me-1"></i> Identificação da Inspeção</h5>
+
+      <!-- Tipo de Subestação -->
+      <div class="mb-3">
+        <label class="label-tecnica mb-2">TIPO DE SUBESTAÇÃO <span class="text-danger">*</span></label>
+        <div class="d-flex gap-3">
+          <div class="tipo-sub-card" id="card-aerea" onclick="selecionarTipoSub('AEREA')">
+            <span class="icon">🏗️</span>
+            <div class="label">Aérea</div>
+            <div class="desc">Equipamentos externos / poste</div>
+          </div>
+          <div class="tipo-sub-card" id="card-abrigada" onclick="selecionarTipoSub('ABRIGADA')">
+            <span class="icon">🏠</span>
+            <div class="label">Abrigada</div>
+            <div class="desc">Sala técnica / cabine blindada</div>
+          </div>
+        </div>
+        <input type="hidden" name="tipo_sub" id="tipo_sub" value="">
+      </div>
+
+      <!-- Tipo de Manutenção e Dados -->
+      <div class="row g-3 mb-2">
+        <div class="col-md-4">
+          <label class="label-tecnica">TIPO DE MANUTENÇÃO <span class="text-danger">*</span></label>
+          <select class="form-select" name="tipo_manutencao" id="tipo_manutencao" onchange="onTipoManutencaoChange()">
+            <option value="">-- Selecione --</option>
+            <option value="TRIMESTRAL">Preventiva Trimestral (a cada 03 meses)</option>
+            <option value="ANUAL">Preventiva Anual — Anexo B.1 TJMG</option>
+            <option value="CORRETIVA">Corretiva / Emergencial</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="label-tecnica">COMARCA <span class="text-danger">*</span></label>
+          <select name="sub_comarca" id="sub_comarca" class="form-select" required>
+            <option value="">Selecione a comarca...</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="label-tecnica">DATA DA INSPEÇÃO</label>
+          <input type="date" name="sub_data" class="form-control">
+        </div>
+        <div class="col-md-3">
+          <label class="label-tecnica">RESPONSÁVEL TÉCNICO</label>
+          <input type="text" name="sub_responsavel" class="form-control" placeholder="Nome / CREA">
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-md-5">
+          <label class="label-tecnica">ENVIAR RELATÓRIO PARA (E-MAIL) <span class="text-danger">*</span></label>
+          <input type="email" name="email_destino" class="form-control" placeholder="destino@tjmg.jus.br" required>
+        </div>
+        <div class="col-md-4">
+          <label class="label-tecnica">OBSERVAÇÕES GERAIS</label>
+          <input type="text" name="sub_obs_geral" class="form-control" placeholder="Situação geral encontrada">
+        </div>
+        <div class="col-md-3">
+          <label class="label-tecnica">Nº CONTRATO</label>
+          <input type="text" name="sub_contrato" class="form-control" placeholder="Contrato TJMG">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. CHECKLIST -->
+    <div id="bloco-checklist" style="display:none;">
+
+      <!-- Progresso geral -->
+      <div class="progresso-wrap">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span style="font-size:.75rem;font-weight:700;color:var(--neutral)"><i class="bi bi-clipboard-check me-1"></i> PROGRESSO DO CHECKLIST — ANEXO B.1 TJMG</span>
+          <span id="prog-texto" style="font-size:.8rem;font-weight:700;color:var(--tjmg-primary)">0 / 0</span>
+        </div>
+        <div class="prog-bar-track"><div class="prog-bar-fill" id="prog-bar" style="width:0%"></div></div>
+        <div class="d-flex justify-content-between mt-1">
+          <small class="text-muted" id="prog-pct">0% concluído</small>
+          <small class="text-muted" id="prog-status">Preencha o checklist</small>
+        </div>
+      </div>
+
+      <!-- SEÇÃO A: SEGURANÇA -->
+      <div class="chk-section"><div class="chk-section-header" onclick="toggleSection('body-seguranca',this)"><div class="chk-section-title"><i class="bi bi-shield-lock-fill" style="color:#c62828"></i> A — Segurança e NR-10</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-seguranca">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-seguranca">
+        <div class="chk-item"><input type="checkbox" name="chk_seg_nr10" class="chk-checkbox" onchange="atualizarProgresso()"><label>Procedimentos de segurança executados conforme NR-10 (credenciamento, EPI, LOTO)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_seg_aterramento_temp" class="chk-checkbox" onchange="atualizarProgresso()"><label>Aterramento temporário instalado antes dos serviços</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_seg_desenergizacao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Instalação desenergizada, aterrada e sinalizada</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_seg_concessionaria" class="chk-checkbox" onchange="atualizarProgresso()"><label>Contato e agendamento com concessionária local realizado</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_seg_cargas_deslig" class="chk-checkbox" onchange="atualizarProgresso()"><label>Todas as cargas elétricas da edificação desligadas antes da manobra</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_seg_prontuario_nr10" class="chk-checkbox" onchange="atualizarProgresso()"><label>Prontuário de Instalações Elétricas (NR-10) verificado e atualizado</label></div>
+      </div></div>
+
+      <!-- SEÇÃO B: TRANSFORMADORES -->
+      <div class="chk-section"><div class="chk-section-header" onclick="toggleSection('body-transfo',this)"><div class="chk-section-title"><i class="bi bi-box" style="color:#003366"></i> B — Transformadores</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-transfo">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-transfo">
+        <div class="sub-sec-label"><i class="bi bi-tools"></i> Inspeção e Limpeza</div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_desconexao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Entrada e saída de energia desconectadas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_limpeza" class="chk-checkbox" onchange="atualizarProgresso()"><label>Limpeza completa de isoladores, suportes, abas, parafusos e aletas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_inspecao_ext" class="chk-checkbox" onchange="atualizarProgresso()"><label>Inspeção minuciosa do exterior do transformador e adjacências</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_vazamentos" class="chk-checkbox" onchange="atualizarProgresso()"><label>Verificação e ausência de vazamentos de óleo</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_trincas_buchas" class="chk-checkbox" onchange="atualizarProgresso()"><label>Buchas inspecionadas — sem trincas, fissuras ou contaminações</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_instrumentos" class="chk-checkbox" onchange="atualizarProgresso()"><label>Instrumentos e acessórios inspecionados (termômetros, indicadores de nível)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_reaperto" class="chk-checkbox" onchange="atualizarProgresso()"><label>Reaperto de todas as conexões elétricas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_aterramento_conexoes" class="chk-checkbox" onchange="atualizarProgresso()"><label>Conexões de aterramento verificadas</label></div>
+        <div class="sub-sec-label"><i class="bi bi-activity"></i> Ensaios Elétricos</div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_iso_cc" class="chk-checkbox" onchange="atualizarProgresso()"><label>Ensaio de resistência de isolamento (em corrente contínua) realizado</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_ohmica" class="chk-checkbox" onchange="atualizarProgresso()"><label>Ensaio de resistência ôhmica dos enrolamentos realizado (variação ≤ 3%)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_tr_ttr" class="chk-checkbox" onchange="atualizarProgresso()"><label>Ensaio da relação de transformação (TTR) realizado</label></div>
+        <div class="sub-sec-label"><i class="bi bi-droplet-half"></i> Óleo Isolante (Apenas Manutenção Anual)</div>
+        <div class="chk-item chk-anual-only"><input type="checkbox" name="chk_tr_oleo_coleta" class="chk-checkbox" onchange="atualizarProgresso()"><label>Óleo isolante coletado para análise físico-química antes da manutenção</label></div>
+        <div class="chk-item chk-anual-only"><input type="checkbox" name="chk_tr_oleo_analise_fq" class="chk-checkbox" onchange="atualizarProgresso()"><label>Análise físico-química realizada em lab. credenciado (rigidez dielétrica, teor de água, fator de potência, índice de neutralização, tensão interfacial, densidade e cor)</label></div>
+        <div class="chk-item chk-anual-only"><input type="checkbox" name="chk_tr_oleo_cromatografia" class="chk-checkbox" onchange="atualizarProgresso()"><label>Análise cromatográfica realizada (C₂H₂, C₂H₄, H₂, CO, CO₂, CH₄)</label></div>
+        <div class="chk-item chk-anual-only"><input type="checkbox" name="chk_tr_oleo_nivel" class="chk-checkbox" onchange="atualizarProgresso()"><label>Nível de óleo verificado e complementado se necessário</label></div>
+        <div class="chk-item chk-anual-only"><input type="checkbox" name="chk_tr_prateamento" class="chk-checkbox" onchange="atualizarProgresso()"><label>Pontos de contatos com desgaste de camada prateada tratados</label></div>
+        <div class="chk-item chk-anual-only"><input type="checkbox" name="chk_tr_reconexao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Entradas e saídas de energia reconectadas após ensaios</label></div>
+      </div></div>
+
+      <!-- SEÇÃO C/D: DISJUNTORES -->
+      <div class="chk-section"><div class="chk-section-header" onclick="toggleSection('body-disj',this)"><div class="chk-section-title"><i class="bi bi-toggle-on" style="color:#003366"></i> C/D — Disjuntores de Média Tensão</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-disj">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-disj">
+        <div class="row g-2 mb-3"><div class="col-md-4"><label class="label-tecnica">TIPO DE DISJUNTOR</label><select class="form-select form-select-sm" name="tipo_disj" id="tipo_disj"><option value="VACUO">A Vácuo</option><option value="PVO">PVO (Pequeno Volume de Óleo)</option><option value="SF6">SF6</option></select></div></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_inspecao_ext" class="chk-checkbox" onchange="atualizarProgresso()"><label>Inspeção externa e limpeza geral do disjuntor</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_mecanismo" class="chk-checkbox" onchange="atualizarProgresso()"><label>Mecanismo de comando inspecionado, limpo e lubrificado</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_conexoes" class="chk-checkbox" onchange="atualizarProgresso()"><label>Conexões elétricas reapertadas com torque adequado</label></div>
+        <div class="chk-item chk-pvo-only" id="chk-pvo-oleo" style="display:none;"><input type="checkbox" name="chk_dj_oleo_pvo" class="chk-checkbox" onchange="atualizarProgresso()"><label>[PVO] Óleo mineral parafínico substituído (ABNT IEC 60296)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_grandezas" class="chk-checkbox" onchange="atualizarProgresso()"><label>Grandezas elétricas características ensaiadas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_resist_contato" class="chk-checkbox" onchange="atualizarProgresso()"><label>Resistência de contato ensaiada (R, S, T)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_iso" class="chk-checkbox" onchange="atualizarProgresso()"><label>Resistência de isolamento ensaiada (aberto e fechado)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_operacao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Operação do disjuntor testada (abertura e fechamento)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_dj_reles" class="chk-checkbox" onchange="atualizarProgresso()"><label>Relés primários ajustados conforme necessário</label></div>
+      </div></div>
+
+      <!-- SEÇÃO E: CHAVES SECCIONADORAS -->
+      <div class="chk-section"><div class="chk-section-header" onclick="toggleSection('body-secc',this)"><div class="chk-section-title"><i class="bi bi-sign-intersection" style="color:#003366"></i> E — Chaves Seccionadoras</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-secc">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-secc">
+        <div class="chk-item"><input type="checkbox" name="chk_sc_inspecao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Inspeção e limpeza geral da chave</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sc_contatos" class="chk-checkbox" onchange="atualizarProgresso()"><label>Contatos desoxidados e polidos</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sc_lubrificacao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Partes articuladas lubrificadas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sc_resist_contato" class="chk-checkbox" onchange="atualizarProgresso()"><label>Resistência de contato ensaiada (R1-R2, S1-S2, T1-T2)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sc_iso" class="chk-checkbox" onchange="atualizarProgresso()"><label>Resistência de isolamento ensaiada (aberta e fechada)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sc_conexoes" class="chk-checkbox" onchange="atualizarProgresso()"><label>Conexões elétricas reapertadas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sc_molas" class="chk-checkbox" onchange="atualizarProgresso()"><label>Pressão das molas ajustada</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sc_teste" class="chk-checkbox" onchange="atualizarProgresso()"><label>Operação da chave testada</label></div>
+      </div></div>
+
+      <!-- SEÇÃO G: MUFLAS (ANUAL) -->
+      <div class="chk-section chk-anual-section" id="sec-muflas" style="display:none;"><div class="chk-section-header" onclick="toggleSection('body-muflas',this)"><div class="chk-section-title"><i class="bi bi-plug" style="color:#003366"></i> G — Muflas</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-muflas">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-muflas">
+        <div class="chk-item"><input type="checkbox" name="chk_muf_visual" class="chk-checkbox" onchange="atualizarProgresso()"><label>Inspeção visual de todas as muflas realizada</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_muf_termico" class="chk-checkbox" onchange="atualizarProgresso()"><label>Medições com termômetro digital e imagens térmicas obtidas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_muf_limpeza" class="chk-checkbox" onchange="atualizarProgresso()"><label>Limpeza executada</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_muf_iso" class="chk-checkbox" onchange="atualizarProgresso()"><label>Testes de isolamento realizados (quando necessário)</label></div>
+      </div></div>
+
+      <!-- SEÇÃO H: RELÉS (ANUAL + ABRIGADA) -->
+      <div class="chk-section chk-anual-section sec-abrigada" id="sec-reles" style="display:none;"><div class="chk-section-header" onclick="toggleSection('body-reles',this)"><div class="chk-section-title"><i class="bi bi-cpu" style="color:#003366"></i> H — Relés Secundários Microprocessados</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-reles">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-reles">
+        <div class="chk-item"><input type="checkbox" name="chk_rel_operacional" class="chk-checkbox" onchange="atualizarProgresso()"><label>Condições operacionais de funcionamento verificadas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_rel_nobreak" class="chk-checkbox" onchange="atualizarProgresso()"><label>Nobreak do relé verificado — baterias testadas e substituídas se necessário</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_rel_configuracao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Relés com perda de configuração reconfigurados conforme parâmetros existentes</label></div>
+      </div></div>
+
+      <!-- SEÇÃO I: BARRAMENTOS (ANUAL + ABRIGADA) -->
+      <div class="chk-section chk-anual-section sec-abrigada" id="sec-barr" style="display:none;"><div class="chk-section-header" onclick="toggleSection('body-barr',this)"><div class="chk-section-title"><i class="bi bi-hdd-stack" style="color:#003366"></i> I — Barramentos Blindados</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-barr">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-barr">
+        <div class="chk-item"><input type="checkbox" name="chk_bb_visual" class="chk-checkbox" onchange="atualizarProgresso()"><label>Inspeção visual em toda extensão dos barramentos, cofres, pluglins e conexões</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_bb_torque" class="chk-checkbox" onchange="atualizarProgresso()"><label>Reaperto com torquímetro em emendas, cofres, derivações e conexões</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_bb_limpeza" class="chk-checkbox" onchange="atualizarProgresso()"><label>Limpeza com soprador em toda a extensão (remoção de poeira)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_bb_termico" class="chk-checkbox" onchange="atualizarProgresso()"><label>Medições termográficas realizadas para pontos de aquecimento</label></div>
+      </div></div>
+
+      <!-- SEÇÃO J: PAINÉIS (ANUAL + ABRIGADA) -->
+      <div class="chk-section chk-anual-section sec-abrigada" id="sec-paineis" style="display:none;"><div class="chk-section-header" onclick="toggleSection('body-paineis',this)"><div class="chk-section-title"><i class="bi bi-grid-1x2" style="color:#003366"></i> J — Painéis Principais de Energia</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-paineis">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-paineis">
+        <div class="chk-item"><input type="checkbox" name="chk_pan_limpeza_geral" class="chk-checkbox" onchange="atualizarProgresso()"><label>Limpeza geral de barramentos, cubículos/celas, isoladores e painéis</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_pan_reaperto" class="chk-checkbox" onchange="atualizarProgresso()"><label>Conexões elétricas (inclusive aterramento) reapertadas com torque adequado</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_pan_limpeza_dependencias" class="chk-checkbox" onchange="atualizarProgresso()"><label>Dependências onde os painéis estão instalados limpas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_pan_parafusos" class="chk-checkbox" onchange="atualizarProgresso()"><label>Parafusos, conectores e terminais faltantes supridos</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_pan_corrosao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Corrosões tratadas e pintura de proteção aplicada onde necessário</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_pan_termico" class="chk-checkbox" onchange="atualizarProgresso()"><label>Inspeção com termômetro digital para pontos de aquecimento</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_pan_iluminacao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Iluminação interna dos painéis mantida em condições adequadas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_pan_coolers" class="chk-checkbox" onchange="atualizarProgresso()"><label>Coolers/exaustores inspecionados e mantidos em perfeito funcionamento</label></div>
+      </div></div>
+
+      <!-- SEÇÃO K: SALA DA SUBESTAÇÃO (ABRIGADA) -->
+      <div class="chk-section sec-abrigada" id="sec-sala" style="display:none;"><div class="chk-section-header" onclick="toggleSection('body-sala',this)"><div class="chk-section-title"><i class="bi bi-building" style="color:#003366"></i> K — Sala da Subestação Abrigada</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-sala">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-sala">
+        <div class="chk-item"><input type="checkbox" name="chk_sala_limpeza" class="chk-checkbox" onchange="atualizarProgresso()"><label>Limpeza das áreas internas, portas, portões, grades e pisos</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sala_grades_portas" class="chk-checkbox" onchange="atualizarProgresso()"><label>Grades, suportes metálicos, portas e portões — reparos de segurança executados</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sala_cadeados" class="chk-checkbox" onchange="atualizarProgresso()"><label>Cadeados nas portas, portões e grades inspecionados e repostos se necessário</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sala_ilum_geral" class="chk-checkbox" onchange="atualizarProgresso()"><label>Iluminação geral e de emergência inspecionadas — lâmpadas substituídas quando necessário</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sala_limpeza_sup" class="chk-checkbox" onchange="atualizarProgresso()"><label>Limpeza da parte superior das cabines e painéis executada</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_sala_conectores" class="chk-checkbox" onchange="atualizarProgresso()"><label>Conectores e terminais faltantes repostos</label></div>
+      </div></div>
+
+      <!-- SEÇÃO: INSPEÇÃO VISUAL TRIMESTRAL -->
+      <div class="chk-section chk-trimestral-section" id="sec-visual" style="display:none;"><div class="chk-section-header" onclick="toggleSection('body-visual',this)"><div class="chk-section-title"><i class="bi bi-eye" style="color:#003366"></i> Inspeção Visual e Termográfica Trimestral</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-visual">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-visual">
+        <div class="chk-item"><input type="checkbox" name="chk_vis_integridade" class="chk-checkbox" onchange="atualizarProgresso()"><label>Inspeção visual de integridade de todos os elementos e componentes</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_vis_medicoes_bt" class="chk-checkbox" onchange="atualizarProgresso()"><label>Medições (a plena carga) de grandezas de BT: tensão e corrente</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_vis_termografia" class="chk-checkbox" onchange="atualizarProgresso()"><label>Medições termográficas realizadas — pontos quentes identificados/tratados</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_vis_substituicao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Elementos e componentes danificados substituídos</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_vis_ajustes" class="chk-checkbox" onchange="atualizarProgresso()"><label>Ajustes e reparos necessários executados</label></div>
+      </div></div>
+
+      <!-- SEÇÃO: DOCUMENTAÇÃO -->
+      <div class="chk-section"><div class="chk-section-header" onclick="toggleSection('body-relatorio',this)"><div class="chk-section-title"><i class="bi bi-file-earmark-text" style="color:#003366"></i> Documentação e Relatório</div><div class="d-flex align-items-center gap-2"><span class="chk-badge-count" id="badge-relatorio">0/0</span><i class="bi bi-chevron-down collapse-toggle"></i></div></div>
+      <div class="chk-section-body" id="body-relatorio">
+        <div class="chk-item"><input type="checkbox" name="chk_rel_fotos" class="chk-checkbox" onchange="atualizarProgresso()"><label>Relatório fotográfico elaborado</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_rel_valores" class="chk-checkbox" onchange="atualizarProgresso()"><label>Valores obtidos nos ensaios registrados no relatório técnico</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_rel_conformidades" class="chk-checkbox" onchange="atualizarProgresso()"><label>Conformidades e não conformidades documentadas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_rel_corretivos" class="chk-checkbox" onchange="atualizarProgresso()"><label>Serviços corretivos detectados documentados (executados ou agendados)</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_rel_religacao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Instalação reenergizada — todas as cargas restabelecidas</label></div>
+        <div class="chk-item"><input type="checkbox" name="chk_rel_fiscalizacao" class="chk-checkbox" onchange="atualizarProgresso()"><label>Relatório a ser entregue à Fiscalização em até 10 dias úteis</label></div>
+      </div></div>
+
+    </div><!-- /bloco-checklist -->
+
+    <!-- 3. MEDIÇÕES -->
+    <div id="bloco-medicoes" style="display:none;">
+
+      <!-- TRANSFORMADORES -->
+      <div class="sub-section-header"><span><i class="bi bi-box me-1"></i> 1. TRANSFORMADORES</span><button type="button" class="btn btn-sm btn-light" onclick="addEquipamento('container-transfo','item-transfo-base')"><i class="bi bi-plus-circle me-1"></i> ADD TRANSFORMADOR</button></div>
+      <div id="container-transfo">
+        <div class="equipamento-card" id="item-transfo-base">
+          <span class="group-title">TRANSFORMADOR #1</span>
+          <div class="row g-2 mb-2">
+            <div class="col-md-2"><label class="label-tecnica">REF TTR</label><input type="text" name="ttr_ref[]" class="form-control form-control-sm" value="108"></div>
+            <div class="col-md-2"><label class="label-tecnica">POTÊNCIA (kVA)</label><input type="number" name="ttr_kva[]" class="form-control form-control-sm" placeholder="ex: 300"></div>
+            <div class="col-md-2">
+              <label class="label-tecnica">TENSÃO AT (kV) <span style="color:#c62828">*</span></label>
+              <input type="number" step="0.01" name="ttr_tensao_at[]" class="form-control form-control-sm" placeholder="ex: 13.8" data-ttr-idx="0" onchange="recalcularTTR(0)">
+              <span class="val-ref">V1 para cálculo de a</span>
+            </div>
+            <div class="col-md-2">
+              <label class="label-tecnica">TENSÃO BT (V) <span style="color:#c62828">*</span></label>
+              <input type="number" step="0.01" name="ttr_tensao_bt[]" class="form-control form-control-sm" placeholder="ex: 380 ou 127" data-ttr-idx="0" onchange="recalcularTTR(0)">
+              <span class="val-ref">V2 para cálculo de a</span>
+            </div>
+            <div class="col-md-4"><label class="label-tecnica">OBSERVAÇÕES</label><input type="text" name="ttr_obs[]" class="form-control form-control-sm" placeholder="Anomalias encontradas..."></div>
+          </div>
+          <!-- CÁLCULO AUTOMÁTICO DA RELAÇÃO TEÓRICA -->
+          <div class="ttr-calc-box" id="ttr-calc-box-0" style="display:none;background:#e8f0fb;border:1px solid #90b4e8;border-radius:7px;padding:8px 12px;margin-bottom:8px;font-size:0.8rem;">
+            <span style="color:#003366;font-weight:700;">&#9881; Relação Teórica Calculada (a = V1 / V2):</span>
+            <span id="ttr-formula-0" style="margin-left:8px;font-size:0.78rem;color:#555;"></span>
+            <span style="margin-left:8px;font-weight:700;color:#003366;font-size:0.9rem;" id="ttr-valor-0">—</span>
+            <span style="margin-left:12px;font-size:0.72rem;color:#888;">Tolerância: ±0,5% (IEC 60076)</span>
+            <span style="margin-left:8px;font-size:0.7rem;color:#888;">Faixa admissível: <span id="ttr-faixa-0">—</span></span>
+          </div>
+
+          <span class="label-tecnica text-muted">RELAÇÃO DE TRANSFORMAÇÃO (TTR) — medições por ponto, desvio máx. ±0,5% do valor teórico (IEC 60076)</span>
+          <div class="row g-2 mb-2">
+            <div class="col-4 col-md-2">
+              <label class="label-tecnica">X1-T</label>
+              <div class="d-flex"><input type="number" step="0.01" name="ttr_x1[]" class="form-control form-control-sm bg-amarelo ttr-input" min="0" data-ttr-idx="0" data-label="X1-T" onchange="validarTTR(this)"><select name="u_ttr_x1[]" class="u-sel"><option value="">—</option><option>TΩ</option><option>MΩ</option><option>GΩ</option></select></div>
+              <span class="val-ref">desvio ≤ ±0,5%</span><span class="val-hint" id="hint-ttr-x1-0"></span>
+            </div>
+            <div class="col-4 col-md-2">
+              <label class="label-tecnica">X2-T</label>
+              <div class="d-flex"><input type="number" step="0.01" name="ttr_x2[]" class="form-control form-control-sm bg-amarelo ttr-input" min="0" data-ttr-idx="0" data-label="X2-T" onchange="validarTTR(this)"><select name="u_ttr_x2[]" class="u-sel"><option value="">—</option><option>TΩ</option><option>MΩ</option><option>GΩ</option></select></div>
+              <span class="val-ref">desvio ≤ ±0,5%</span><span class="val-hint" id="hint-ttr-x2-0"></span>
+            </div>
+            <div class="col-4 col-md-2">
+              <label class="label-tecnica">X3-T</label>
+              <div class="d-flex"><input type="number" step="0.01" name="ttr_x3[]" class="form-control form-control-sm bg-amarelo ttr-input" min="0" data-ttr-idx="0" data-label="X3-T" onchange="validarTTR(this)"><select name="u_ttr_x3[]" class="u-sel"><option value="">—</option><option>TΩ</option><option>MΩ</option><option>GΩ</option></select></div>
+              <span class="val-ref">desvio ≤ ±0,5%</span><span class="val-hint" id="hint-ttr-x3-0"></span>
+            </div>
+          </div>
+          <span class="label-tecnica text-muted">ISOLAÇÃO MEGÔMETRO — AT ≥ 100 MΩ | BT ≥ 10 MΩ <span style="color:#aaa;font-weight:400">(NBR 5356 / IEC 60076)</span></span>
+          <div class="row g-2 mb-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">H1-T <span style="color:#c62828">AT</span></label><div class="d-flex"><input type="number" name="iso_h1t[]" class="form-control form-control-sm bg-amarelo iso-input" min="0" data-min="100" data-norma="NBR 5356" data-label="H1-T (AT)" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_iso_h1t[]" class="u-sel"><option selected>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 100 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H2-T <span style="color:#c62828">AT</span></label><div class="d-flex"><input type="number" name="iso_h2t[]" class="form-control form-control-sm bg-amarelo iso-input" min="0" data-min="100" data-norma="NBR 5356" data-label="H2-T (AT)" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_iso_h2t[]" class="u-sel"><option selected>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 100 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H3-T <span style="color:#c62828">AT</span></label><div class="d-flex"><input type="number" name="iso_h3t[]" class="form-control form-control-sm bg-amarelo iso-input" min="0" data-min="100" data-norma="NBR 5356" data-label="H3-T (AT)" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_iso_h3t[]" class="u-sel"><option selected>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 100 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H1-X1 <span style="color:#0056b3">BT</span></label><div class="d-flex"><input type="number" name="iso_h1x1[]" class="form-control form-control-sm bg-amarelo iso-input" min="0" data-min="10" data-norma="NBR 5356" data-label="H1-X1 (BT)" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_iso_h1x1[]" class="u-sel"><option selected>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 10 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H2-X2 <span style="color:#0056b3">BT</span></label><div class="d-flex"><input type="number" name="iso_h2x2[]" class="form-control form-control-sm bg-amarelo iso-input" min="0" data-min="10" data-norma="NBR 5356" data-label="H2-X2 (BT)" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_iso_h2x2[]" class="u-sel"><option selected>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 10 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H3-X3 <span style="color:#0056b3">BT</span></label><div class="d-flex"><input type="number" name="iso_h3x3[]" class="form-control form-control-sm bg-amarelo iso-input" min="0" data-min="10" data-norma="NBR 5356" data-label="H3-X3 (BT)" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_iso_h3x3[]" class="u-sel"><option selected>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 10 MΩ</span><span class="val-hint"></span></div>
+          </div>
+          <span class="label-tecnica text-muted">RESISTÊNCIA ÔHMICA — Variação máx. <strong style="color:#c62828">3%</strong> entre fases H1-H2, H1-H3, H2-H3 <span style="color:#aaa;font-weight:400">(NBR 5356 / IEC 60076)</span></span>
+          <div class="row g-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">X1-X0</label><div class="d-flex"><input type="number" step="0.001" name="ohm_x1x0[]" class="form-control form-control-sm bg-amarelo ohm-input" min="0"><select name="u_ohm_x1x0[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">X2-X0</label><div class="d-flex"><input type="number" step="0.001" name="ohm_x2x0[]" class="form-control form-control-sm bg-amarelo ohm-input" min="0"><select name="u_ohm_x2x0[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">X3-X0</label><div class="d-flex"><input type="number" step="0.001" name="ohm_x3x0[]" class="form-control form-control-sm bg-amarelo ohm-input" min="0"><select name="u_ohm_x3x0[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H1-H2 <span style="color:#c62828">★</span></label><div class="d-flex"><input type="number" step="0.001" name="ohm_h1h2[]" class="form-control form-control-sm bg-amarelo ohm-input" data-ohm-group="transfo" min="0"><select name="u_ohm_h1h2[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">variação entre fases ≤ 3%</span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H1-H3 <span style="color:#c62828">★</span></label><div class="d-flex"><input type="number" step="0.001" name="ohm_h1h3[]" class="form-control form-control-sm bg-amarelo ohm-input" data-ohm-group="transfo" min="0"><select name="u_ohm_h1h3[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">variação entre fases ≤ 3%</span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">H2-H3 <span style="color:#c62828">★</span></label><div class="d-flex"><input type="number" step="0.001" name="ohm_h2h3[]" class="form-control form-control-sm bg-amarelo ohm-input" data-ohm-group="transfo" min="0"><select name="u_ohm_h2h3[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">variação entre fases ≤ 3%</span></div>
+            <div class="col-12"><div class="variacao-box variacao-neutral" id="variacao-transfo-0">Variação ôhmica: preencha H1-H2, H1-H3 e H2-H3</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DISJUNTORES -->
+      <div class="sub-section-header"><span><i class="bi bi-toggle-on me-1"></i> 2. DISJUNTORES DE MÉDIA TENSÃO</span><button type="button" class="btn btn-sm btn-light" onclick="addEquipamento('container-disj','item-disj-base')"><i class="bi bi-plus-circle me-1"></i> ADD DISJUNTOR</button></div>
+      <div id="container-disj">
+        <div class="equipamento-card" id="item-disj-base">
+          <span class="group-title">DISJUNTOR #1</span>
+          <div class="row g-2 mb-2"><div class="col-md-4"><label class="label-tecnica">OBSERVAÇÕES</label><input type="text" name="disj_obs[]" class="form-control form-control-sm" placeholder="Anomalias..."></div></div>
+          <span class="label-tecnica text-muted">ISOLAÇÃO ABERTO — mín. <strong style="color:#c62828">1000 MΩ</strong> por fase <span style="color:#aaa;font-weight:400">(IEC 62271-100)</span></span>
+          <div class="row g-2 mb-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">AB: R</label><div class="d-flex"><input type="number" name="disj_ab_r[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-100" data-label="Isolação AB: R" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_disj_ab_r[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">AB: S</label><div class="d-flex"><input type="number" name="disj_ab_s[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-100" data-label="Isolação AB: S" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_disj_ab_s[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">AB: T</label><div class="d-flex"><input type="number" name="disj_ab_t[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-100" data-label="Isolação AB: T" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_disj_ab_t[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+          </div>
+          <span class="label-tecnica text-muted">ISOLAÇÃO FECHADO — mín. <strong style="color:#c62828">1000 MΩ</strong> fase-terra <span style="color:#aaa;font-weight:400">(IEC 62271-100)</span></span>
+          <div class="row g-2 mb-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">FE: R</label><div class="d-flex"><input type="number" name="disj_fe_r[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-100" data-label="Isolação FE: R" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_disj_fe_r[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">FE: S</label><div class="d-flex"><input type="number" name="disj_fe_s[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-100" data-label="Isolação FE: S" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_disj_fe_s[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">FE: T</label><div class="d-flex"><input type="number" name="disj_fe_t[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-100" data-label="Isolação FE: T" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_disj_fe_t[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+          </div>
+          <span class="label-tecnica text-muted">RESISTÊNCIA DE CONTATO — máx. <strong style="color:#e65100">200 µΩ</strong> (atenção) | máx. <strong style="color:#c62828">300 µΩ</strong> (crítico) <span style="color:#aaa;font-weight:400">(IEC 62271-100)</span></span>
+          <div class="row g-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">R1-R2</label><div class="d-flex"><input type="number" name="disj_cont_r[]" class="form-control form-control-sm bg-amarelo" min="0" data-max="200" data-max-critico="300" data-norma="IEC 62271-100" data-label="Res. Contato R1-R2" data-unidade="µΩ" onchange="validarMedicao(this)"><select name="u_disj_cont_r[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">máx. 200 µΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">S1-S2</label><div class="d-flex"><input type="number" name="disj_cont_s[]" class="form-control form-control-sm bg-amarelo" min="0" data-max="200" data-max-critico="300" data-norma="IEC 62271-100" data-label="Res. Contato S1-S2" data-unidade="µΩ" onchange="validarMedicao(this)"><select name="u_disj_cont_s[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">máx. 200 µΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">T1-T2</label><div class="d-flex"><input type="number" name="disj_cont_t[]" class="form-control form-control-sm bg-amarelo" min="0" data-max="200" data-max-critico="300" data-norma="IEC 62271-100" data-label="Res. Contato T1-T2" data-unidade="µΩ" onchange="validarMedicao(this)"><select name="u_disj_cont_t[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">máx. 200 µΩ</span><span class="val-hint"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHAVES SECCIONADORAS -->
+      <div class="sub-section-header"><span><i class="bi bi-sign-intersection me-1"></i> 3. CHAVE SECCIONADORA</span><button type="button" class="btn btn-sm btn-light" onclick="addEquipamento('container-secc','item-secc-base')"><i class="bi bi-plus-circle me-1"></i> ADD CHAVE</button></div>
+      <div id="container-secc">
+        <div class="equipamento-card" id="item-secc-base">
+          <span class="group-title">CHAVE #1</span>
+          <div class="row g-2 mb-2"><div class="col-md-4"><label class="label-tecnica">OBSERVAÇÕES</label><input type="text" name="secc_obs[]" class="form-control form-control-sm" placeholder="Anomalias..."></div></div>
+          <span class="label-tecnica text-muted">ISOLAÇÃO ABERTA — mín. <strong style="color:#c62828">1000 MΩ</strong> por polo <span style="color:#aaa;font-weight:400">(IEC 62271-102)</span></span>
+          <div class="row g-2 mb-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">AB: R1-R2</label><div class="d-flex"><input type="number" name="secc_ab_r[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-102" data-label="Isolação AB: R1-R2" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_secc_ab_r[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">AB: S1-S2</label><div class="d-flex"><input type="number" name="secc_ab_s[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-102" data-label="Isolação AB: S1-S2" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_secc_ab_s[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">AB: T1-T2</label><div class="d-flex"><input type="number" name="secc_ab_t[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-102" data-label="Isolação AB: T1-T2" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_secc_ab_t[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+          </div>
+          <span class="label-tecnica text-muted">ISOLAÇÃO FECHADA — mín. <strong style="color:#c62828">1000 MΩ</strong> fase-terra <span style="color:#aaa;font-weight:400">(IEC 62271-102)</span></span>
+          <div class="row g-2 mb-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">FE: R1-R2</label><div class="d-flex"><input type="number" name="secc_fe_r[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-102" data-label="Isolação FE: R1-R2" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_secc_fe_r[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">FE: S1-S2</label><div class="d-flex"><input type="number" name="secc_fe_s[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-102" data-label="Isolação FE: S1-S2" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_secc_fe_s[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">FE: T1-T2</label><div class="d-flex"><input type="number" name="secc_fe_t[]" class="form-control form-control-sm bg-amarelo" min="0" data-min="1000" data-norma="IEC 62271-102" data-label="Isolação FE: T1-T2" data-unidade="MΩ" onchange="validarMedicao(this)"><select name="u_secc_fe_t[]" class="u-sel"><option>MΩ</option><option>GΩ</option><option>TΩ</option></select></div><span class="val-ref">mín. 1000 MΩ</span><span class="val-hint"></span></div>
+          </div>
+          <span class="label-tecnica text-muted">RESISTÊNCIA DE CONTATO — máx. <strong style="color:#e65100">200 µΩ</strong> (atenção) | máx. <strong style="color:#c62828">500 µΩ</strong> (crítico) <span style="color:#aaa;font-weight:400">(IEC 62271-102)</span></span>
+          <div class="row g-2">
+            <div class="col-4 col-md-2"><label class="label-tecnica">R1-R2</label><div class="d-flex"><input type="number" name="secc_cont_r[]" class="form-control form-control-sm bg-amarelo" min="0" data-max="200" data-max-critico="500" data-norma="IEC 62271-102" data-label="Res. Contato R1-R2" data-unidade="µΩ" onchange="validarMedicao(this)"><select name="u_secc_cont_r[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">máx. 200 µΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">S1-S2</label><div class="d-flex"><input type="number" name="secc_cont_s[]" class="form-control form-control-sm bg-amarelo" min="0" data-max="200" data-max-critico="500" data-norma="IEC 62271-102" data-label="Res. Contato S1-S2" data-unidade="µΩ" onchange="validarMedicao(this)"><select name="u_secc_cont_s[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">máx. 200 µΩ</span><span class="val-hint"></span></div>
+            <div class="col-4 col-md-2"><label class="label-tecnica">T1-T2</label><div class="d-flex"><input type="number" name="secc_cont_t[]" class="form-control form-control-sm bg-amarelo" min="0" data-max="200" data-max-critico="500" data-norma="IEC 62271-102" data-label="Res. Contato T1-T2" data-unidade="µΩ" onchange="validarMedicao(this)"><select name="u_secc_cont_t[]" class="u-sel"><option>µΩ</option><option>mΩ</option><option>Ω</option></select></div><span class="val-ref">máx. 200 µΩ</span><span class="val-hint"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NÃO CONFORMIDADES -->
+      <div class="card-surface mt-3">
+        <h5 class="section-title"><i class="bi bi-exclamation-triangle me-1"></i> Não Conformidades e Ações Corretivas</h5>
+        <div class="row g-3">
+          <div class="col-md-6"><label class="label-tecnica">NÃO CONFORMIDADES IDENTIFICADAS</label><textarea name="sub_nc" class="obs-field" rows="3" placeholder="Descreva anomalias, pontos de atenção..."></textarea></div>
+          <div class="col-md-6"><label class="label-tecnica">AÇÕES CORRETIVAS TOMADAS / PROGRAMADAS</label><textarea name="sub_acoes" class="obs-field" rows="3" placeholder="Ações executadas nesta visita ou agendadas..."></textarea></div>
+        </div>
+      </div>
+
+      <!-- PAINEL RESUMO NÃO CONFORMIDADES AUTOMÁTICO -->
+      <div class="nc-panel" id="nc-panel-auto">
+        <div class="nc-panel-title"><i class="bi bi-exclamation-triangle-fill"></i> MEDIÇÕES FORA DO PADRÃO NORMATIVO — serão destacadas no relatório PDF</div>
+        <ul class="nc-list" id="nc-list-critico"></ul>
+        <ul class="nc-list nc-warn-list mt-2" id="nc-list-atencao"></ul>
+      </div>
+
+    </div><!-- /bloco-medicoes -->
+
+    <!-- BOTÕES -->
+    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top flex-wrap">
+      <button type="button" class="btn btn-outline-secondary" onclick="resetarSubestacao()"><i class="bi bi-arrow-counterclockwise me-1"></i> LIMPAR TUDO</button>
+      <button type="button" class="btn-tjmg-gold" onclick="salvarTudoSubestacao()"><i class="bi bi-send-check me-1"></i> SALVAR INSPEÇÃO E ENVIAR RELATÓRIO</button>
+    </div>
+
+  </div><!-- /tab-subestacao -->
+
+</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* ════════════════════════════════════════
+   ESTADO GLOBAL
+════════════════════════════════════════ */
+let cacheDados = [];
+let meuGrafico = null;
+let meuGraficoPizza = null;
+let dashCarregado = false;
+
+/* ════════════════════════════════════════
+   LAUDOS — Cascata Comarca → Edificação
+   (Laudos não tem campo Região, então a comarca filtra edifs globalmente)
+════════════════════════════════════════ */
+function lau_onRegiaoChange(regiaoVal) {
+  // Cascata REGIÃO -> COMARCA -> EDIFICAÇÃO (padrão Periódica/PCI)
+  if (typeof ComapDropdowns === 'undefined') {
+    setTimeout(function(){ lau_onRegiaoChange(regiaoVal); }, 200);
+    return;
+  }
+  ComapDropdowns.init(function(){
+    ComapDropdowns.onRegiao(regiaoVal, 'f_comarca', 'f_edificacao');
+  });
+}
+
+function lau_onComarcaChange(comarcaVal) {
+  // Cascata COMARCA -> EDIFICAÇÃO baseado na REGIÃO atualmente selecionada
+  if (typeof ComapDropdowns === 'undefined') return;
+  var reg = document.getElementById('f_regiao');
+  var regVal = reg ? reg.value : '';
+  ComapDropdowns.onComarca(regVal, comarcaVal, 'f_edificacao');
+}
+
+function lau_popularSelectsComarcas() {
+  // Subestação ainda usa apenas COMARCA global (sem cascata por Região)
+  if (typeof ComapDropdowns === 'undefined') return;
+  ComapDropdowns.init(function(){
+    var comarcas = ComapDropdowns.listarTodasComarcasGlobais ? ComapDropdowns.listarTodasComarcasGlobais() : [];
+    if (!comarcas.length && ComapDropdowns._d) {
+      var set={}; var dados=ComapDropdowns._d.data||{};
+      Object.keys(dados).forEach(function(r){(dados[r]||[]).forEach(function(d){if(d.comarca)set[d.comarca.toUpperCase()]=d.comarca;});});
+      comarcas = Object.values(set).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+    }
+    var sub = document.getElementById('sub_comarca');
+    if (sub) {
+      var atual = sub.value;
+      sub.innerHTML = '<option value="">Selecione a comarca...</option>' + comarcas.map(function(c){return '<option>'+c+'</option>';}).join('');
+      if (atual) { for (var i=0;i<sub.options.length;i++) if (sub.options[i].value===atual) { sub.selectedIndex=i; break; } }
+    }
+  });
+}
+
+/* ════════════════════════════════════════
+   NAVEGAÇÃO DE ABAS
+════════════════════════════════════════ */
+function trocarTab(tabId, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.style.display='none');
+  document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(tabId).style.display='block';
+  if(btn) btn.classList.add('active');
+}
+
+/* ════════════════════════════════════════
+   UTILITÁRIOS DE DATA
+════════════════════════════════════════ */
+function parseDateLocal(str) {
+  if(!str) return null;
+  const [y,m,d] = str.split('-').map(Number);
+  return new Date(y,m-1,d,12,0,0);
+}
+function formatDateLocal(date) {
+  if(!(date instanceof Date)||isNaN(date)) return '';
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+function autoData(origem, destinoId, anos) {
+  if(!origem.value) return;
+  const d = parseDateLocal(origem.value);
+  d.setFullYear(d.getFullYear()+anos);
+  document.getElementById(destinoId).value = formatDateLocal(d);
+}
+function validarDatas(tipo) {
+  const ent = document.getElementById(`ent_${tipo}`);
+  const val = document.getElementById(`val_${tipo}`);
+  const err = document.getElementById(`err-${tipo}`);
+  if(!ent||!val||!err) return;
+  if(ent.value&&val.value&&val.value<ent.value){val.classList.add('is-invalid');err.style.display='block';}
+  else{val.classList.remove('is-invalid');err.style.display='none';}
+}
+
+/* ════════════════════════════════════════
+   LAUDOS: STATUS N/A
+════════════════════════════════════════ */
+function onStatusChange(selectEl, tipo) {
+  const card = document.getElementById(`card-${tipo}`);
+  const datasDiv = document.getElementById(`datas-${tipo}`);
+  const inputs = datasDiv.querySelectorAll('input[type="date"]');
+  if(selectEl.value==='N/A'){inputs.forEach(i=>{i.value='';i.disabled=true;});card.classList.add('na-mode');}
+  else{inputs.forEach(i=>{i.disabled=false;});card.classList.remove('na-mode');}
+}
+
+/* ════════════════════════════════════════
+   SUGESTÕES DATALIST
+════════════════════════════════════════ */
+function popularSugestoes(dados) {
+  // Datalist de polos removido — agora usamos cascata Região > Comarca > Edificação
+  // Garante que o select de Comarca da aba Subestação esteja populado (globalmente)
+  lau_popularSelectsComarcas();
+}
+
+/* ════════════════════════════════════════
+   FORMULÁRIO PRINCIPAL
+════════════════════════════════════════ */
+function limpar() {
+  const f=document.getElementById('formPci');f.reset();
+  document.getElementById('edit_id').value='';document.getElementById('edit-indicator').style.display='none';
+  ['spda','unif','pie','fach','sub'].forEach(tipo=>{
+    const card=document.getElementById(`card-${tipo}`);const datasDiv=document.getElementById(`datas-${tipo}`);
+    card.classList.remove('na-mode');datasDiv.querySelectorAll('input[type="date"]').forEach(i=>{i.disabled=false;i.classList.remove('is-invalid');});
+    const err=document.getElementById(`err-${tipo}`);if(err)err.style.display='none';
+  });
+}
+document.getElementById('formPci').addEventListener('submit',function(e){
+  e.preventDefault();
+  const erros=document.querySelectorAll('.date-validation-msg');
+  for(let err of erros){if(err.style.display==='block'){Swal.fire('Atenção','Corrija as datas com erro antes de salvar.','warning');return;}}
+  Swal.fire({title:'Salvando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  const payload={};new FormData(this).forEach((v,k)=>payload[k]=v);
+  google.script.run.withSuccessHandler(()=>{Swal.fire({icon:'success',title:'Sucesso!',text:'Registro salvo com sucesso.'});limpar();carregarDados();dashCarregado=false;}).withFailureHandler(err=>Swal.fire('Erro',err.toString(),'error')).lau_salvarRegistro(payload);
+});
+
+/* ════════════════════════════════════════
+   CARREGAR DADOS
+════════════════════════════════════════ */
+function carregarDados() {
+  google.script.run.withSuccessHandler(dados=>{
+    cacheDados=dados||[];popularFiltroComarca(dados);popularSugestoes(dados);renderizarTabela(dados);atualizarDataBadge(dados);dashCarregado=false;
+  }).withFailureHandler(err=>console.error('Erro ao carregar:',err)).lau_lerDados();
+}
+function atualizarDataBadge(dados) {
+  const badge=document.getElementById('dataRefBadge');
+  if(dados&&dados.length>0&&dados[0].hojeRef){const d=dados[0].hojeRef.split('-').reverse().join('/');badge.textContent=`Ref: ${d}`;}
+  else{badge.textContent=`Ref: ${new Date().toLocaleDateString('pt-BR')}`;}
+}
+function popularFiltroComarca(dados) {
+  const comarcas=[...new Set(dados.map(d=>d.COMARCA))].filter(Boolean).sort();
+  const opts='<option value="">Todas as Comarcas</option>'+comarcas.map(c=>`<option value="${c}">${c}</option>`).join('');
+  ['filtroComarca','filtroComarcaDash'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
+}
+
+/* ════════════════════════════════════════
+   TABELA DE CONSULTA
+════════════════════════════════════════ */
+function getHojeRef(){return cacheDados.length>0&&cacheDados[0].hojeRef?cacheDados[0].hojeRef:formatDateLocal(new Date());}
+function classifLaudo(valStr,hojeStr){
+  if(!valStr) return 'na';
+  const d30=formatDateLocal(new Date(new Date(hojeStr+'T12:00').getTime()+30*864e5));
+  const d60=formatDateLocal(new Date(new Date(hojeStr+'T12:00').getTime()+60*864e5));
+  if(valStr<hojeStr) return 'vencido';if(valStr<=d30) return '30d';if(valStr<=d60) return '60d';return 'ok';
+}
+function renderizarTabela(dados) {
+  const hojeStr=getHojeRef();const tbody=document.getElementById('corpoTabela');
+  document.getElementById('contador-registros').textContent=`${dados.length} registro(s)`;
+  if(dados.length===0){tbody.innerHTML=`<tr><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i>Nenhum registro encontrado</div></td></tr>`;return;}
+  tbody.innerHTML=dados.map(item=>{
+    const laudosDefs=[{key:'spda',val:item.val_spda},{key:'unif',val:item.val_unif},{key:'pie',val:item.val_pie},{key:'fach',val:item.val_fach},{key:'sub',val:item.val_sub}];
+    let piorStatus='ok';
+    const dots=laudosDefs.map(l=>{
+      const st=item['st_'+l.key];
+      if(st==='N/A') return `<span class="dot dot-na" title="${l.key.toUpperCase()}: N/A"></span>`;
+      if(st==='PENDENTE') return `<span class="dot dot-pend" title="${l.key.toUpperCase()}: PENDENTE"></span>`;
+      const cl=classifLaudo(l.val,hojeStr);
+      if(cl==='vencido') piorStatus='vencido';else if((cl==='30d'||cl==='60d')&&piorStatus!=='vencido') piorStatus='alerta';
+      const cls=cl==='vencido'?'dot-vencido':cl==='30d'?'dot-30d':cl==='60d'?'dot-30d':'dot-ok';
+      return `<span class="dot ${cls}" title="${l.key.toUpperCase()}: ${l.val?l.val.split('-').reverse().join('/'):'—'}"></span>`;
+    }).join('');
+    const statusBadge=piorStatus==='vencido'?`<span class="badge-status badge-vencido">VENCIDO</span>`:piorStatus==='alerta'?`<span class="badge-status badge-30d">ATENÇÃO</span>`:`<span class="badge-status badge-ok">EM DIA</span>`;
+    return `<tr class="${piorStatus==='vencido'?'row-vencido':''}"><td><small class="text-muted">${item.ID}</small></td><td><strong>${item.COMARCA||'—'}</strong></td><td class="col-hide-mobile"><small>${item.EDIFICACAO||'—'}</small></td><td class="col-hide-mobile"><small class="text-muted">${item.GRUPO||'—'}</small></td><td><div class="laudos-dots">${dots}</div></td><td class="text-center">${statusBadge}</td><td class="text-center"><button class="btn btn-sm btn-outline-warning me-1" onclick="prepararEdicao(${item.ID})" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="apagar(${item.ID})" title="Excluir"><i class="bi bi-trash"></i></button></td></tr>`;
+  }).join('');
+}
+function filtrar(){
+  const comarca=document.getElementById('filtroComarca').value;const termo=document.getElementById('filtroEdif').value.toUpperCase();
+  renderizarTabela(cacheDados.filter(d=>(comarca===''||d.COMARCA===comarca)&&((d.EDIFICACAO||'').toUpperCase().includes(termo)||(d.COMARCA||'').toUpperCase().includes(termo))));
+}
+
+/* ════════════════════════════════════════
+   EDITAR / EXCLUIR
+════════════════════════════════════════ */
+function prepararEdicao(id){
+  const item=cacheDados.find(d=>String(d.ID)===String(id));if(!item) return;
+  const f=document.getElementById('formPci');f.querySelectorAll('input,select').forEach(i=>i.disabled=false);
+  document.getElementById('edit_id').value=item.ID;document.getElementById('edit-indicator').style.display='inline-block';document.getElementById('edit-id-display').textContent=item.ID;
+  document.getElementById('f_contrato').value=item.CONTRATO||'';f.grupo.value=item.GRUPO||'A';
+  // ★ REGIÃO: seta valor e dispara cascata p/ popular Comarca > Edificação
+  var sr=document.getElementById('f_regiao'); var rv=(item.REGIAO||item.POLO||'').toUpperCase();
+  if(sr){var okR=false;for(var i=0;i<sr.options.length;i++){if(sr.options[i].value.toUpperCase()===rv){sr.selectedIndex=i;okR=true;break;}}
+    if(okR && rv) lau_onRegiaoChange(sr.value);}
+  // Cascata: garante que select de Comarca esteja populado, seta valor, dispara edifs
+  lau_popularSelectsComarcas();
+  setTimeout(function(){
+    var sc=document.getElementById('f_comarca'); var cv=(item.COMARCA||'').toUpperCase();
+    var ok=false; for(var i=0;i<sc.options.length;i++){if(sc.options[i].value.toUpperCase()===cv){sc.selectedIndex=i;ok=true;break;}}
+    if(!ok&&item.COMARCA){var op=document.createElement('option');op.value=item.COMARCA;op.textContent=item.COMARCA+' (não cadastrada)';sc.appendChild(op);sc.value=item.COMARCA;}
+    lau_onComarcaChange(sc.value);
+    setTimeout(function(){
+      var se=document.getElementById('f_edificacao'); var ev=(item.EDIFICACAO||'').toUpperCase();
+      var okE=false; for(var i=0;i<se.options.length;i++){if(se.options[i].value.toUpperCase()===ev){se.selectedIndex=i;okE=true;break;}}
+      if(!okE&&item.EDIFICACAO){var op=document.createElement('option');op.value=item.EDIFICACAO;op.textContent=item.EDIFICACAO+' (não cadastrada)';se.appendChild(op);se.value=item.EDIFICACAO;}
+    }, 60);
+  }, 60);
+  const fmt=v=>(v&&typeof v==='string')?v.split('T')[0]:'';
+  ['spda','unif','pie','fach','sub'].forEach(l=>{
+    const stEl=f.querySelector(`[name="st_${l}"]`);if(stEl)stEl.value=item['st_'+l]||'PENDENTE';
+    const ent=document.getElementById(`ent_${l}`);const val=document.getElementById(`val_${l}`);
+    if(ent)ent.value=fmt(item['ent_'+l]);if(val)val.value=fmt(item['val_'+l]);onStatusChange(stEl,l);
+  });
+  trocarTab('tab-lancamento',document.querySelector('.nav-tab-btn'));window.scrollTo({top:0,behavior:'smooth'});
+}
+function apagar(id){
+  Swal.fire({title:'Confirmar Exclusão?',text:'Esta ação não pode ser desfeita!',icon:'warning',showCancelButton:true,confirmButtonColor:'#c62828',cancelButtonText:'Cancelar',confirmButtonText:'Sim, excluir!'}).then(result=>{
+    if(result.isConfirmed){google.script.run.withSuccessHandler(()=>{Swal.fire('Excluído!','Registro removido.','success');carregarDados();dashCarregado=false;}).lau_excluirRegistro(id);}
+  });
+}
+
+/* ════════════════════════════════════════
+   DASHBOARD
+════════════════════════════════════════ */
+function renderizarDash(){
+  if(!cacheDados||cacheDados.length===0){google.script.run.withSuccessHandler(dados=>{cacheDados=dados||[];popularFiltroComarca(dados);popularSugestoes(dados);atualizarDataBadge(dados);_renderDash();}).lau_lerDados();return;}
+  _renderDash();
+}
+function filtrarPorKpi(val){const sel=document.getElementById('filtroCritico');if(sel){sel.value=val;_renderDash();}}
+function _renderDash(){
+  const hojeStr=getHojeRef();const hoje=parseDateLocal(hojeStr);
+  const d30=new Date(hoje);d30.setDate(hoje.getDate()+30);const d60=new Date(hoje);d60.setDate(hoje.getDate()+60);
+  const d30Str=formatDateLocal(d30);const d60Str=formatDateLocal(d60);
+  const filtroCritico=document.getElementById('filtroCritico').value;const filtroComarca=document.getElementById('filtroComarcaDash').value;
+  const vencidos=[0,0,0,0,0],atencao=[0,0,0,0,0],conforme=[0,0,0,0,0];let total30d=0,alertasHtml='',totalConformes=0,totalLaudos=0;
+  cacheDados.forEach(item=>{
+    if(filtroComarca&&item.COMARCA!==filtroComarca) return;
+    const laudosCfg=[{n:'SPDA',v:item.val_spda,idx:0},{n:'UNIFILAR',v:item.val_unif,idx:1},{n:'PIE',v:item.val_pie,idx:2},{n:'FACHADA',v:item.val_fach,idx:3},{n:'SUBESTAÇÃO',v:item.val_sub,idx:4}];
+    laudosCfg.forEach(l=>{
+      if(!l.v) return;totalLaudos++;
+      let cat,badge,vF=l.v.split('-').reverse().join('/');
+      if(l.v<hojeStr){cat='vencidos';badge=`<span class="badge-status badge-vencido">VENCIDO</span>`;vencidos[l.idx]++;}
+      else if(l.v<=d30Str){cat='30';badge=`<span class="badge-status badge-30d">30 DIAS</span>`;atencao[l.idx]++;total30d++;}
+      else if(l.v<=d60Str){cat='60';badge=`<span class="badge-status badge-60d">60 DIAS</span>`;atencao[l.idx]++;}
+      else{cat='superior60';badge=`<span class="badge-status badge-ok">EM DIA</span>`;conforme[l.idx]++;totalConformes++;}
+      if(filtroCritico==='todos'||filtroCritico===cat){alertasHtml+=`<tr class="${cat==='vencidos'?'row-vencido':''}"><td><small>${item.REGIAO||item.POLO||'—'}</small></td><td><strong>${item.COMARCA}</strong></td><td><small>${item.EDIFICACAO}</small></td><td>${l.n}</td><td><small>${vF}</small></td><td>${badge}</td></tr>`;}
+    });
+  });
+  document.getElementById('venc-spda').textContent=vencidos[0];document.getElementById('venc-unif').textContent=vencidos[1];document.getElementById('venc-pie').textContent=vencidos[2];document.getElementById('venc-fach').textContent=vencidos[3];document.getElementById('venc-sub').textContent=vencidos[4];
+  document.getElementById('kpi-30d').textContent=total30d;document.getElementById('kpi-total').textContent=cacheDados.length;
+  const pct=totalLaudos>0?Math.round((totalConformes/totalLaudos)*100):0;
+  document.getElementById('kpi-conformidade').textContent=`${pct}%`;document.getElementById('conf-percent-big').textContent=`${pct}%`;document.getElementById('conf-bar').style.width=`${pct}%`;
+  document.getElementById('conf-ok-count').textContent=`${totalConformes} em dia`;document.getElementById('conf-venc-count').textContent=`${vencidos.reduce((a,b)=>a+b,0)} vencidos`;
+  document.getElementById('corpoAlertas').innerHTML=alertasHtml||`<tr><td colspan="6"><div class="empty-state"><i class="bi bi-check-circle"></i>Nenhum alerta para o filtro selecionado</div></td></tr>`;
+  atualizarGraficos({vencidos,atencao,conforme});dashCarregado=true;
+}
+function atualizarGraficos(cont){
+  const ctxBar=document.getElementById('chartLaudos').getContext('2d');if(meuGrafico)meuGrafico.destroy();
+  meuGrafico=new Chart(ctxBar,{type:'bar',data:{labels:['SPDA','UNIFILAR','PIE','FACHADA','SUBESTAÇÃO'],datasets:[{label:'Vencido',data:cont.vencidos,backgroundColor:'#c62828',borderRadius:3},{label:'Atenção',data:cont.atencao,backgroundColor:'#ef6c00',borderRadius:3},{label:'Conforme',data:cont.conforme,backgroundColor:'#2e7d32',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,grid:{color:'#f0f2f5'}}},plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+  const tV=cont.vencidos.reduce((a,b)=>a+b,0),tA=cont.atencao.reduce((a,b)=>a+b,0),tC=cont.conforme.reduce((a,b)=>a+b,0);
+  const ctxPizza=document.getElementById('chartPizza').getContext('2d');if(meuGraficoPizza)meuGraficoPizza.destroy();
+  meuGraficoPizza=new Chart(ctxPizza,{type:'doughnut',data:{labels:['Vencidos','Atenção','Em Dia'],datasets:[{data:[tV,tA,tC],backgroundColor:['#c62828','#ef6c00','#2e7d32'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+}
+
+/* ════════════════════════════════════════
+   RELATÓRIOS / EXPORTAÇÃO
+════════════════════════════════════════ */
+function filtrarExportacao(){
+  if(!cacheDados||cacheDados.length===0){
+    document.getElementById('corpoExport').innerHTML=`<tr><td colspan="5"><div class="empty-state"><i class="bi bi-hourglass-split"></i>Carregando dados...</div></td></tr>`;
+    google.script.run.withSuccessHandler(dados=>{cacheDados=dados||[];popularSugestoes(dados);atualizarDataBadge(dados);filtrarExportacao();}).lau_lerDados();return;
+  }
+  const prazo=document.getElementById('filtroPrazo').value;const hojeStr=getHojeRef();const hoje=parseDateLocal(hojeStr);
+  const filtrados=cacheDados.filter(d=>{
+    const datas=[d.val_spda,d.val_unif,d.val_pie,d.val_fach,d.val_sub].filter(Boolean).map(v=>parseDateLocal(v));
+    if(prazo==='todos') return true;if(prazo==='vencidos') return datas.some(dt=>dt<hoje);
+    const limite=new Date(hoje);limite.setDate(hoje.getDate()+parseInt(prazo));return datas.some(dt=>dt>=hoje&&dt<=limite);
+  });
+  document.getElementById('corpoExport').innerHTML=filtrados.length===0?`<tr><td colspan="5"><div class="empty-state"><i class="bi bi-check-circle"></i>Nenhum registro para este filtro</div></td></tr>`:filtrados.map(d=>`<tr><td><input type="checkbox" class="form-check-input checkExport" value="${d.ID}"></td><td>${d.REGIAO||d.POLO||'—'}</td><td><strong>${d.COMARCA}</strong></td><td>${d.EDIFICACAO}</td><td><small class="text-muted">${d.GRUPO||'—'}</small></td></tr>`).join('');
+}
+function marcarTodos(el){document.querySelectorAll('.checkExport').forEach(cb=>cb.checked=el.checked);}
+function gerarRelatorio(){
+  const selecionados=Array.from(document.querySelectorAll('.checkExport:checked')).map(cb=>cb.value);
+  if(selecionados.length===0){Swal.fire('Atenção','Selecione ao menos uma edificação.','warning');return;}
+  Swal.fire({title:'Gerando relatório...',text:'Enviando por e-mail...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  google.script.run.withSuccessHandler(()=>Swal.fire('Enviado!','Relatório enviado com sucesso.','success')).withFailureHandler(err=>Swal.fire('Erro',err.toString(),'error')).lau_processarRelatorio(selecionados);
+}
+
+/* ════════════════════════════════════════
+   SUBESTAÇÃO — TIPO / CHECKLIST
+════════════════════════════════════════ */
+function selecionarTipoSub(tipo){
+  document.getElementById('tipo_sub').value=tipo;
+  document.getElementById('card-aerea').classList.toggle('selected',tipo==='AEREA');
+  document.getElementById('card-abrigada').classList.toggle('selected',tipo==='ABRIGADA');
+  document.querySelectorAll('.sec-abrigada').forEach(el=>el.style.display=tipo==='ABRIGADA'?'block':'none');
+  onTipoManutencaoChange();
+}
+function onTipoManutencaoChange(){
+  const tipo=document.getElementById('tipo_manutencao').value;const tipoSub=document.getElementById('tipo_sub').value;
+  if(!tipo||!tipoSub){document.getElementById('bloco-checklist').style.display='none';document.getElementById('bloco-medicoes').style.display='none';return;}
+  document.getElementById('bloco-checklist').style.display='block';document.getElementById('bloco-medicoes').style.display='block';
+  document.querySelectorAll('.chk-anual-section').forEach(el=>el.style.display=tipo==='ANUAL'?'block':'none');
+  document.querySelectorAll('.chk-trimestral-section').forEach(el=>el.style.display=tipo==='TRIMESTRAL'?'block':'none');
+  document.querySelectorAll('.sec-abrigada').forEach(el=>el.style.display=tipoSub==='ABRIGADA'?'block':'none');
+  const tipoDj=document.getElementById('tipo_disj')?.value;
+  document.querySelectorAll('.chk-pvo-only').forEach(el=>el.style.display=tipoDj==='PVO'?'flex':'none');
+  atualizarProgresso();
+}
+function atualizarProgresso(){
+  const checkboxes=Array.from(document.querySelectorAll('#bloco-checklist .chk-checkbox')).filter(cb=>{
+    const sec=cb.closest('.chk-section');const item=cb.closest('.chk-item');
+    return sec&&sec.style.display!=='none'&&item&&item.style.display!=='none';
+  });
+  const total=checkboxes.length,marcados=checkboxes.filter(cb=>cb.checked).length;
+  const pct=total>0?Math.round((marcados/total)*100):0;
+  document.getElementById('prog-bar').style.width=pct+'%';document.getElementById('prog-texto').textContent=`${marcados} / ${total}`;
+  document.getElementById('prog-pct').textContent=`${pct}% concluído`;
+  document.getElementById('prog-status').textContent=pct===100?'✓ Checklist completo':pct>=80?'Quase lá...':pct>=50?'Em andamento':'Preencha o checklist';
+  const secoes={seguranca:'body-seguranca',transfo:'body-transfo',disj:'body-disj',secc:'body-secc',muflas:'body-muflas',reles:'body-reles',barr:'body-barr',paineis:'body-paineis',sala:'body-sala',visual:'body-visual',relatorio:'body-relatorio'};
+  Object.entries(secoes).forEach(([key,bodyId])=>{
+    const bodyEl=document.getElementById(bodyId);const badge=document.getElementById(`badge-${key}`);
+    if(!bodyEl||!badge) return;
+    const cbs=Array.from(bodyEl.querySelectorAll('.chk-checkbox')).filter(cb=>cb.closest('.chk-item').style.display!=='none');
+    const tot=cbs.length,ok=cbs.filter(c=>c.checked).length;
+    badge.textContent=`${ok}/${tot}`;badge.className='chk-badge-count'+(ok===tot&&tot>0?' completo':ok>0?' parcial':'');
+  });
+  document.querySelectorAll('.chk-item').forEach(item=>{const cb=item.querySelector('input[type=checkbox]');item.classList.toggle('checked',cb&&cb.checked);});
+}
+function toggleSection(bodyId,headerEl){
+  const body=document.getElementById(bodyId);if(!body) return;
+  const isHidden=body.style.display==='none';body.style.display=isHidden?'block':'none';headerEl.classList.toggle('collapsed',!isHidden);
+}
+
+/* ════════════════════════════════════════
+   VALIDAÇÃO DE MEDIÇÕES — 3 NÍVEIS
+   OK / ATENÇÃO (warn) / FORA DO LIMITE (danger)
+   Normas: NBR 5356, IEC 60076, IEC 62271-100, IEC 62271-102
+════════════════════════════════════════ */
+function validarMedicao(input) {
+  const val      = parseFloat(input.value);
+  const min      = input.dataset.min      ? parseFloat(input.dataset.min)      : null;
+  const max      = input.dataset.max      ? parseFloat(input.dataset.max)      : null;
+  const maxCrit  = input.dataset.maxCritico ? parseFloat(input.dataset.maxCritico) : null;
+  const norma    = input.dataset.norma    || '';
+  const unidade  = input.dataset.unidade  || '';
+
+  const parent   = input.closest('.col-4,.col-md-2');
+  const hint     = parent ? parent.querySelector('.val-hint') : null;
+
+  if (!val || val <= 0) {
+    if (hint) { hint.textContent = ''; hint.className = 'val-hint'; }
+    input.classList.remove('is-invalid','is-valid','is-warn');
+    atualizarPainelNC();
+    return;
+  }
+
+  let status = 'ok'; // ok | warn | danger
+
+  if (min !== null) {
+    if (val < min) status = 'danger';
+  }
+  if (max !== null) {
+    if (maxCrit !== null && val > maxCrit) status = 'danger';
+    else if (val > max) status = 'warn';
+  }
+
+  if (hint) {
+    if (status === 'danger') {
+      if (min !== null) hint.textContent = `✗ Fora do limite — mín. ${min} ${unidade} (${norma})`;
+      else hint.textContent = `✗ Crítico — máx. ${maxCrit||max} ${unidade} (${norma})`;
+      hint.className = 'val-hint danger';
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+    } else if (status === 'warn') {
+      hint.textContent = `⚠ Atenção — acima de ${max} ${unidade} (${norma})`;
+      hint.className = 'val-hint warn';
+      input.classList.remove('is-invalid');
+      input.classList.add('is-valid');
+    } else {
+      if (min !== null) hint.textContent = `✓ Conforme — mín. ${min} ${unidade}`;
+      else hint.textContent = `✓ Conforme — máx. ${max} ${unidade}`;
+      hint.className = 'val-hint ok';
+      input.classList.remove('is-invalid');
+      input.classList.add('is-valid');
+    }
+  }
+
+  atualizarPainelNC();
+}
+
+// compatibilidade com chamadas antigas no código clonado
+function validarIsolacao(input, minRecomendado) {
+  if (!input.dataset.min) input.dataset.min = minRecomendado;
+  if (!input.dataset.norma) input.dataset.norma = 'NBR 5356';
+  if (!input.dataset.unidade) input.dataset.unidade = 'MΩ';
+  validarMedicao(input);
+}
+function validarResContato(input, maxRecomendado) {
+  if (!input.dataset.max) input.dataset.max = maxRecomendado;
+  if (!input.dataset.norma) input.dataset.norma = 'NBR/IEC';
+  if (!input.dataset.unidade) input.dataset.unidade = 'µΩ';
+  validarMedicao(input);
+}
+
+function atualizarPainelNC() {
+  const panel       = document.getElementById('nc-panel-auto');
+  const listCrit    = document.getElementById('nc-list-critico');
+  const listAtencao = document.getElementById('nc-list-atencao');
+  if (!panel || !listCrit || !listAtencao) return;
+
+  const criticos  = [];
+  const atencoes  = [];
+
+  document.querySelectorAll('#bloco-medicoes input[data-min], #bloco-medicoes input[data-max]').forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!v || v <= 0) return;
+    const label   = inp.dataset.label   || inp.name || '?';
+    const norma   = inp.dataset.norma   || '';
+    const unidade = inp.dataset.unidade || '';
+    const min     = inp.dataset.min     ? parseFloat(inp.dataset.min)        : null;
+    const max     = inp.dataset.max     ? parseFloat(inp.dataset.max)        : null;
+    const maxCrit = inp.dataset.maxCritico ? parseFloat(inp.dataset.maxCritico) : null;
+
+    if (min !== null && v < min) {
+      criticos.push(`${label}: ${v} ${unidade} — mínimo exigido: ${min} ${unidade} (${norma})`);
+    } else if (max !== null) {
+      if (maxCrit !== null && v > maxCrit) {
+        criticos.push(`${label}: ${v} ${unidade} — máximo crítico: ${maxCrit} ${unidade} (${norma})`);
+      } else if (v > max) {
+        atencoes.push(`${label}: ${v} ${unidade} — limite de atenção: ${max} ${unidade} (${norma})`);
+      }
+    }
+  });
+
+  // Variação ôhmica
+  document.querySelectorAll('.variacao-box.variacao-fail').forEach((box, idx) => {
+    const txt = box.textContent;
+    if (txt && txt.includes('%')) {
+      criticos.push(`Variação Ôhmica Transformador #${idx+1}: ${txt.replace('⚠ FORA DO LIMITE (>3%)','').trim()} — máx. 3% (NBR 5356)`);
+    }
+  });
+
+  listCrit.innerHTML    = criticos.map(t  => `<li>${t}</li>`).join('');
+  listAtencao.innerHTML = atencoes.map(t  => `<li>${t}</li>`).join('');
+
+  // Inclui NCs de TTR (calculadas pelo validarTTR via dataset)
+  document.querySelectorAll('#bloco-medicoes .ttr-input').forEach(function(inp) {
+    if (inp.dataset.ttrConformine === '0') {
+      listCrit.innerHTML += '<li>TTR ' + (inp.dataset.ttrLabel||inp.name) + ': ' + inp.value
+        + ' (teórico: ' + parseFloat(inp.dataset.ttrTeoricoA||0).toFixed(2)
+        + ', desvio: ' + (parseFloat(inp.dataset.ttrDesvio||0) >= 0 ? '+' : '') + parseFloat(inp.dataset.ttrDesvio||0).toFixed(3)
+        + '%) — IEC 60076 ±0,5%</li>';
+    }
+  });
+
+  const temAlerta = listCrit.innerHTML.length > 0 || atencoes.length > 0;
+  panel.classList.toggle('visible', temAlerta);
+
+  if (criticos.length > 0 && atencoes.length === 0) {
+    panel.style.borderLeftColor = '#c62828';
+    panel.style.background = '#fff5f5';
+  } else if (criticos.length === 0 && atencoes.length > 0) {
+    panel.style.borderLeftColor = '#e65100';
+    panel.style.background = '#fff8f0';
+  } else if (criticos.length > 0 && atencoes.length > 0) {
+    panel.style.borderLeftColor = '#c62828';
+    panel.style.background = '#fff5f5';
+  }
+}
+
+/* ════════════════════════════════════════
+   SUBESTAÇÃO — EQUIPAMENTOS DINÂMICOS
+════════════════════════════════════════ */
+function addEquipamento(containerId,baseId){
+  const container=document.getElementById(containerId);const baseItem=document.getElementById(baseId);const novoItem=baseItem.cloneNode(true);
+  novoItem.removeAttribute('id');novoItem.classList.add('equipamento-clonado');
+  novoItem.querySelectorAll('input').forEach(i=>{if(i.type==='checkbox'||i.type==='radio')i.checked=false;else i.value='';});
+  novoItem.querySelectorAll('.is-invalid,.is-valid').forEach(el=>{el.classList.remove('is-invalid','is-valid');});
+  novoItem.querySelectorAll('.val-hint').forEach(el=>{el.textContent='';el.className='val-hint';});
+
+  // Índice do novo equipamento
+  const novoIdx = container.querySelectorAll('.equipamento-card').length;
+
+  const titulo=novoItem.querySelector('.group-title');
+  if(titulo){const base=titulo.textContent.split('#')[0].trim();titulo.textContent=`${base} #${novoIdx+1}`;}
+
+  // TTR calc box — atualiza IDs e data-idx
+  const calcBox = novoItem.querySelector('.ttr-calc-box');
+  if(calcBox){
+    calcBox.style.display='none';
+    calcBox.id='ttr-calc-box-'+novoIdx;
+    ['ttr-formula-','ttr-valor-','ttr-faixa-'].forEach(prefix=>{
+      const el=calcBox.querySelector('[id^="'+prefix+'"]');
+      if(el){el.id=prefix+novoIdx;el.textContent='';}
+    });
+  }
+
+  // TTR inputs — atualiza data-ttr-idx e hint IDs
+  novoItem.querySelectorAll('.ttr-input').forEach(inp=>{
+    inp.dataset.ttrIdx=novoIdx;
+    const lbl=inp.dataset.label||'';
+    const hintId='hint-ttr-'+lbl.toLowerCase().replace('-','').replace('-','')+'-'+novoIdx;
+    const oldHint=inp.closest('.col-4,.col-md-2').querySelector('.val-hint[id]');
+    if(oldHint) oldHint.id=hintId;
+    inp.onchange=function(){validarTTR(this);};
+  });
+
+  // Tensão AT/BT — atualiza data-ttr-idx
+  novoItem.querySelectorAll('[name="ttr_tensao_at[]"],[name="ttr_tensao_bt[]"]').forEach(inp=>{
+    inp.dataset.ttrIdx=novoIdx;
+    inp.onchange=function(){recalcularTTR(novoIdx);};
+  });
+
+  const varBox=novoItem.querySelector('.variacao-box');
+  if(varBox){varBox.className='variacao-box variacao-neutral';varBox.textContent='Variação ôhmica: preencha H1-H2, H1-H3 e H2-H3';const idx=container.querySelectorAll('.variacao-box').length;varBox.id=`variacao-transfo-${idx}`;}
+  attachOhmEvents(novoItem);
+  const btnRemover=document.createElement('button');btnRemover.type='button';btnRemover.className='btn-remover';btnRemover.innerHTML='<i class="bi bi-trash"></i> Remover';btnRemover.onclick=()=>novoItem.remove();novoItem.appendChild(btnRemover);
+  container.appendChild(novoItem);
+}
+function attachOhmEvents(card){
+  card.querySelectorAll('.ohm-input').forEach(input=>input.addEventListener('input',()=>calcularVariacaoOhm(card)));
+}
+function calcularVariacaoOhm(card){
+  const inputs=Array.from(card.querySelectorAll('input[name^="ohm_h"]'));if(inputs.length<3) return;
+  const vals=inputs.map(i=>parseFloat(i.value)).filter(v=>!isNaN(v)&&v>0);const varBox=card.querySelector('.variacao-box');if(!varBox) return;
+  if(vals.length===3){const variacao=((Math.max(...vals)/Math.min(...vals))-1)*100;varBox.textContent=`Variação ôhmica: ${variacao.toFixed(2)}% ${variacao>3?'⚠ FORA DO LIMITE (>3%)':'✓ CONFORME (≤ 3%)'}`;varBox.className=`variacao-box ${variacao>3?'variacao-fail':'variacao-ok'}`;}
+  else{varBox.className='variacao-box variacao-neutral';varBox.textContent='Variação ôhmica: preencha H1-H2, H1-H3 e H2-H3';}
+  atualizarPainelNC();
+}
+document.getElementById('item-transfo-base')&&attachOhmEvents(document.getElementById('item-transfo-base'));
+document.addEventListener('change',function(e){
+  if(e.target&&e.target.name==='tipo_disj'){const pvoItem=document.getElementById('chk-pvo-oleo');if(pvoItem)pvoItem.style.display=e.target.value==='PVO'?'flex':'none';atualizarProgresso();}
+});
+
+/* ════════════════════════════════════════
+   SALVAR SUBESTAÇÃO
+════════════════════════════════════════ */
+function resetarSubestacao(){
+  document.getElementById('tipo_sub').value='';document.getElementById('card-aerea').classList.remove('selected');document.getElementById('card-abrigada').classList.remove('selected');document.getElementById('tipo_manutencao').value='';
+  document.getElementById('bloco-checklist').style.display='none';document.getElementById('bloco-medicoes').style.display='none';
+  document.querySelectorAll('.chk-checkbox').forEach(cb=>cb.checked=false);
+  document.querySelectorAll('#tab-subestacao input[type="text"],#tab-subestacao input[type="number"],#tab-subestacao input[type="email"],#tab-subestacao input[type="date"],#tab-subestacao textarea').forEach(i=>i.value='');
+  document.querySelectorAll('.equipamento-clonado').forEach(el=>el.remove());
+  document.querySelectorAll('.is-invalid,.is-valid').forEach(el=>el.classList.remove('is-invalid','is-valid'));
+  document.querySelectorAll('.val-hint').forEach(el=>{el.textContent='';el.className='val-hint';});
+  atualizarProgresso();
+}
+function salvarTudoSubestacao(){
+  const tipoSub=document.getElementById('tipo_sub').value;
+  if(!tipoSub) return Swal.fire('Atenção','Selecione o tipo de subestação (Aérea ou Abrigada).','warning');
+  const tipoMan=document.getElementById('tipo_manutencao').value;
+  if(!tipoMan) return Swal.fire('Atenção','Selecione o tipo de manutenção.','warning');
+  const comarca=document.querySelector('[name="sub_comarca"]').value.trim();
+  if(!comarca) return Swal.fire('Atenção','Informe a Comarca.','warning');
+  const email=document.querySelector('[name="email_destino"]').value.trim();
+  if(!email) return Swal.fire('Atenção','Informe o e-mail de destino.','warning');
+  const invalidos=document.querySelectorAll('#bloco-medicoes .is-invalid');
+  if(invalidos.length>0){
+    Swal.fire({icon:'warning',title:'Valores fora dos limites',text:`${invalidos.length} medição(ões) abaixo dos valores mínimos recomendados. Deseja prosseguir mesmo assim?`,showCancelButton:true,confirmButtonText:'Sim, prosseguir',cancelButtonText:'Revisar'}).then(r=>{if(r.isConfirmed)_enviarSubestacao();});
+    return;
+  }
+  _enviarSubestacao();
+}
+function _enviarSubestacao(){
+  Swal.fire({title:'Gerando relatório...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+  const allInputs=document.getElementById('tab-subestacao').querySelectorAll('input,select,textarea');
+  const dados={};
+  allInputs.forEach(input=>{
+    if(!input.name||input.disabled) return;const k=input.name;
+    const v=input.type==='checkbox'?(input.checked?'SIM':'NÃO'):input.value;
+    if(dados[k]!==undefined){if(!Array.isArray(dados[k]))dados[k]=[dados[k]];dados[k].push(v);}else{dados[k]=v;}
+  });
+  const checkboxes=Array.from(document.querySelectorAll('#bloco-checklist .chk-checkbox')).filter(cb=>{const sec=cb.closest('.chk-section');return sec&&sec.style.display!=='none';});
+  dados.checklist_total=checkboxes.length;dados.checklist_marcados=checkboxes.filter(cb=>cb.checked).length;
+  dados.checklist_pct=dados.checklist_total>0?Math.round((dados.checklist_marcados/dados.checklist_total)*100):0;
+  google.script.run.withSuccessHandler(res=>{Swal.fire('Sucesso!',res||'Inspeção salva e enviada por e-mail.','success');resetarSubestacao();}).withFailureHandler(err=>Swal.fire('Erro',err.message||err.toString(),'error')).lau_salvarLeituraSubestacao(dados);
+}
+
+/* ════════════════════════════════════════
+   TTR — RELAÇÃO DE TRANSFORMAÇÃO
+   a = V1(AT em V) / V2(BT em V)
+   Tolerância: ±0,5% (IEC 60076)
+════════════════════════════════════════ */
+var _ttrTeorico = {}; // armazena a teórico por índice de equipamento
+
+function recalcularTTR(idx) {
+  // Pega os inputs do equipamento pelo índice
+  var cards = document.querySelectorAll('#container-transfo .equipamento-card');
+  var card  = idx === 0 ? document.getElementById('item-transfo-base') : cards[idx];
+  if (!card) return;
+
+  var inpAT = card.querySelector('[name="ttr_tensao_at[]"]');
+  var inpBT = card.querySelector('[name="ttr_tensao_bt[]"]');
+  var box   = card.querySelector('.ttr-calc-box');
+
+  if (!inpAT || !inpBT || !box) return;
+
+  var atKv = parseFloat(inpAT.value);
+  var btV  = parseFloat(inpBT.value);
+
+  if (!atKv || !btV || atKv <= 0 || btV <= 0) {
+    box.style.display = 'none';
+    _ttrTeorico[idx] = null;
+    // Limpa hints dos campos TTR
+    card.querySelectorAll('.ttr-input').forEach(function(inp) {
+      var hint = card.querySelector('#hint-ttr-' + inp.dataset.label.toLowerCase().replace('-','') + '-' + idx)
+               || inp.closest('.col-4,.col-md-2').querySelector('.val-hint');
+      if (hint) { hint.textContent = ''; hint.className = 'val-hint'; }
+      inp.classList.remove('is-invalid','is-valid');
+    });
+    return;
+  }
+
+  // a = V1 / V2  (AT em kV → converte para V)
+  var atV    = atKv * 1000;
+  var a      = atV / btV;
+  var aMinus = a * 0.995; // -0,5%
+  var aPlus  = a * 1.005; // +0,5%
+
+  _ttrTeorico[idx] = { a: a, min: aMinus, max: aPlus, atKv: atKv, btV: btV };
+
+  // Atualiza exibição
+  box.style.display = 'block';
+  var fEl = card.querySelector('[id^="ttr-formula-"]');
+  var vEl = card.querySelector('[id^="ttr-valor-"]');
+  var fxEl= card.querySelector('[id^="ttr-faixa-"]');
+
+  if (fEl)  fEl.textContent  = atV.toLocaleString('pt-BR') + 'V ÷ ' + btV.toLocaleString('pt-BR') + 'V =';
+  if (vEl)  vEl.textContent  = a.toFixed(2);
+  if (fxEl) fxEl.textContent = aMinus.toFixed(2) + ' a ' + aPlus.toFixed(2);
+
+  // Revalida campos TTR já preenchidos
+  card.querySelectorAll('.ttr-input').forEach(function(inp) {
+    if (inp.value) validarTTR(inp);
+  });
+
+  atualizarPainelNC();
+}
+
+function validarTTR(input) {
+  var idx  = parseInt(input.dataset.ttrIdx || 0);
+  var teo  = _ttrTeorico[idx];
+  var val  = parseFloat(input.value);
+  var label= input.dataset.label || input.name;
+
+  var parent = input.closest('.col-4,.col-md-2');
+  var hint   = parent ? parent.querySelector('.val-hint') : null;
+
+  if (!val || val <= 0) {
+    if (hint) { hint.textContent = ''; hint.className = 'val-hint'; }
+    input.classList.remove('is-invalid','is-valid');
+    atualizarPainelNC();
+    return;
+  }
+
+  if (!teo) {
+    // Sem tensões preenchidas: aviso neutro
+    if (hint) { hint.textContent = 'Preencha tensão AT e BT para validar'; hint.className = 'val-hint'; }
+    input.classList.remove('is-invalid','is-valid');
+    return;
+  }
+
+  var desvio = ((val - teo.a) / teo.a) * 100;
+  var dentroFaixa = val >= teo.min && val <= teo.max;
+
+  if (hint) {
+    if (dentroFaixa) {
+      hint.textContent = '✓ Conforme — desvio: ' + (desvio >= 0 ? '+' : '') + desvio.toFixed(3) + '% (tol. ±0,5%)';
+      hint.className   = 'val-hint ok';
+      input.classList.remove('is-invalid');
+      input.classList.add('is-valid');
+    } else {
+      hint.textContent = '✗ Fora do limite — desvio: ' + (desvio >= 0 ? '+' : '') + desvio.toFixed(3) + '% | IEC 60076 admite ±0,5%';
+      hint.className   = 'val-hint danger';
+      input.classList.add('is-invalid');
+      input.classList.remove('is-valid');
+    }
+  }
+
+  input.dataset.ttrTeoricoA   = teo.a.toFixed(4);
+  input.dataset.ttrDesvio     = desvio.toFixed(3);
+  input.dataset.ttrConformine = dentroFaixa ? '1' : '0';
+  input.dataset.ttrLabel      = label;
+
+  atualizarPainelNC();
+}
+
+/* ════════════════════════════════════════
+   INICIALIZAÇÃO
+════════════════════════════════════════ */
+window.onload=function(){carregarDados();atualizarProgresso();};
+</script>
+
+<script>
+/* ⬇ Helper Dropdowns COMAP — Comarca > Edificação (Laudos não usa Região) */
+(function(){
+  if (window.ComapDropdowns) return;
+  var C={_d:null,_l:false,_p:[],
+    init:function(cb){var s=this;if(s._d){if(cb)cb(s._d);return;}if(s._l){if(cb)s._p.push(cb);return;}s._l=true;
+      google.script.run.withSuccessHandler(function(r){s._l=false;s._d=(r&&r.ok)?r:{data:{},totalRegistros:0};if(cb)cb(s._d);s._p.forEach(function(f){try{f(s._d);}catch(e){}});s._p=[];})
+      .withFailureHandler(function(){s._l=false;s._d={data:{},totalRegistros:0};if(cb)cb(s._d);}).util_carregarTodasComarcas();},
+    _n:function(r){if(!r)return'';return r.toString().toUpperCase().replace(/\s+/g,'_').replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I').replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C').trim();},
+    listarComarcasDaRegiao:function(r){if(!this._d)return[];var reg=this._n(r);var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca)s[d.comarca.toUpperCase()]=d.comarca;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarEdificacoesPorComarca:function(r,c){if(!this._d)return[];var reg=this._n(r);var co=(c||'').toString().trim().toUpperCase();if(!co)return[];var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca.toUpperCase()===co&&d.edificacao)s[d.edificacao.toUpperCase()]=d.edificacao;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarTodasComarcasGlobais:function(){if(!this._d)return[];var s={};var d=this._d.data||{};Object.keys(d).forEach(function(r){(d[r]||[]).forEach(function(x){if(x.comarca)s[x.comarca.toUpperCase()]=x.comarca;});});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    _popular:function(id,ops,ph){var el=document.getElementById(id);if(!el)return;var at=el.value;el.innerHTML='';var v=document.createElement('option');v.value='';v.textContent=ph||'Selecione...';el.appendChild(v);ops.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=o;el.appendChild(op);});if(at){var aU=at.toUpperCase();for(var i=0;i<el.options.length;i++){if(el.options[i].value.toUpperCase()===aU){el.selectedIndex=i;break;}}}},
+    onRegiao:function(r,iC,iE){var s=this;var f=function(){s._popular(iC,s.listarComarcasDaRegiao(r),'Selecione a comarca...');if(iE)s._popular(iE,[],'Selecione a comarca primeiro');};if(!s._d)s.init(f);else f();},
+    onComarca:function(r,c,iE){var s=this;var f=function(){s._popular(iE,s.listarEdificacoesPorComarca(r,c),'Selecione a edificação...');};if(!s._d)s.init(f);else f();}
+  };
+  window.ComapDropdowns=C;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){C.init();});else C.init();
+})();
+</script>
+</body>
+</html>

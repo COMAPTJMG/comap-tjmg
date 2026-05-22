@@ -1,0 +1,3356 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+<script>
+/* COMAP UNIFICADO — bootstrap de sessão v2 (servidor injetou via window.__COMAP_SESSAO__) */
+(function(){
+  try {
+    var s = window.__COMAP_SESSAO__ || {};
+    // Se servidor não injetou (acesso direto sem login), redireciona para shell
+    if (!s.email) {
+      // Tenta query string como fallback
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('email')) {
+        s = {
+          nome: p.get('n') || '',
+          email: p.get('email') || '',
+          regiao: (p.get('r') || '').toUpperCase(),
+          global: p.get('g') === '1'
+        };
+      } else {
+        // Sem sessão de jeito nenhum — manda pro shell sem o ?modulo
+        window.location.href = window.location.pathname;
+        return;
+      }
+    }
+    // Garante que esteja no formato esperado pelos sistemas originais
+    var compat = {
+      nome: s.nome || '',
+      regiao: (s.regiao || '').toUpperCase(),
+      login: s.email || '',
+      email: s.email || '',
+      global: !!s.global,
+      timestamp: Date.now()
+    };
+    if (compat.global && compat.regiao !== 'MASTER') compat.regiao = 'MASTER';
+    try {
+      localStorage.setItem('comap_session', JSON.stringify(compat));
+      localStorage.setItem('comap_unificado', JSON.stringify(s));
+    } catch(e) {}
+    window.__COMAP_SESSAO__ = s;
+  } catch(e) { console.error('Bootstrap COMAP:', e); }
+})();
+</script>
+
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --blue:        #003366;
+      --blue-mid:    #004080;
+      --blue-light:  #0a4f8a;
+      --blue-pale:   #e8f0fb;
+      --gold:        #c5a059;
+      --gold-light:  #d4b06a;
+      --success:     #1b7a3e;
+      --success-bg:  #e8f5ee;
+      --warning:     #b45309;
+      --warning-bg:  #fef3c7;
+      --danger:      #b91c1c;
+      --danger-bg:   #fee2e2;
+      --gray-50:     #f8fafc;
+      --gray-100:    #f1f5f9;
+      --gray-200:    #e2e8f0;
+      --gray-300:    #cbd5e1;
+      --gray-400:    #94a3b8;
+      --gray-500:    #64748b;
+      --gray-600:    #475569;
+      --gray-700:    #334155;
+      --gray-900:    #0f172a;
+      --radius-sm:   6px;
+      --radius:      10px;
+      --radius-lg:   14px;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.04);
+      --shadow:      0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+      --shadow-lg:   0 10px 28px rgba(0,0,0,.10);
+      --fs-xs:   10px;
+      --fs-sm:   11px;
+      --fs-base: 13px;
+      --fs-md:   14px;
+      --fs-lg:   16px;
+      --fs-xl:   18px;
+      --fs-kpi:  30px;
+      --sp-xs:  4px;
+      --sp-sm:  8px;
+      --sp-md:  12px;
+      --sp-lg:  16px;
+      --sp-xl:  20px;
+      --sp-2xl: 24px;
+      --sp-3xl: 28px;
+      --topbar-h:      62px;
+      --container-pad: 20px 24px;
+      --chart-min-h:   340px;
+      --kpi-cols:      6;
+      --grid-cols:     2;
+      --table-min-w:   700px;
+    }
+
+    .kpi-concluidas .value { color: #0369a1; }
+    .kpi-concluidas        { border-top-color: #0369a1; }
+
+    .btn-edit-locked {
+      background: var(--gray-200) !important; color: var(--gray-400) !important;
+      border-color: var(--gray-300) !important; cursor: not-allowed !important;
+      opacity: .7;
+    }
+
+    /* ── View Modal fields ── */
+    .view-field { display: flex; flex-direction: column; gap: 5px; }
+    .view-label {
+      font-size: var(--fs-xs); font-weight: 700; color: var(--gray-500);
+      text-transform: uppercase; letter-spacing: .07em;
+    }
+    .view-value {
+      font-size: var(--fs-base); font-weight: 600; color: var(--gray-900);
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm); padding: 9px 12px;
+      min-height: 38px; line-height: 1.4; word-break: break-word;
+    }
+    .view-field-highlight .view-value {
+      background: var(--blue-pale); border-color: #c3d4f0;
+      color: var(--blue); font-weight: 500; min-height: 56px;
+    }
+
+    /* ── View button ── */
+    .btn-view-table {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: white; color: var(--blue);
+      border: 1.5px solid var(--blue);
+      padding: 6px 11px; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: var(--fs-xs); font-weight: 700;
+      text-transform: uppercase; letter-spacing: .04em;
+      transition: all .2s; white-space: nowrap;
+    }
+    .btn-view-table:hover { background: var(--blue-pale); transform: translateY(-1px); }
+    @media (max-width:479px) { .btn-view-table { padding: 5px 8px; font-size: 9px; } }
+
+    .last-update-chip {
+      font-size: var(--fs-xs); color: rgba(255,255,255,.5);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.12);
+      white-space: nowrap;
+      line-height: 1;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .last-update-chip .dot-pulse {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #22c55e;
+      animation: dotpulse 2s ease infinite;
+      flex-shrink: 0;
+    }
+    @keyframes dotpulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+    .data-stale-overlay { position: relative; }
+    .data-stale-overlay::after {
+      content: '↻ Atualizando...';
+      position: absolute; inset: 0;
+      background: rgba(255,255,255,.7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: var(--fs-sm); font-weight: 700; color: var(--blue);
+      border-radius: var(--radius-lg);
+      z-index: 10;
+      animation: fadeInOverlay .2s ease;
+    }
+    @keyframes fadeInOverlay { from{opacity:0} to{opacity:1} }
+
+    .filter-item .date-error {
+      font-size: var(--fs-xs); color: var(--danger);
+      font-weight: 600; margin-top: 3px; display: none;
+    }
+    .filter-item.has-error input { border-color: var(--danger) !important; }
+    .filter-item.has-error .date-error { display: block; }
+
+    .paginacao-wrap {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--sp-md) var(--sp-lg);
+      border-top: 1px solid var(--gray-200);
+      flex-wrap: wrap; gap: var(--sp-sm);
+      margin-top: var(--sp-sm);
+    }
+    .paginacao-info { font-size: var(--fs-xs); color: var(--gray-500); font-weight: 500; }
+    .paginacao-info b { color: var(--blue); }
+    .paginacao-btns { display: flex; gap: var(--sp-xs); align-items: center; flex-wrap: wrap; }
+    .pag-btn {
+      min-width: 32px; height: 32px; padding: 0 10px;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      background: white; color: var(--gray-700);
+      font-family: 'Inter', sans-serif; font-size: var(--fs-xs); font-weight: 600;
+      cursor: pointer; transition: all .15s;
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+    .pag-btn:hover:not(:disabled):not(.pag-active) { background: var(--gray-100); border-color: var(--gray-300); }
+    .pag-btn.pag-active { background: var(--blue); color: white; border-color: var(--blue); }
+    .pag-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .pag-select {
+      height: 32px; padding: 0 8px;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      background: white; color: var(--gray-700);
+      font-family: 'Inter', sans-serif; font-size: var(--fs-xs); font-weight: 600;
+      cursor: pointer; outline: none;
+    }
+
+    @media (max-width: 479px) {
+      :root {
+        --fs-xs:  9px;  --fs-sm: 10px; --fs-base: 11px;
+        --fs-md: 12px;  --fs-lg: 13px; --fs-xl:   15px;  --fs-kpi: 22px;
+        --sp-sm:  5px;  --sp-md:  8px; --sp-lg:   10px;
+        --sp-xl: 12px;  --sp-2xl:14px; --sp-3xl:  16px;
+        --topbar-h:      auto;
+        --container-pad: 8px 10px;
+        --chart-min-h:   200px;
+        --kpi-cols:      2;
+        --grid-cols:     1;
+        --table-min-w:   500px;
+      }
+    }
+    @media (min-width:480px) and (max-width:767px) {
+      :root {
+        --fs-xs:  9px;  --fs-sm: 10px; --fs-base: 12px;
+        --fs-md: 13px;  --fs-lg: 14px; --fs-xl:   16px;  --fs-kpi: 24px;
+        --sp-sm:  6px;  --sp-md: 10px; --sp-lg:   12px;
+        --sp-xl: 14px;  --sp-2xl:16px; --sp-3xl:  18px;
+        --topbar-h:      auto;
+        --container-pad: 10px 14px;
+        --chart-min-h:   230px;
+        --kpi-cols:      2;
+        --grid-cols:     1;
+        --table-min-w:   560px;
+      }
+    }
+    @media (min-width:768px) and (max-width:1023px) {
+      :root {
+        --fs-xs:  10px; --fs-sm: 11px; --fs-base: 13px;
+        --fs-md: 14px;  --fs-lg: 15px; --fs-xl:   17px;  --fs-kpi: 26px;
+        --sp-lg:  14px; --sp-xl: 16px; --sp-2xl:  20px;
+        --container-pad: 14px 18px;
+        --chart-min-h:   280px;
+        --kpi-cols:      3;
+        --grid-cols:     1;
+        --table-min-w:   650px;
+      }
+    }
+    @media (min-width:1024px) and (max-width:1365px) {
+      :root {
+        --fs-kpi:    28px;
+        --chart-min-h: 310px;
+        --kpi-cols:  3;
+        --grid-cols: 2;
+        --container-pad: 16px 20px;
+      }
+    }
+    @media (min-width:1920px) and (max-width:2559px) {
+      :root {
+        --fs-xs:  11px; --fs-sm: 13px; --fs-base: 15px;
+        --fs-md: 16px;  --fs-lg: 19px; --fs-xl:   22px;  --fs-kpi: 38px;
+        --sp-sm:  9px;  --sp-md: 14px; --sp-lg:   20px;
+        --sp-xl: 26px;  --sp-2xl:30px; --sp-3xl:  36px;
+        --topbar-h:      76px;
+        --container-pad: 26px 36px;
+        --chart-min-h:   440px;
+        --kpi-cols:      6;
+        --grid-cols:     2;
+        --table-min-w:   900px;
+      }
+    }
+    @media (min-width:2560px) {
+      :root {
+        --fs-xs:  13px; --fs-sm: 15px; --fs-base: 17px;
+        --fs-md: 18px;  --fs-lg: 22px; --fs-xl:   26px;  --fs-kpi: 48px;
+        --sp-sm: 10px;  --sp-md: 16px; --sp-lg:   24px;
+        --sp-xl: 32px;  --sp-2xl:40px; --sp-3xl:  48px;
+        --topbar-h:      90px;
+        --container-pad: 36px 52px;
+        --chart-min-h:   560px;
+        --kpi-cols:      6;
+        --grid-cols:     2;
+        --table-min-w:   1000px;
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      font-size: var(--fs-md);
+      line-height: 1.55;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--gray-100); }
+    ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 99px; }
+
+    #device-badge {
+      position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+      background: var(--blue); color: var(--gold);
+      font-size: 10px; font-weight: 700; padding: 4px 11px;
+      border-radius: 20px; letter-spacing: .05em; text-transform: uppercase;
+      box-shadow: 0 2px 10px rgba(0,0,0,.35);
+      pointer-events: none; opacity: 0;
+      transition: opacity .3s;
+    }
+    #device-badge.show { opacity: 1; }
+
+    /* LOGIN */
+    #login_screen {
+      display: none; align-items: center; justify-content: center;
+      min-height: 100vh; padding: var(--sp-lg);
+      background: var(--blue);
+      background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(197,160,89,.2) 0%, transparent 60%);
+    }
+    .login-outer { width: 100%; max-width: 420px; }
+    .login-badge {
+      display: flex; align-items: center; justify-content: center;
+      gap: var(--sp-md); margin-bottom: var(--sp-3xl);
+    }
+    .login-badge-icon {
+      width: 44px; height: 44px; background: var(--gold);
+      border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+      font-size: var(--fs-xl); font-weight: 800; color: var(--blue); flex-shrink: 0;
+    }
+    .login-badge-text { color: white; }
+    .login-badge-text strong { display: block; font-size: var(--fs-xl); font-weight: 800; letter-spacing: .03em; }
+    .login-badge-text span   { font-size: var(--fs-xs); opacity: .6; letter-spacing: .04em; text-transform: uppercase; }
+    .login-card {
+      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius-lg); padding: var(--sp-3xl) var(--sp-2xl);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .login-card h2 { font-size: var(--fs-lg); font-weight: 700; color: white; margin-bottom: 4px; }
+    .login-card > p { font-size: var(--fs-sm); color: rgba(255,255,255,.45); margin-bottom: var(--sp-2xl); }
+    .login-field { margin-bottom: var(--sp-lg); }
+    .login-field label {
+      display: block; font-size: var(--fs-xs); font-weight: 600;
+      color: rgba(255,255,255,.55); text-transform: uppercase;
+      letter-spacing: .07em; margin-bottom: 7px;
+    }
+    .login-field input {
+      width: 100%; background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14); border-radius: var(--radius);
+      padding: 11px 14px; color: white;
+      font-family: 'Inter', sans-serif; font-size: var(--fs-md);
+      outline: none; transition: border-color .2s, background .2s;
+    }
+    .login-field input::placeholder { color: rgba(255,255,255,.25); }
+    .login-field input:focus { border-color: var(--gold); background: rgba(255,255,255,.12); }
+    .btn-login {
+      width: 100%; margin-top: 6px; background: var(--gold); border: none;
+      border-radius: var(--radius); padding: 13px;
+      color: var(--blue); font-family: 'Inter', sans-serif;
+      font-weight: 700; font-size: var(--fs-sm); letter-spacing: .05em; text-transform: uppercase;
+      cursor: pointer; transition: all .2s; box-shadow: 0 4px 14px rgba(197,160,89,.4);
+    }
+    .btn-login:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; }
+    #login_msg { font-size: var(--fs-sm); color: #fca5a5; margin-top: 12px; text-align: center; min-height: 18px; }
+
+    /* TOP BAR */
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--blue); border-bottom: 3px solid var(--gold);
+      padding: 0 var(--sp-2xl);
+      display: flex; justify-content: space-between; align-items: center;
+      min-height: var(--topbar-h);
+      box-shadow: 0 2px 16px rgba(0,0,0,.25);
+      flex-wrap: wrap; gap: var(--sp-sm);
+    }
+    .top-bar-brand { display: flex; align-items: center; gap: var(--sp-md); }
+    .top-bar-icon {
+      width: 32px; height: 32px; background: var(--gold);
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+      font-size: var(--fs-base); font-weight: 800; color: var(--blue); flex-shrink: 0;
+    }
+    .top-bar-title { font-size: var(--fs-lg); font-weight: 800; color: white; letter-spacing: .02em; }
+    .top-bar-sub   { font-size: var(--fs-xs); color: rgba(255,255,255,.55); margin-top: 1px; }
+    .top-bar-right { display: flex; align-items: center; gap: var(--sp-sm); flex-wrap: wrap; }
+    .top-bar-clock {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius-sm); padding: 7px 12px;
+      font-size: var(--fs-sm); font-weight: 600; color: rgba(255,255,255,.8);
+      font-variant-numeric: tabular-nums; letter-spacing: .04em;
+      line-height: 1;
+    }
+    .btn-topbar {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+      color: white; padding: 7px 14px; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: var(--fs-xs); font-weight: 600; letter-spacing: .03em;
+      transition: all .2s; line-height: 1;
+      display: inline-flex; align-items: center; gap: 5px;
+      white-space: nowrap; height: 32px;
+    }
+    .btn-topbar:hover { background: rgba(255,255,255,.18); }
+    .btn-topbar-gold { background: var(--gold); border-color: var(--gold); color: var(--blue); font-weight: 700; }
+    .btn-topbar-gold:hover { background: var(--gold-light); border-color: var(--gold-light); }
+    @media (max-width:767px) {
+      .top-bar { padding: var(--sp-md) var(--sp-lg); }
+      .top-bar-sub, #data_atual, .last-update-chip { display: none; }
+      .btn-topbar { padding: 7px 10px; font-size: 10px; }
+    }
+    @media (min-width:2560px) {
+      .top-bar-icon { width: 48px; height: 48px; font-size: 20px; }
+      .btn-topbar { padding: 10px 22px; font-size: var(--fs-sm); height: 40px; }
+      .top-bar-clock { padding: 8px 18px; font-size: var(--fs-base); }
+    }
+
+    /* BANNER ALERTA */
+    #alerta_banner {
+      display: none;
+      background: linear-gradient(90deg, #991b1b, #b91c1c, #991b1b);
+      background-size: 200% 100%;
+      animation: slideGrad 2.5s linear infinite;
+      color: white; padding: 9px var(--sp-2xl);
+      align-items: center; gap: var(--sp-md);
+      font-size: var(--fs-base); font-weight: 600;
+      border-bottom: 2px solid #ef4444; flex-wrap: wrap;
+    }
+    @keyframes slideGrad { 0%{background-position:0%} 100%{background-position:200%} }
+    .alerta-icon { font-size: var(--fs-lg); animation: shake .5s ease infinite alternate; }
+    @keyframes shake { from{transform:rotate(-7deg)} to{transform:rotate(7deg)} }
+    .alerta-ose-chip {
+      background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.3);
+      border-radius: 4px; padding: 2px 9px; font-size: var(--fs-xs); cursor: pointer;
+    }
+    .alerta-fechar {
+      margin-left: auto; background: rgba(255,255,255,.15); border: none;
+      color: white; width: 22px; height: 22px; border-radius: 50%;
+      cursor: pointer; font-size: 14px; flex-shrink: 0;
+    }
+
+    /* LOADER */
+    #loader {
+      text-align: center; padding: 80px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .spinner {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 3px solid var(--gray-200); border-top-color: var(--blue);
+      animation: spin .9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loader p { color: var(--gray-500); font-size: var(--fs-base); font-weight: 500; }
+
+    /* CONTAINER */
+    .container { padding: var(--container-pad); max-width: 1800px; margin: auto; }
+    @media (min-width:1920px) { .container { max-width: 2300px; } }
+    @media (min-width:2560px) { .container { max-width: 3000px; } }
+
+    /* FILTROS */
+    .search-container {
+      background: white; padding: var(--sp-lg) var(--sp-xl);
+      border-radius: var(--radius-lg); margin-bottom: var(--sp-xl);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+    }
+    .filter-wrapper { display: flex; gap: var(--sp-md); flex-wrap: wrap; align-items: flex-end; }
+    .filter-item { display: flex; flex-direction: column; gap: 5px; }
+    .filter-item label {
+      font-size: var(--fs-xs); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .07em;
+    }
+    .filter-item input[type="date"] {
+      padding: 9px 12px; border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm); font-family: 'Inter', sans-serif;
+      font-size: var(--fs-base); color: var(--gray-700); outline: none; transition: border-color .2s;
+    }
+    .filter-item input[type="date"]:focus { border-color: var(--blue); }
+    .search-box {
+      flex: 1; min-width: 240px;
+      padding: 10px 14px 10px 36px;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-size: var(--fs-base); color: var(--gray-700);
+      outline: none; transition: border-color .2s;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 12px center;
+    }
+    .search-box:focus { border-color: var(--blue); }
+    .btn-limpar-filtro {
+      background: var(--gray-100); border: 1.5px solid var(--gray-200);
+      color: var(--gray-600); padding: 9px 16px; border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-size: var(--fs-sm); font-weight: 600;
+      cursor: pointer; align-self: flex-end; transition: all .2s;
+    }
+    .btn-limpar-filtro:hover { background: var(--gray-200); }
+    @media (max-width:767px) {
+      .filter-item, .search-box, .btn-limpar-filtro { width: 100%; }
+      .filter-item input[type="date"] { width: 100%; }
+    }
+
+    /* KPI CARDS */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(var(--kpi-cols), 1fr);
+      gap: var(--sp-md);
+      margin-bottom: var(--sp-xl);
+    }
+    .kpi-card {
+      background: white; padding: var(--sp-lg) var(--sp-lg);
+      border-radius: var(--radius-lg); border-top: 4px solid var(--blue);
+      border-left: none; border-right: none; border-bottom: none;
+      box-shadow: var(--shadow-sm);
+      transition: transform .2s, box-shadow .2s;
+      position: relative; overflow: hidden;
+    }
+    .kpi-card::after {
+      content:''; position:absolute; bottom:-18px; right:-10px;
+      width:64px; height:64px; border-radius:50%;
+      background:currentColor; opacity:.04;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .kpi-card h3 {
+      font-size: var(--fs-xs); font-weight: 700; color: var(--gray-400);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px;
+    }
+    .kpi-card .value {
+      font-size: var(--fs-kpi); font-weight: 800; color: var(--blue);
+      line-height: 1; letter-spacing: -.02em;
+    }
+    .kpi-card .kpi-sub { font-size: var(--fs-xs); color: var(--gray-400); margin-top: 4px; font-weight: 500; }
+    @media (max-width:767px) {
+      .kpi-card { padding: var(--sp-md); border-top-width: 3px; }
+      .kpi-card .kpi-sub { display: none; }
+    }
+    @media (min-width:2560px) { .kpi-card { border-top-width: 6px; } }
+
+    .kpi-aberto .value     { color: var(--success); }
+    .kpi-aberto            { border-top-color: var(--success); }
+    .kpi-repro .value      { color: #d97706; }
+    .kpi-repro             { border-top-color: #d97706; }
+    .kpi-atraso .value     { color: var(--danger); animation: pulse-num 2s ease infinite; }
+    .kpi-atraso            { border-top-color: var(--danger); }
+    .kpi-canceladas .value { color: var(--gray-500); }
+    .kpi-canceladas        { border-top-color: var(--gray-400); }
+    @keyframes pulse-num { 0%,100%{opacity:1} 50%{opacity:.7} }
+
+    /* GRID */
+    .grid { display: grid; grid-template-columns: repeat(var(--grid-cols), 1fr); gap: var(--sp-lg); align-items: start; }
+    .full-width { grid-column: 1 / -1; }
+
+    .chart-box {
+      background: white; padding: var(--sp-xl);
+      border-radius: var(--radius-lg); min-height: var(--chart-min-h);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+      overflow: hidden;
+    }
+    @media (max-width:767px) { .chart-box { padding: var(--sp-lg); } }
+    @media (min-width:1920px) { .chart-box { padding: var(--sp-2xl); } }
+
+    .chart-box-title {
+      font-size: var(--fs-xs); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: var(--sp-md); padding-bottom: var(--sp-sm);
+      border-bottom: 2px solid var(--gray-100);
+      display: flex; align-items: center; gap: var(--sp-sm);
+    }
+    .chart-box-title .dot { width:8px; height:8px; border-radius:50%; background:var(--gold); flex-shrink:0; }
+    .chart-empty {
+      display: flex; align-items: center; justify-content: center;
+      height: 280px; color: var(--gray-300);
+      font-size: var(--fs-base); font-weight: 500;
+      flex-direction: column; gap: 8px;
+    }
+    .chart-empty-icon { font-size: 32px; opacity: .4; }
+
+    /* TABELA */
+    .table-wrapper {
+      overflow-x: auto; border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      -webkit-overflow-scrolling: touch;
+    }
+    @media (max-width:767px) {
+      .table-wrapper::before {
+        content: '← deslize →';
+        display: block; text-align: center;
+        font-size: 9px; color: var(--gray-400);
+        padding: 3px; background: var(--gray-50);
+      }
+    }
+    table { width: 100%; border-collapse: collapse; min-width: var(--table-min-w); }
+    thead tr { background: var(--blue); }
+    th {
+      padding: var(--sp-sm) var(--sp-lg); text-align: left;
+      font-size: var(--fs-xs); font-weight: 700; color: rgba(255,255,255,.85);
+      text-transform: uppercase; letter-spacing: .07em; white-space: nowrap;
+    }
+    td { padding: var(--sp-sm) var(--sp-lg); border-bottom: 1px solid var(--gray-100); font-size: var(--fs-base); vertical-align: middle; }
+    tbody tr { transition: background .15s; }
+    tbody tr:hover { background: var(--blue-pale); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr.row-atraso { background: #fff5f5; }
+    tbody tr.row-atraso:hover { background: #fee2e2; }
+    @media (min-width:2560px) {
+      th { padding: 14px 22px; font-size: var(--fs-sm); }
+      td { padding: 13px 22px; font-size: var(--fs-md); }
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px;
+      font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; white-space: nowrap;
+    }
+    .badge::before { content:''; width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .status-aberto       { background: var(--success-bg); color: var(--success); }
+    .status-reprogramado { background: var(--warning-bg); color: var(--warning); }
+    .status-alert        { background: var(--danger-bg);  color: var(--danger); animation: pulse-badge 1.4s ease infinite; }
+    @keyframes pulse-badge {
+      0%,100%{ box-shadow:0 0 0 0 rgba(185,28,28,0); }
+      50%{ box-shadow:0 0 0 5px rgba(185,28,28,.15); }
+    }
+
+    .tempo-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      border-radius: 20px; padding: 4px 10px;
+      font-size: var(--fs-sm); font-weight: 600; white-space: nowrap;
+    }
+    .tempo-ok      { background: var(--success-bg); color: var(--success); border:1px solid #bbf7d0; }
+    .tempo-alerta  { background: #fef3c7; color:#92400e; border:1px solid #fde68a; animation:blink 1.6s ease infinite; }
+    .tempo-critico { background: var(--danger-bg); color: var(--danger); border:1px solid #fecaca; animation:blink .85s ease infinite; }
+    .tempo-vencido { background: #f5f5f5; color:#6b7280; border:1px solid #e5e7eb; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .tempo-bar-bg   { height:3px; background:var(--gray-200); border-radius:2px; margin-top:5px; min-width:70px; }
+    .tempo-bar-fill { height:100%; border-radius:2px; transition:width .3s; }
+
+    .btn-edit-table {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--blue); color: white; border: none;
+      padding: 6px 11px; border-radius: var(--radius-sm);
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+      letter-spacing: .04em; transition: all .2s; white-space: nowrap;
+    }
+    .btn-edit-table:hover { background: var(--blue-light); transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,51,102,.25); }
+    @media (max-width:479px) { .btn-edit-table { padding:5px 8px; font-size:9px; } }
+    @media (min-width:2560px) { .btn-edit-table { padding:9px 16px; font-size:var(--fs-sm); } }
+
+    .legenda-wrap {
+      display: flex; gap: var(--sp-sm); margin-top: var(--sp-lg);
+      flex-wrap: wrap; align-items: center;
+      padding: var(--sp-sm) var(--sp-lg);
+      background: var(--gray-50); border-radius: var(--radius-sm);
+      border: 1px solid var(--gray-200);
+    }
+    .legenda-title { font-size: var(--fs-xs); font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: .06em; }
+
+    /* SECTION */
+    .section-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: var(--sp-lg); flex-wrap: wrap; gap: var(--sp-sm);
+    }
+    .section-title { font-size: var(--fs-md); font-weight: 700; color: var(--blue); display: flex; align-items: center; gap: var(--sp-sm); flex-wrap: wrap; }
+    .section-badge {
+      background: var(--blue); color: white;
+      font-size: var(--fs-xs); font-weight: 700; padding: 2px 8px;
+      border-radius: 20px; letter-spacing: .04em;
+    }
+    .section-badge-danger { background: var(--danger); }
+
+    .filtro-tabela-select {
+      padding: 7px 11px; border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm); font-family: 'Inter', sans-serif;
+      font-size: var(--fs-sm); font-weight: 600; color: var(--gray-700);
+      outline: none; background: white; cursor: pointer;
+    }
+    @media (max-width:767px) { .filtro-tabela-select { width: 100%; } }
+
+    /* MODAL BASE */
+    .modal {
+      display: none; position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,.65); backdrop-filter: blur(3px);
+      overflow-y: auto; padding: var(--sp-xl);
+    }
+    @media (max-width:767px) {
+      .modal { padding: 0; display: none; align-items: flex-end; }
+      .modal.open { display: flex !important; }
+      .modal-content {
+        margin: 0 !important; border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+        max-width: 100% !important; width: 100% !important;
+        animation: slideUp .25s ease;
+      }
+      @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    }
+    .modal-content {
+      background: white; margin: 20px auto; padding: 0;
+      border-radius: var(--radius-lg); width: 100%; max-width: 560px;
+      box-shadow: var(--shadow-lg); overflow: hidden;
+    }
+    @media (min-width:1920px) { .modal-content { max-width: 680px; } }
+    .modal-header {
+      background: var(--blue); padding: var(--sp-lg) var(--sp-xl);
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 3px solid var(--gold);
+    }
+    .modal-header h2 { font-size: var(--fs-lg); font-weight: 700; color: white; margin: 0; }
+    .modal-close {
+      background: rgba(255,255,255,.15); border: none; color: white;
+      width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+      font-size: 17px; display: flex; align-items: center; justify-content: center;
+    }
+    .modal-close:hover { background: rgba(255,255,255,.28); }
+    .modal-body { padding: var(--sp-xl); }
+    .modal-info-os {
+      font-size: var(--fs-sm); font-weight: 600; background: var(--blue-pale);
+      padding: var(--sp-sm) var(--sp-lg); border-radius: var(--radius-sm); color: var(--blue);
+      margin-bottom: var(--sp-lg); border-left: 3px solid var(--blue); line-height: 1.5;
+    }
+    .tab-row { display: flex; margin-bottom: var(--sp-xl); border-radius: var(--radius-sm); overflow: hidden; border: 1.5px solid var(--gray-200); }
+    .tab-btn {
+      flex: 1; padding: 11px 12px; cursor: pointer; border: none;
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: var(--fs-sm);
+      text-transform: uppercase; letter-spacing: .05em; transition: all .2s;
+    }
+    .tab-active   { background: var(--blue); color: white; }
+    .tab-inactive { background: white; color: var(--gray-500); }
+    .tab-inactive:hover { background: var(--gray-50); }
+    .form-group { margin-bottom: var(--sp-lg); }
+    .form-group label {
+      display: block; font-size: var(--fs-xs); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 7px;
+    }
+    .form-group input, .form-group select {
+      width: 100%; padding: 10px 12px;
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-size: var(--fs-base); color: var(--gray-700);
+      outline: none; background: white; transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--blue); }
+    .form-row { display: flex; gap: var(--sp-md); }
+    .form-row .form-group { flex: 1; }
+    @media (max-width:479px) { .form-row { flex-direction: column; } }
+    .btn-save {
+      width: 100%; margin-top: 6px; background: var(--blue); color: white; border: none;
+      padding: 13px; border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: var(--fs-base);
+      letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .2s;
+    }
+    .btn-save:hover:not(:disabled) { background: var(--blue-light); }
+    .btn-save:disabled { background: var(--gray-300); cursor: not-allowed; }
+    .btn-repro {
+      width: 100%; margin-top: 6px; background: var(--gold); color: var(--blue); border: none;
+      padding: 13px; border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-weight: 700; font-size: var(--fs-base);
+      letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .2s;
+    }
+    .btn-repro:hover:not(:disabled) { background: var(--gold-light); }
+    .btn-repro:disabled { background: var(--gray-300); cursor: not-allowed; }
+    .alert-box {
+      background: var(--warning-bg); border-left: 3px solid var(--gold);
+      border-radius: var(--radius-sm); padding: 11px 14px; margin-bottom: var(--sp-lg);
+      font-size: var(--fs-sm); color: #78350f; line-height: 1.5;
+    }
+
+    /* MODAL RELATÓRIO */
+    #modalRelatorio {
+      display: none; position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,.65); backdrop-filter: blur(3px);
+      overflow-y: auto; padding: var(--sp-lg);
+    }
+    .modal-relatorio-content {
+      background: white; margin: 10px auto; padding: 0;
+      border-radius: var(--radius-lg); width: 100%; max-width: 1440px;
+      box-shadow: var(--shadow-lg); overflow: hidden;
+    }
+    @media (min-width:1920px) { .modal-relatorio-content { max-width: 1900px; } }
+    @media (max-width:767px)  { .modal-relatorio-content { margin: 0; border-radius: 0; } }
+    .rel-header {
+      background: var(--blue); padding: var(--sp-lg) var(--sp-2xl);
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 3px solid var(--gold);
+    }
+    .rel-header h2 { font-size: var(--fs-lg); font-weight: 700; color: white; margin: 0; }
+    .rel-header p  { font-size: var(--fs-xs); color: rgba(255,255,255,.55); margin-top: 2px; }
+    .rel-body { padding: var(--sp-xl) var(--sp-2xl); }
+    @media (max-width:767px) { .rel-body { padding: var(--sp-lg); } }
+    .rel-filters {
+      display: flex; gap: var(--sp-sm); flex-wrap: wrap; align-items: flex-end;
+      background: var(--gray-50); padding: var(--sp-lg); border-radius: var(--radius-sm);
+      margin-bottom: var(--sp-lg); border: 1px solid var(--gray-200);
+    }
+    .rel-filter-item { display: flex; flex-direction: column; gap: 5px; min-width: 155px; flex: 1; }
+    .rel-filter-item label {
+      font-size: var(--fs-xs); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .07em;
+    }
+    .rel-filter-item input, .rel-filter-item select {
+      padding: 9px 10px; border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm); font-family: 'Inter', sans-serif;
+      font-size: var(--fs-base); color: var(--gray-700); background: white;
+      outline: none; transition: border-color .2s;
+    }
+    .rel-filter-item input:focus, .rel-filter-item select:focus { border-color: var(--blue); }
+    @media (max-width:767px) { .rel-filter-item { min-width: 100%; } }
+    .btn-rel-limpar {
+      background: white; color: var(--gray-600); border: 1.5px solid var(--gray-200);
+      padding: 9px 16px; border-radius: var(--radius-sm); cursor: pointer;
+      font-family: 'Inter', sans-serif; font-weight: 600; font-size: var(--fs-sm);
+      align-self: flex-end; transition: all .2s;
+    }
+    .btn-rel-limpar:hover { background: var(--gray-100); }
+    .rel-export-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: var(--sp-sm); flex-wrap: wrap; gap: var(--sp-sm);
+    }
+    .rel-counter { font-size: var(--fs-sm); color: var(--gray-500); font-weight: 500; }
+    .rel-counter b { color: var(--blue); }
+    .btn-export-pdf {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: #b91c1c; color: white; border: none;
+      padding: 8px 16px; border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-size: var(--fs-sm); font-weight: 700;
+      cursor: pointer; box-shadow: 0 2px 6px rgba(185,28,28,.3); transition: all .2s;
+    }
+    .btn-export-pdf:hover { background: #991b1b; transform: translateY(-1px); }
+    .btn-export-pdf:disabled { background: var(--gray-400); cursor: not-allowed; transform: none; }
+    .export-ok {
+      display: none; align-items: center; gap: 8px;
+      background: var(--success-bg); border: 1px solid #86efac;
+      border-radius: var(--radius-sm); padding: 7px 12px;
+      font-size: var(--fs-sm); color: var(--success); font-weight: 600; margin-bottom: 8px;
+    }
+    .rel-table-wrap { overflow-x: auto; border-radius: var(--radius-sm); border: 1px solid var(--gray-200); -webkit-overflow-scrolling: touch; }
+    .rel-table { width: 100%; border-collapse: collapse; min-width: 1020px; font-size: var(--fs-sm); }
+    .rel-table thead th {
+      background: var(--blue); color: rgba(255,255,255,.85);
+      padding: 10px 13px; text-align: left;
+      font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; white-space: nowrap;
+    }
+    .rel-table tbody tr:nth-child(even) { background: var(--gray-50); }
+    .rel-table tbody tr:hover { background: var(--blue-pale); }
+    .rel-table td { padding: 9px 13px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; white-space: nowrap; }
+    .rel-badge { padding: 3px 9px; border-radius: 20px; font-weight: 700; font-size: var(--fs-xs); text-transform: uppercase; display: inline-block; letter-spacing: .04em; }
+    .rel-sem-dados { text-align: center; padding: 48px; color: var(--gray-400); font-size: var(--fs-base); }
+
+    #session-toast {
+      display: none; position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 99999; background: #7c2d12; color: white;
+      padding: 12px 20px; border-radius: var(--radius-lg);
+      font-size: var(--fs-sm); font-weight: 600;
+      box-shadow: 0 8px 28px rgba(0,0,0,.35);
+      border: 1px solid rgba(255,255,255,.15);
+      display: none; align-items: center; gap: 10px;
+      animation: toastIn .3s ease;
+      white-space: nowrap;
+    }
+    @keyframes toastIn { from{opacity:0;transform:translateX(-50%) translateY(12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
+    #session-toast button {
+      background: rgba(255,255,255,.2); border: none; color: white;
+      padding: 4px 10px; border-radius: var(--radius-sm); cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: var(--fs-xs); font-weight: 700;
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style id="tjmg-design-system">
+/* ─── TOKENS GLOBAIS ─────────────────────────────────────── */
+:root {
+  --tjmg-blue:        #003366 !important;
+  --tjmg-blue-dark:   #00234d !important;
+  --tjmg-blue-mid:    #004080 !important;
+  --tjmg-blue-light:  #0a4f8a !important;
+  --tjmg-blue-pale:   #e8f0fb !important;
+  --tjmg-gold:        #c5a059 !important;
+  --tjmg-gold-light:  #d4b06a !important;
+  --tjmg-gold-pale:   #fdf6e8 !important;
+  --tjmg-success:     #1b7a3e !important;
+  --tjmg-success-bg:  #e8f5ee !important;
+  --tjmg-warning:     #b45309 !important;
+  --tjmg-warning-bg:  #fef3c7 !important;
+  --tjmg-danger:      #b91c1c !important;
+  --tjmg-danger-bg:   #fee2e2 !important;
+  --tjmg-gray-50:     #f8fafc !important;
+  --tjmg-gray-100:    #f1f5f9 !important;
+  --tjmg-gray-200:    #e2e8f0 !important;
+  --tjmg-gray-300:    #cbd5e1 !important;
+  --tjmg-gray-400:    #94a3b8 !important;
+  --tjmg-gray-500:    #64748b !important;
+  --tjmg-gray-600:    #475569 !important;
+  --tjmg-gray-700:    #334155 !important;
+  --tjmg-gray-900:    #0f172a !important;
+  --tjmg-radius-sm:   6px !important;
+  --tjmg-radius:      10px !important;
+  --tjmg-radius-lg:   14px !important;
+  --tjmg-shadow-sm:   0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04) !important;
+  --tjmg-shadow:      0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04) !important;
+  --tjmg-shadow-lg:   0 10px 28px rgba(0,0,0,.10) !important;
+  --tjmg-topbar-h:    62px !important;
+  --tjmg-font:        'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif !important;
+}
+
+/* ─── RESET TIPOGRÁFICO ──────────────────────────────────── */
+html, body, button, input, select, textarea, table, td, th,
+.top-bar, .navbar-tjmg, .header-pci, .topo,
+.kpi-card, .card-kpi, .card-surface, .card-pci, .card,
+.btn, .btn-topbar, .nav-tab-btn, .nav-link,
+.modal-header, .modal-body, .modal-footer, .modal-content,
+.form-control, .form-select, .form-label,
+h1, h2, h3, h4, h5, h6, p, span, div, label, small, strong, b {
+  font-family: var(--tjmg-font);
+}
+body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; font-size: 14px !important; line-height: 1.55 !important; }
+
+/* Desativa cores de tema escuro (Emergencial) — fallback se sobrar algo */
+html[data-theme="dark"], html[data-theme="dark"] body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR — altura 62px, azul TJMG + borda dourada
+═══════════════════════════════════════════════════════════ */
+.top-bar, .navbar-tjmg, .header-pci, .topo, header.top-bar, header.header-pci, nav.navbar-tjmg {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,.18) !important;
+  position: sticky !important;
+  top: 34px !important;
+  z-index: 200 !important;
+  color: #fff !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+.top-bar *, .navbar-tjmg *, .header-pci *, .topo * { color: inherit; }
+.top-bar h2, .navbar-tjmg h2, .header-pci h2, .topo h2,
+.top-bar-title, .brand,
+.header-pci .brand, .navbar-tjmg .brand {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: .02em !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+.top-bar-sub, .header-pci .sub, .navbar-tjmg .sub, .topo .sub,
+.top-bar small, .header-pci small {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.55) !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+  display: block !important;
+  margin-top: 1px !important;
+}
+/* Ícone "C" do topbar */
+.top-bar-icon, .login-badge-icon {
+  width: 34px !important; height: 34px !important;
+  background: var(--tjmg-gold) !important;
+  border-radius: 8px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 15px !important; font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  flex-shrink: 0 !important;
+}
+.top-bar-brand, .header-pci > div:first-child { display: flex !important; align-items: center !important; gap: 14px !important; }
+.top-bar-right, .header-pci > div:last-child { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+
+/* Chips do topbar (relógio, data, região) */
+.top-bar-clock, .last-update-chip, .header-badge, #dataRefBadge, #chip_regiao {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.85) !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+}
+
+/* Botões do topbar */
+.btn-topbar {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  padding: 7px 14px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .03em !important;
+  height: 32px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  transition: background .15s !important;
+}
+.btn-topbar:hover { background: rgba(255,255,255,.20) !important; }
+.btn-topbar-gold {
+  background: var(--tjmg-gold) !important;
+  border-color: var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-topbar-gold:hover { background: var(--tjmg-gold-light) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PCI: navbar Bootstrap → topbar TJMG (overrides estruturais)
+═══════════════════════════════════════════════════════════ */
+.navbar-tjmg .container-fluid { padding: 0 !important; width: 100% !important; max-width: none !important; }
+.navbar-tjmg .brand { display: flex !important; align-items: center !important; gap: 10px !important; font-size: 15px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.navbar-tjmg .brand::before { content: "C"; display:flex; align-items:center; justify-content:center; width:32px; height:32px; background: var(--tjmg-gold); color: var(--tjmg-blue); border-radius:8px; font-weight:800; font-size:14px; }
+.navbar-tjmg .brand .fa-fire-extinguisher,
+.navbar-tjmg .brand i.fas { display: none !important; }
+.navbar-tjmg .sub { font-size: 10px !important; color: rgba(255,255,255,.55) !important; letter-spacing: .04em !important; margin-top: 1px !important; text-transform: uppercase !important; }
+.navbar-tjmg .text-end small { color: rgba(255,255,255,.70) !important; font-size: 11px !important; font-weight: 500 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAUDOS: header-pci gradient → solid TJMG
+═══════════════════════════════════════════════════════════ */
+.header-pci h2 { font-size: 16px !important; font-weight: 800 !important; letter-spacing: .02em !important; margin: 0 !important; color: #fff !important; }
+.header-pci h2 i.bi { color: var(--tjmg-gold) !important; font-size: 18px !important; margin-right: 6px !important; }
+.header-pci small { font-size: 11px !important; opacity: .55 !important; letter-spacing: .04em !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABS DE NAVEGAÇÃO
+═══════════════════════════════════════════════════════════ */
+.nav-tabs-bar {
+  background: var(--tjmg-blue-mid) !important;
+  border-bottom: 1px solid rgba(255,255,255,.1) !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  gap: 0 !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  position: sticky !important;
+  top: calc(34px + var(--tjmg-topbar-h)) !important;
+  z-index: 190 !important;
+}
+.nav-tabs-bar::-webkit-scrollbar { display: none; }
+.nav-tab {
+  padding: 12px 22px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.55) !important;
+  cursor: pointer !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  background: transparent !important;
+  transition: all .15s !important;
+  white-space: nowrap !important;
+  letter-spacing: .03em !important;
+  text-transform: uppercase !important;
+  user-select: none !important;
+  line-height: 1.2 !important;
+}
+.nav-tab:hover { color: rgba(255,255,255,.9) !important; background: rgba(255,255,255,.05) !important; }
+.nav-tab.active { color: var(--tjmg-gold) !important; border-bottom-color: var(--tjmg-gold) !important; font-weight: 700 !important; background: transparent !important; }
+
+/* Bootstrap nav-tabs (PCI) e tabs-wrapper (Laudos) */
+.nav.nav-tabs, .tabs-wrapper {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  padding: 4px !important;
+  display: flex !important;
+  gap: 2px !important;
+  margin-bottom: 18px !important;
+}
+.nav.nav-tabs .nav-link, .tabs-wrapper .nav-tab-btn {
+  color: var(--tjmg-gray-500) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  letter-spacing: .02em !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+  transition: all .15s !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.nav.nav-tabs .nav-link:hover, .tabs-wrapper .nav-tab-btn:hover { color: var(--tjmg-blue) !important; background: var(--tjmg-gray-100) !important; }
+.nav.nav-tabs .nav-link.active, .tabs-wrapper .nav-tab-btn.active {
+  background: var(--tjmg-blue) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(0,51,102,.25) !important;
+}
+
+/* Inner tabs (Periódica: cadastro/atualização) */
+.inner-tab {
+  padding: 10px 18px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  cursor: pointer !important;
+  border-radius: 8px 8px 0 0 !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  transition: all .15s !important;
+}
+.inner-tab-inactive { background: var(--tjmg-gray-200) !important; color: var(--tjmg-gray-500) !important; }
+.inner-tab-active   { background: var(--tjmg-blue) !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   CARDS / SURFACES
+═══════════════════════════════════════════════════════════ */
+.kpi-card, .card-kpi, .card-pci, .card-surface, .form-section, .chart-box, .search-container, .dash-filter-bar, .filter-bar {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card, .card-kpi {
+  padding: 16px 18px !important;
+  border-top: 4px solid var(--tjmg-blue) !important;
+  transition: transform .15s, box-shadow .15s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.kpi-card:hover, .card-kpi:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.kpi-card h3, .card-kpi h3, .kpi-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-gray-400) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card .value, .card-kpi h2, .kpi-value {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1 !important;
+  letter-spacing: -.02em !important;
+  font-family: var(--tjmg-font) !important;
+  margin: 0 !important;
+}
+.kpi-card .kpi-sub, .card-kpi small, .kpi-sub {
+  font-size: 10px !important;
+  color: var(--tjmg-gray-400) !important;
+  margin-top: 4px !important;
+  font-weight: 500 !important;
+  font-family: var(--tjmg-font) !important;
+  display: block !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+/* Variantes de cor KPI */
+.kpi-aberto, .kpi-success { border-top-color: var(--tjmg-success) !important; }
+.kpi-aberto .value, .kpi-success .kpi-value { color: var(--tjmg-success) !important; }
+.kpi-concluidas { border-top-color: #0369a1 !important; }
+.kpi-concluidas .value { color: #0369a1 !important; }
+.kpi-repro, .kpi-warning { border-top-color: #d97706 !important; }
+.kpi-repro .value, .kpi-warning .kpi-value { color: #d97706 !important; }
+.kpi-atraso, .kpi-danger { border-top-color: var(--tjmg-danger) !important; }
+.kpi-atraso .value, .kpi-danger .kpi-value { color: var(--tjmg-danger) !important; }
+.kpi-canceladas { border-top-color: var(--tjmg-gray-400) !important; }
+.kpi-canceladas .value { color: var(--tjmg-gray-500) !important; }
+.kpi-info { border-top-color: var(--tjmg-blue) !important; }
+.kpi-info .kpi-value { color: var(--tjmg-blue) !important; }
+.kpi-gold { border-top-color: var(--tjmg-gold) !important; }
+.kpi-gold .kpi-value { color: #8a6a00 !important; }
+
+/* PCI: card-kpi com background colorido — manter, mas com radius/sombra padronizados */
+.card-kpi[style*="background"] { border: none !important; border-top: none !important; }
+.card-kpi[style*="background"] h2 { color: inherit !important; }
+
+/* Form sections */
+.form-section, .card-surface, .chart-box {
+  padding: 22px !important;
+  margin-bottom: 18px !important;
+}
+.form-section-title, .section-title, .card-title, .chart-box-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 2px solid var(--tjmg-gray-100) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.form-section-title::after, .section-title::after { content: none !important; }
+.chart-box-title .dot, .card-title .dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; background: var(--tjmg-gold) !important; flex-shrink: 0 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   FORM CONTROLS — Inputs, selects, textareas
+═══════════════════════════════════════════════════════════ */
+input[type="text"], input[type="email"], input[type="password"], input[type="date"],
+input[type="time"], input[type="number"], input[type="search"], textarea,
+select, .form-control, .form-select, .filtro-tabela-select, .search-box {
+  font-family: var(--tjmg-font) !important;
+  font-size: 13px !important;
+  color: var(--tjmg-gray-700) !important;
+  background: #fff !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 9px 12px !important;
+  outline: none !important;
+  transition: border-color .15s, box-shadow .15s !important;
+  line-height: 1.4 !important;
+}
+input:focus, textarea:focus, select:focus, .form-control:focus, .form-select:focus {
+  border-color: var(--tjmg-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0,51,102,.10) !important;
+}
+input:disabled, select:disabled, textarea:disabled,
+.form-control:disabled, .form-select:disabled {
+  background: var(--tjmg-gray-100) !important;
+  color: var(--tjmg-gray-400) !important;
+  border-style: dashed !important;
+  cursor: not-allowed !important;
+}
+label, .form-label, .filter-item label, .form-group label, .label-tecnica, .dash-filter-item label, .mf-group label, .rel-filter-item label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  margin-bottom: 5px !important;
+  display: block !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTÕES (Bootstrap + custom)
+═══════════════════════════════════════════════════════════ */
+.btn {
+  font-family: var(--tjmg-font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 8px 16px !important;
+  letter-spacing: .02em !important;
+  transition: all .15s !important;
+  line-height: 1.3 !important;
+  cursor: pointer !important;
+}
+.btn-primary, .btn-tjmg, .btn-save, .btn-login {
+  background: var(--tjmg-blue) !important;
+  border: 1px solid var(--tjmg-blue) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+.btn-primary:hover, .btn-tjmg:hover, .btn-save:hover, .btn-login:hover {
+  background: var(--tjmg-blue-light) !important;
+  border-color: var(--tjmg-blue-light) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,51,102,.25) !important;
+}
+.btn-tjmg-gold, .btn-primary-gold, .btn-repro {
+  background: var(--tjmg-gold) !important;
+  border: 1px solid var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-tjmg-gold:hover, .btn-primary-gold:hover, .btn-repro:hover {
+  background: var(--tjmg-gold-light) !important;
+  border-color: var(--tjmg-gold-light) !important;
+}
+.btn-danger { background: var(--tjmg-danger) !important; border-color: var(--tjmg-danger) !important; color: #fff !important; }
+.btn-success { background: var(--tjmg-success) !important; border-color: var(--tjmg-success) !important; color: #fff !important; }
+.btn-warning { background: #d97706 !important; border-color: #d97706 !important; color: #fff !important; }
+.btn-secondary { background: var(--tjmg-gray-500) !important; border-color: var(--tjmg-gray-500) !important; color: #fff !important; }
+.btn-outline-primary { background: transparent !important; border: 1.5px solid var(--tjmg-blue) !important; color: var(--tjmg-blue) !important; }
+.btn-outline-primary:hover { background: var(--tjmg-blue-pale) !important; }
+.btn-outline-secondary { background: #fff !important; border: 1.5px solid var(--tjmg-gray-200) !important; color: var(--tjmg-gray-600) !important; }
+.btn-outline-secondary:hover { background: var(--tjmg-gray-100) !important; }
+.btn-outline-warning { background: transparent !important; border: 1.5px solid #d97706 !important; color: #d97706 !important; }
+.btn-outline-warning:hover { background: #fef3c7 !important; }
+.btn-outline-danger { background: transparent !important; border: 1.5px solid var(--tjmg-danger) !important; color: var(--tjmg-danger) !important; }
+.btn-outline-danger:hover { background: var(--tjmg-danger-bg) !important; }
+.btn-outline-success { background: transparent !important; border: 1.5px solid var(--tjmg-success) !important; color: var(--tjmg-success) !important; }
+.btn-sm { padding: 6px 12px !important; font-size: 11px !important; }
+.btn-lg { padding: 11px 20px !important; font-size: 13px !important; }
+
+.btn-limpar-filtro, .btn-rel-limpar {
+  background: var(--tjmg-gray-100) !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  color: var(--tjmg-gray-600) !important;
+  padding: 9px 16px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-family: var(--tjmg-font) !important;
+}
+.btn-limpar-filtro:hover, .btn-rel-limpar:hover { background: var(--tjmg-gray-200) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABELAS
+═══════════════════════════════════════════════════════════ */
+table, .table, .table-tjmg, .rel-table, .preview-table {
+  font-family: var(--tjmg-font) !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+table thead tr, .table thead tr, .table-tjmg thead tr {
+  background: var(--tjmg-blue) !important;
+}
+table thead th, .table thead th, .table-tjmg thead th, .rel-table thead th, .preview-table thead th {
+  background: var(--tjmg-blue) !important;
+  color: rgba(255,255,255,.92) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  padding: 10px 14px !important;
+  text-align: left !important;
+  border-bottom: 2px solid var(--tjmg-gold) !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody td, .table tbody td, .table-tjmg tbody td {
+  padding: 9px 14px !important;
+  font-size: 12.5px !important;
+  color: var(--tjmg-gray-700) !important;
+  border-bottom: 1px solid var(--tjmg-gray-100) !important;
+  vertical-align: middle !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody tr:hover, .table tbody tr:hover { background: var(--tjmg-blue-pale) !important; }
+.table-tjmg tbody tr:hover { background: var(--tjmg-gray-50) !important; }
+tbody tr.row-atraso, tbody tr.row-vencido { background: #fff5f5 !important; }
+tbody tr.row-atraso:hover, tbody tr.row-vencido:hover { background: var(--tjmg-danger-bg) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   BADGES / STATUS
+═══════════════════════════════════════════════════════════ */
+.badge, .badge-status, .badge-item, .rel-badge, .section-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  line-height: 1.4 !important;
+}
+.section-badge { background: var(--tjmg-blue) !important; color: #fff !important; }
+.section-badge-danger { background: var(--tjmg-danger) !important; }
+.status-aberto, .badge-agendado { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.status-aberto::before, .badge-agendado::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-reprogramado, .badge-30d, .badge-andamento {
+  background: var(--tjmg-warning-bg) !important;
+  color: var(--tjmg-warning) !important;
+}
+.status-reprogramado::before, .badge-andamento::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-alert, .badge-vencido, .badge-atraso {
+  background: var(--tjmg-danger-bg) !important;
+  color: var(--tjmg-danger) !important;
+}
+.status-alert::before, .badge-atraso::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.badge-ok, .badge-vigente { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.badge-60d { background: #fef9c3 !important; color: #854d0e !important; }
+.badge-90d { background: #dbeafe !important; color: #1e40af !important; }
+.badge-suspenso { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-500) !important; border: 1.5px dashed var(--tjmg-gray-300) !important; }
+.badge-na { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-400) !important; }
+
+/* Tempo-chip (prazo) — preserva cores semânticas */
+.tempo-chip { font-family: var(--tjmg-font) !important; padding: 4px 10px !important; border-radius: 20px !important; font-size: 11px !important; font-weight: 600 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   MODAIS
+═══════════════════════════════════════════════════════════ */
+.modal-content, .modal-relatorio-content, .modal-email {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: none !important;
+  box-shadow: var(--tjmg-shadow-lg) !important;
+  overflow: hidden !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header, .rel-header, .modal-edicao-header {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 16px 22px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+.modal-header h2, .modal-header h5, .rel-header h2 {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin: 0 !important;
+  letter-spacing: .02em !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header p, .rel-header p {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.6) !important;
+  margin: 2px 0 0 !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-close, .btn-close {
+  background: rgba(255,255,255,.15) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+.modal-close:hover, .btn-close:hover { background: rgba(255,255,255,.28) !important; opacity: 1 !important; }
+.modal-body, .rel-body { padding: 22px !important; background: #fff !important; font-family: var(--tjmg-font) !important; }
+.modal-footer, .modal-edicao-footer { background: var(--tjmg-gray-50) !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding: 14px 22px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE / CONTAINER
+═══════════════════════════════════════════════════════════ */
+.container, .container-fluid, main.container {
+  max-width: 1800px !important;
+  margin: 0 auto !important;
+  padding: 22px 24px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.welcome h2 { font-size: 22px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; }
+.welcome .sub { color: var(--tjmg-gray-500) !important; font-size: 13px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════════════════════════ */
+#login_screen, #tela-login {
+  background: var(--tjmg-blue) !important;
+  background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(197,160,89,.20) 0%, transparent 60%) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 32px 28px !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  border-top: 4px solid var(--tjmg-gold) !important;
+  color: #fff !important;
+}
+.login-card h1, .login-card h2 { color: #fff !important; font-weight: 800 !important; font-size: 18px !important; }
+.login-card .login-sub, .login-card > p { color: rgba(255,255,255,.55) !important; font-size: 12px !important; }
+.login-field label, .login-card label, .login-card label span {
+  color: rgba(255,255,255,.65) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  font-weight: 700 !important;
+}
+.login-card input, .login-field input, #form-login input {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  color: #fff !important;
+  padding: 12px 14px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 14px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card input::placeholder { color: rgba(255,255,255,.30) !important; }
+.login-card input:focus { border-color: var(--tjmg-gold) !important; background: rgba(255,255,255,.14) !important; box-shadow: none !important; }
+.btn-login, #btn_acessar, #btn-login {
+  background: var(--tjmg-gold) !important;
+  border: none !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  padding: 13px !important;
+  border-radius: var(--tjmg-radius) !important;
+  box-shadow: 0 4px 14px rgba(197,160,89,.4) !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+  cursor: pointer !important;
+}
+.btn-login:hover, #btn_acessar:hover, #btn-login:hover { background: var(--tjmg-gold-light) !important; transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════════════════════
+   SHELL HOME (index.html — cards de módulos)
+═══════════════════════════════════════════════════════════ */
+.topo {
+  background: var(--tjmg-blue) !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.topo .marca { font-size: 16px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.topo .versao { font-size: 11px !important; color: rgba(255,255,255,.5) !important; }
+.topo .info-user { font-size: 12px !important; color: rgba(255,255,255,.85) !important; font-weight: 500 !important; }
+.topo .btn-icon {
+  background: rgba(255,255,255,.10) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  padding: 7px 14px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  height: 32px !important;
+}
+.cards .card {
+  background: #fff !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  padding: 22px !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  transition: transform .15s, box-shadow .15s !important;
+}
+.cards .card:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.card-titulo { font-weight: 700 !important; font-size: 15px !important; color: var(--tjmg-blue) !important; font-family: var(--tjmg-font) !important; }
+.card-total { font-size: 32px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; line-height: 1 !important; font-family: var(--tjmg-font) !important; }
+.card-rotulo { font-size: 10px !important; color: var(--tjmg-gray-400) !important; text-transform: uppercase !important; letter-spacing: .07em !important; font-weight: 600 !important; }
+.card-acessar { color: var(--tjmg-blue) !important; font-size: 12px !important; font-weight: 700 !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding-top: 12px !important; margin-top: 12px !important; }
+
+/* Welcome */
+.welcome { margin-bottom: 24px !important; }
+.welcome h2 { color: var(--tjmg-blue) !important; }
+
+.info-box {
+  background: var(--tjmg-blue-pale) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  padding: 14px 18px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 12px !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1.6 !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ELEMENTOS QUE NÃO DEVEM SER ALTERADOS
+═══════════════════════════════════════════════════════════ */
+/* Gráficos preservam visual original — Google Charts / Chart.js renderizam canvas próprio */
+#chartHist, #chartLaudos, #chartPizza,
+#chart_concluidos, #chart_comarcas_total, #chart_pendentes, #chart_sis, #chart_ele,
+#grafico_gauge, #grafico_barras, #grafico_pizza_tipo {
+  font-family: var(--tjmg-font) !important;
+}
+
+/* Login do PCI/Laudos: o body com gradient azul precisa de margem para a navbar superior */
+body { padding-top: 34px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVO
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .top-bar, .navbar-tjmg, .header-pci, .topo {
+    height: auto !important;
+    min-height: var(--tjmg-topbar-h) !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap !important;
+  }
+  .top-bar-sub, .header-pci small, .navbar-tjmg .sub, #data_atual, .last-update-chip { display: none !important; }
+  .btn-topbar { padding: 6px 10px !important; font-size: 10px !important; height: 30px !important; }
+  table thead th { padding: 8px 10px !important; font-size: 9px !important; }
+  table tbody td { padding: 7px 10px !important; font-size: 11.5px !important; }
+  .kpi-card .value, .card-kpi h2, .kpi-value { font-size: 22px !important; }
+  .container, .container-fluid { padding: 14px 12px !important; }
+}
+</style>
+</head>
+<body>
+
+<style>
+#comap-unif-nav {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  background: #0a1929 !important;
+  color: #fff !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  gap: 10px !important;
+  z-index: 99999 !important;
+  font: 600 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  border-bottom: 1px solid #c5a059 !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+#comap-unif-nav * {
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+#comap-unif-nav a {
+  color: #fff !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+#comap-unif-nav .comap-sep {
+  opacity: .3 !important;
+  color: #fff !important;
+}
+#comap-unif-nav select {
+  background: rgba(255,255,255,.1) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  /* FIX: força largura fixa — sobrescreve width:100% do CSS do módulo */
+  width: 180px !important;
+  min-width: 140px !important;
+  max-width: 180px !important;
+  flex: 0 0 180px !important;
+  margin: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+}
+#comap-unif-nav select option {
+  background: #0a1929 !important;
+  color: #fff !important;
+}
+#comap-unif-nav .comap-spacer {
+  flex: 1 1 auto !important;
+}
+#comap-unif-nav button.comap-sair {
+  background: rgba(220,38,38,.2) !important;
+  color: #fff !important;
+  border: 1px solid rgba(220,38,38,.5) !important;
+  padding: 3px 10px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+#comap-unif-nav .comap-mod-label {
+  opacity: .7 !important;
+  font-size: 11px !important;
+  margin-left: 6px !important;
+  color: #fff !important;
+}
+#comap-loading {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(10,25,41,.92) !important;
+  z-index: 100000 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  color: #fff !important;
+  font: 600 14px sans-serif !important;
+}
+#comap-loading.show {
+  display: flex !important;
+}
+#comap-loading .comap-spin {
+  width: 40px !important;
+  height: 40px !important;
+  border: 3px solid rgba(197,160,89,.3) !important;
+  border-top-color: #c5a059 !important;
+  border-radius: 50% !important;
+  animation: comap-spin 0.8s linear infinite !important;
+  margin-bottom: 14px !important;
+}
+@keyframes comap-spin { to { transform: rotate(360deg) } }
+body { padding-top: 34px !important; }
+</style>
+<div id="comap-unif-nav">
+  <a href="#" onclick="event.preventDefault();if(window.__COMAP_HOME__)window.__COMAP_HOME__();else{var a=document.createElement('a');a.href=window.__COMAP_URL__||'/';a.target='_top';document.body.appendChild(a);a.click();}return false;">🏠 <span>COMAP</span></a>
+  <span class="comap-sep">│</span>
+  <select id="comap-unif-sel" onchange="(function(sel){if(!sel.value)return;var ov=document.getElementById('comap-loading');if(ov)ov.classList.add('show');var s=window.__COMAP_SESSAO__||{};var p=new URLSearchParams({modulo:sel.value,n:s.nome||'',email:s.email||'',r:s.regiao||'',g:s.global?'1':'0'});var a=document.createElement('a');a.href=(window.__COMAP_URL__||window.location.pathname)+'?'+p.toString();a.target='_top';document.body.appendChild(a);a.click();})(this)">
+    <option value="">— Trocar módulo —</option>
+    <option value="emergencial" selected>🚨 Emergencial</option>
+    <option value="periodica"   >🔄 Periódica</option>
+    <option value="pci"         >🔥 PCI</option>
+    <option value="laudos"      >📋 Laudos</option>
+  </select>
+  <span class="comap-spacer"></span>
+  <button class="comap-sair" onclick="if(window.__COMAP_LOGOUT__)window.__COMAP_LOGOUT__();">⏻ SAIR</button>
+  <span class="comap-mod-label">EMERGENCIAL</span>
+</div>
+<div id="comap-loading">
+  <div class="comap-spin"></div>
+  <div>Carregando módulo...</div>
+</div>
+
+<div id="device-badge"></div>
+
+<div id="session-toast">
+  ⚠️ Sua sessão expira em <span id="session-countdown">5:00</span>
+  <button onclick="renovarSessao(); fecharSessionToast()">Renovar</button>
+  <button onclick="fazerLogout()">Sair</button>
+</div>
+
+<!-- LOGIN -->
+<div id="login_screen">
+  <div class="login-outer">
+    <div class="login-badge">
+      <div class="login-badge-icon">C</div>
+      <div class="login-badge-text">
+        <strong>COMAP</strong>
+        <span>TJMG · Coordenação de Manutenção</span>
+      </div>
+    </div>
+    <div class="login-card">
+      <h2>Acesso ao Sistema</h2>
+      <p>Insira suas credenciais para continuar</p>
+      <div class="login-field">
+        <label>E-mail</label>
+        <input type="text" id="user_email" placeholder="seu@tjmg.jus.br" autocomplete="username"
+               onkeydown="if(event.key==='Enter') realizarLogin()">
+      </div>
+      <div class="login-field">
+        <label>Senha</label>
+        <input type="password" id="user_pass" placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter') realizarLogin()">
+      </div>
+      <button class="btn-login" id="btn_acessar" onclick="realizarLogin()">Entrar no Sistema</button>
+      <p id="login_msg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard_content" style="display:none;">
+
+  <!-- MODAL VIEW — Detalhes da OSE (leitura — todos os usuários) -->
+  <div id="modalView" class="modal">
+    <div class="modal-content" style="max-width:600px;">
+      <div class="modal-header" id="view_modal_header">
+        <div>
+          <h2 style="font-size:var(--fs-lg);font-weight:800;color:white;margin:0;letter-spacing:.01em;">
+            🔍 Detalhes da OSE
+          </h2>
+          <p id="view_subtitulo" style="font-size:var(--fs-xs);color:rgba(255,255,255,.5);margin-top:3px;"></p>
+        </div>
+        <button class="modal-close" onclick="fecharView()">×</button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+
+        <!-- Faixa colorida com OSE + status -->
+        <div id="view_header_strip"
+             style="padding:var(--sp-lg) var(--sp-xl);
+                    display:flex;align-items:center;justify-content:space-between;
+                    gap:var(--sp-md);flex-wrap:wrap;
+                    border-bottom:1px solid var(--gray-200);">
+          <div>
+            <div style="font-size:var(--fs-xs);font-weight:700;color:rgba(255,255,255,.65);
+                        text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">
+              Ordem de Serviço Emergencial
+            </div>
+            <div id="view_ose_num"
+                 style="font-size:var(--fs-kpi);font-weight:800;color:white;
+                        letter-spacing:-.02em;line-height:1;font-family:monospace;"></div>
+          </div>
+          <div id="view_status_badge" style="align-self:flex-start;margin-top:4px;"></div>
+        </div>
+
+        <!-- Campos em grid -->
+        <div style="padding:var(--sp-xl);display:grid;gap:var(--sp-lg);">
+
+          <!-- Contrato + Região -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-md);">
+            <div class="view-field">
+              <div class="view-label">📋 Contrato</div>
+              <div class="view-value" id="view_contrato">—</div>
+            </div>
+            <div class="view-field">
+              <div class="view-label">📍 Região</div>
+              <div class="view-value" id="view_regiao">—</div>
+            </div>
+          </div>
+
+          <!-- Comarca + Edificação -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-md);">
+            <div class="view-field">
+              <div class="view-label">🏛️ Comarca</div>
+              <div class="view-value" id="view_comarca">—</div>
+            </div>
+            <div class="view-field">
+              <div class="view-label">🏢 Edificação</div>
+              <div class="view-value" id="view_edificacao">—</div>
+            </div>
+          </div>
+
+          <!-- Data/Hora Abertura -->
+          <div class="view-field">
+            <div class="view-label">🕐 Data e Hora de Abertura</div>
+            <div class="view-value" id="view_abertura">—</div>
+          </div>
+
+          <!-- Divider -->
+          <div style="height:1px;background:var(--gray-200);margin:-4px 0;"></div>
+
+          <!-- Descrição sucinta -->
+          <div class="view-field view-field-highlight">
+            <div class="view-label">🔧 Descrição Sucinta do Problema</div>
+            <div class="view-value" id="view_descricao" style="white-space:pre-wrap;line-height:1.6;">—</div>
+          </div>
+
+          <!-- Sistema / Subsistema / Elemento (apenas se preenchido) -->
+          <div id="view_bloco_sistema" style="display:none;">
+            <div style="height:1px;background:var(--gray-200);margin-bottom:var(--sp-lg);"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-md);">
+              <div class="view-field">
+                <div class="view-label">⚙️ Sistema</div>
+                <div class="view-value" id="view_sistema">—</div>
+              </div>
+              <div class="view-field">
+                <div class="view-label">🔩 Subsistema</div>
+                <div class="view-value" id="view_subsistema">—</div>
+              </div>
+              <div class="view-field">
+                <div class="view-label">🔌 Elemento</div>
+                <div class="view-value" id="view_elemento">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botão fechar -->
+          <button onclick="fecharView()"
+                  style="width:100%;padding:12px;background:var(--gray-100);
+                         border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);
+                         font-family:'Inter',sans-serif;font-weight:700;font-size:var(--fs-sm);
+                         color:var(--gray-600);cursor:pointer;transition:background .15s;"
+                  onmouseover="this.style.background='var(--gray-200)'"
+                  onmouseout="this.style.background='var(--gray-100)'">
+            Fechar
+          </button>
+
+        </div><!-- /grid campos -->
+      </div><!-- /modal-body -->
+    </div><!-- /modal-content -->
+  </div>
+  <!-- FIM MODAL VIEW -->
+
+  <!-- MODAL CONCLUSÃO -->
+  <div id="modalConclusao" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>✏️ Gestão de Atendimento</h2>
+        <button class="modal-close" onclick="fecharModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p id="info_os" class="modal-info-os"></p>
+        <input type="hidden" id="f_linha">
+        <input type="hidden" id="f_ose_val">
+        <div class="tab-row">
+          <button id="tab_exec"  class="tab-btn tab-active"   onclick="alternarAba('executar')">Atualizar Status</button>
+          <button id="tab_repro" class="tab-btn tab-inactive" onclick="alternarAba('reprogramar')">Reprogramar</button>
+        </div>
+        <div id="aba_executar">
+          <div class="form-group">
+            <label>Status Final</label>
+            <select id="f_status" onchange="tratarMudancaStatus()">
+              <option value="CONCLUÍDO">CONCLUÍDO</option>
+              <option value="CANCELADO">CANCELADO</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Data Conclusão</label><input type="date" id="f_data" oninput="validarForm()"></div>
+            <div class="form-group"><label>Hora Conclusão</label><input type="time" id="f_hora" oninput="validarForm()"></div>
+          </div>
+          <div class="form-group"><label>Sistema Predial</label><select id="f_sistema" onchange="popularSubsistema()"><option value="">Carregando...</option></select></div>
+          <div class="form-group"><label>Subsistema</label><select id="f_subsistema" onchange="popularElemento()"><option value="">Selecione o Sistema primeiro</option></select></div>
+          <div class="form-group"><label>Elemento</label><select id="f_elemento" onchange="validarForm()"><option value="">Selecione o Subsistema primeiro</option></select></div>
+          <div class="form-group"><label>Causa Raiz</label><input type="text" id="f_causa" oninput="validarForm()" placeholder="Descreva a causa raiz..."></div>
+          <button class="btn-save" id="btn_gravar" onclick="enviarDados()" disabled>Gravar Atualização</button>
+        </div>
+        <div id="aba_reprogramar" style="display:none;">
+          <div class="alert-box"><strong>Atenção:</strong> Esta ação alterará a <strong>Data e Hora de Abertura</strong> original da OSE e mudará o status para <strong>ABERTO (REPROGRAMADO)</strong>.</div>
+          <div class="form-group"><label>Nova Data de Abertura</label><input type="date" id="r_data"></div>
+          <div class="form-group"><label>Nova Hora de Abertura</label><input type="time" id="r_hora"></div>
+          <button class="btn-repro" id="btn_repro_gravar" onclick="enviarReprogramacao()">Confirmar Reprogramação</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL RELATÓRIO -->
+  <div id="modalRelatorio">
+    <div class="modal-relatorio-content">
+      <div class="rel-header">
+        <div>
+          <h2>📋 Relatório de Atendimentos</h2>
+          <p>Todos os registros — abertos, concluídos e cancelados</p>
+        </div>
+        <button class="modal-close" onclick="fecharRelatorio()">×</button>
+      </div>
+      <div class="rel-body">
+        <div class="rel-filters">
+          <div class="rel-filter-item"><label>Contrato</label><select id="rel_contrato" onchange="filtrarRelatorio()"><option value="">Todos</option></select></div>
+          <div class="rel-filter-item"><label>Comarca / Região</label><input type="text" id="rel_comarca" placeholder="Digite comarca ou região..." oninput="filtrarRelatorio()"></div>
+          <div class="rel-filter-item"><label>OSE</label><input type="text" id="rel_ose" placeholder="Número da OSE..." oninput="filtrarRelatorio()"></div>
+          <div class="rel-filter-item">
+            <label>Status</label>
+            <select id="rel_status" onchange="filtrarRelatorio()">
+              <option value="">Todos</option>
+              <option value="ABERTO">Aberto</option>
+              <option value="EM ATRASO">Em Atraso</option>
+              <option value="ABERTO(REPROGRAMADO)">Reprogramado</option>
+              <option value="CONCLUÍDO">Concluído (no prazo)</option>
+              <option value="CONCLUÍDO(ATRASO24)">Concluído (atraso &lt;24h)</option>
+              <option value="CONCLUÍDO(ATRASO48)">Concluído (atraso &lt;48h)</option>
+              <option value="CONCLUÍDO(ATRASOACIMA48)">Concluído (atraso &gt;48h)</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </div>
+          <button class="btn-rel-limpar" onclick="limparFiltrosRelatorio()">✕ Limpar</button>
+        </div>
+        <div class="rel-export-bar">
+          <p class="rel-counter" id="rel_counter">Carregando...</p>
+          <button class="btn-export-pdf" id="btn_exportar" onclick="exportarPDF()">📄 Exportar PDF</button>
+        </div>
+        <div class="export-ok" id="export_ok">✅ Download iniciado com sucesso!</div>
+        <div class="rel-table-wrap">
+          <table class="rel-table" id="rel_table_main">
+            <thead><tr>
+              <th id="rel_th_acao" style="display:none;">Ação</th>
+              <th>OSE</th><th>Contrato</th><th>Comarca</th><th>Região</th>
+              <th>Dt. Abertura</th><th>Hr. Abertura</th>
+              <th>Dt. Conclusão</th><th>Hr. Conclusão</th>
+              <th>Sistema</th><th>Elemento</th><th>Causa Raiz</th><th>Status</th>
+            </tr></thead>
+            <tbody id="rel_tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL GESTÃO DE USUÁRIOS (apenas MASTER) -->
+  <div id="modalUsuarios"
+       style="display:none;position:fixed;inset:0;z-index:9000;
+              background:rgba(0,0,0,.65);backdrop-filter:blur(3px);
+              overflow-y:auto;padding:var(--sp-xl);">
+    <div style="background:white;margin:20px auto;padding:0;
+                border-radius:var(--radius-lg);width:100%;max-width:740px;
+                box-shadow:var(--shadow-lg);overflow:hidden;">
+      <div class="modal-header">
+        <div>
+          <h2 style="font-size:var(--fs-lg);font-weight:700;color:white;margin:0;">👥 Gestão de Usuários</h2>
+          <p style="font-size:var(--fs-xs);color:rgba(255,255,255,.5);margin-top:2px;">TJMG · COMAP — Acesso restrito ao perfil MASTER</p>
+        </div>
+        <button class="modal-close" onclick="fecharGestaoUsuarios()">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="usuarios_lista_view">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-lg);">
+            <span style="font-size:var(--fs-sm);color:var(--gray-500);font-weight:500;" id="usuarios_counter">Carregando...</span>
+            <button class="btn-edit-table" style="background:var(--success);letter-spacing:.03em;" onclick="mostrarFormUsuario(null)">+ Novo Usuário</button>
+          </div>
+          <div class="table-wrapper">
+            <table style="min-width:500px;">
+              <thead><tr><th>Nome</th><th>E-mail</th><th>Acesso / Região</th><th style="text-align:center;">Ações</th></tr></thead>
+              <tbody id="usuarios_tbody"><tr><td colspan="4" style="text-align:center;padding:28px;color:var(--gray-400);">Carregando...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div id="usuarios_form_view" style="display:none;">
+          <div style="display:flex;align-items:center;gap:var(--sp-sm);margin-bottom:var(--sp-xl);padding-bottom:var(--sp-md);border-bottom:2px solid var(--gray-100);">
+            <button onclick="mostrarListaUsuarios()" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:var(--fs-sm);font-weight:700;display:flex;align-items:center;gap:4px;padding:0;">← Voltar</button>
+            <span style="color:var(--gray-300);">|</span>
+            <span id="form_titulo_usuario" style="font-size:var(--fs-md);font-weight:700;color:var(--blue);"></span>
+          </div>
+          <input type="hidden" id="u_linha">
+          <input type="hidden" id="u_email_original">
+          <div class="form-group"><label>Nome Completo</label><input type="text" id="u_nome" placeholder="Ex: João da Silva" oninput="validarFormUsuario()"></div>
+          <div class="form-group"><label>E-mail TJMG</label><input type="email" id="u_email" placeholder="usuario@tjmg.jus.br" oninput="validarFormUsuario()"></div>
+          <div class="form-row">
+            <div class="form-group">
+              <label id="u_senha_label">Senha</label>
+              <div style="position:relative;">
+                <input type="password" id="u_senha" placeholder="Mínimo 4 caracteres" oninput="validarFormUsuario()" style="padding-right:40px;width:100%;">
+                <button onclick="toggleSenhaUsuario('u_senha')" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:var(--fs-base);color:var(--gray-400);" title="Mostrar/ocultar">👁</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Confirmar Senha</label>
+              <div style="position:relative;">
+                <input type="password" id="u_senha_conf" placeholder="Repita a senha" oninput="validarFormUsuario()" style="padding-right:40px;width:100%;">
+                <button onclick="toggleSenhaUsuario('u_senha_conf')" type="button" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:var(--fs-base);color:var(--gray-400);" title="Mostrar/ocultar">👁</button>
+              </div>
+            </div>
+          </div>
+          <div id="u_senha_erro" style="display:none;font-size:var(--fs-xs);color:var(--danger);font-weight:700;margin-top:-10px;margin-bottom:var(--sp-md);">⚠ As senhas não conferem</div>
+          <div class="form-group">
+            <label>Nível de Acesso / Região</label>
+            <select id="u_regiao" onchange="validarFormUsuario()">
+              <option value="">Selecione o nível de acesso...</option>
+              <option value="MASTER">👑 MASTER — Acesso Total (todas as regiões)</option>
+              <optgroup label="─── Regiões Especiais ───">
+                <option value="NORTE">📍 NORTE</option>
+                <option value="LESTE">📍 LESTE</option>
+                <option value="CENTRAL">📍 CENTRAL</option>
+                <option value="ZONA DA MATA">📍 ZONA DA MATA</option>
+              </optgroup>
+              <optgroup label="─── Outras Regiões ───">
+                <option value="SUL">📍 SUL</option>
+                <option value="TRIANGULO">📍 TRIÂNGULO</option>
+                <option value="ALTO PARANAIBA">📍 ALTO PARANAÍBA</option>
+                <option value="NOROESTE">📍 NOROESTE</option>
+              </optgroup>
+            </select>
+          </div>
+          <div id="u_form_hint" style="font-size:var(--fs-xs);color:var(--gray-400);background:var(--gray-50);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:var(--sp-lg);border-left:3px solid var(--gray-300);line-height:1.5;"></div>
+          <div style="display:flex;gap:var(--sp-md);">
+            <button onclick="mostrarListaUsuarios()" style="flex:1;padding:12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);background:white;color:var(--gray-600);font-family:'Inter',sans-serif;font-weight:700;font-size:var(--fs-sm);cursor:pointer;transition:background .2s;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='white'">Cancelar</button>
+            <button class="btn-save" id="btn_salvar_usuario" onclick="salvarUsuarioModal()" disabled style="flex:2;">💾 Salvar Usuário</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDIÇÃO COMPLETA (apenas MASTER) -->
+  <div id="modalEditarRegistro"
+       style="display:none;position:fixed;inset:0;z-index:9500;
+              background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
+              overflow-y:auto;padding:var(--sp-xl);">
+    <div style="background:white;margin:16px auto;padding:0;
+                border-radius:var(--radius-lg);width:100%;max-width:820px;
+                box-shadow:var(--shadow-lg);overflow:hidden;">
+      <div class="modal-header" style="border-bottom:3px solid #c5a059;">
+        <div>
+          <h2 style="font-size:var(--fs-lg);font-weight:700;color:white;margin:0;">🛠️ Edição Completa de Registro</h2>
+          <p style="font-size:var(--fs-xs);color:rgba(255,255,255,.5);margin-top:2px;" id="er_subtitulo">TJMG · COMAP — Acesso restrito ao perfil MASTER</p>
+        </div>
+        <button class="modal-close" onclick="fecharEditarRegistro()">×</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="er_linha">
+        <div style="background:#fff3cd;border-left:3px solid #c5a059;border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:var(--sp-lg);font-size:var(--fs-xs);color:#78350f;line-height:1.6;">
+          ⚠️ <strong>Modo MASTER:</strong> Todos os campos do registro podem ser alterados. O status pode ser revertido para <strong>ABERTO</strong> a qualquer momento.
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>OSE (Número da Ordem)</label><input type="text" id="er_ose" placeholder="Ex: 12345"></div>
+          <div class="form-group"><label>Contrato</label><input type="text" id="er_contrato" placeholder="Ex: CT-001"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Região</label>
+            <select id="er_regiao" onchange="ComapDropdowns.onRegiao(this.value,'er_comarca','er_edificacao')">
+              <option value="">Selecione...</option>
+              <option value="NORTE">NORTE</option>
+              <option value="LESTE">LESTE</option>
+              <option value="CENTRAL">CENTRAL</option>
+              <option value="ZONA_DA_MATA">ZONA DA MATA</option>
+              <option value="SUL">SUL</option>
+              <option value="SUDOESTE">SUDOESTE</option>
+              <option value="TRIANGULO">TRIÂNGULO</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Comarca</label>
+            <select id="er_comarca" onchange="ComapDropdowns.onComarca(document.getElementById('er_regiao').value,this.value,'er_edificacao')">
+              <option value="">Selecione a região primeiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Edificação</label>
+            <select id="er_edificacao">
+              <option value="">Selecione a comarca primeiro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Data de Abertura</label><input type="date" id="er_data_abertura"></div>
+          <div class="form-group"><label>Hora de Abertura</label><input type="time" id="er_hora_abertura"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Data de Conclusão <span style="font-weight:400;color:var(--gray-400);">(opcional)</span></label><input type="date" id="er_data_conclusao"></div>
+          <div class="form-group"><label>Hora de Conclusão <span style="font-weight:400;color:var(--gray-400);">(opcional)</span></label><input type="time" id="er_hora_conclusao"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Sistema Predial</label><input type="text" id="er_sistema" placeholder="Ex: ELÉTRICO"></div>
+          <div class="form-group"><label>Subsistema</label><input type="text" id="er_subsistema" placeholder="Ex: ILUMINAÇÃO"></div>
+        </div>
+        <div class="form-group"><label>Elemento</label><input type="text" id="er_elemento" placeholder="Ex: LUMINÁRIAS"></div>
+        <div class="form-group"><label>Causa Raiz</label><input type="text" id="er_causa" placeholder="Descreva a causa raiz do problema..."></div>
+        <div class="form-group">
+          <label>Status do Chamado</label>
+          <select id="er_status">
+            <option value="ABERTO">✅ ABERTO</option>
+            <option value="NÃO INICIADO">🔵 NÃO INICIADO</option>
+            <option value="ABERTO(REPROGRAMADO)">🟡 ABERTO (REPROGRAMADO)</option>
+            <option value="EM ATRASO">🔴 EM ATRASO</option>
+            <option value="CONCLUÍDO">✔️ CONCLUÍDO (no prazo)</option>
+            <option value="CONCLUÍDO(ATRASO24)">⏱ CONCLUÍDO (atraso &lt;24h)</option>
+            <option value="CONCLUÍDO(ATRASO48)">⏱ CONCLUÍDO (atraso &lt;48h)</option>
+            <option value="CONCLUÍDO(ATRASOACIMA48)">⏱ CONCLUÍDO (atraso &gt;48h)</option>
+            <option value="CANCELADO">⛔ CANCELADO</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:var(--sp-md);margin-top:var(--sp-xl);">
+          <button onclick="fecharEditarRegistro()" style="flex:1;padding:12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);background:white;color:var(--gray-600);font-family:Inter,sans-serif;font-weight:700;font-size:var(--fs-sm);cursor:pointer;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='white'">Cancelar</button>
+          <button class="btn-save" id="btn_salvar_edicao" onclick="salvarEdicaoCompleta()" style="flex:2;">💾 Salvar Alterações</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-brand">
+      <div class="top-bar-icon">C</div>
+      <div>
+        <div class="top-bar-title">COMAP · Atendimentos Emergenciais</div>
+        <div class="top-bar-sub">TJMG — Coordenação de Manutenção Predial &nbsp;|&nbsp; Usuário: <span id="span_user"></span></div>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div class="top-bar-clock" id="relogio_topbar">--:--:--</div>
+      <div class="top-bar-clock" id="data_atual" style="font-weight:500;"></div>
+      <div class="last-update-chip" id="last_update_chip" style="display:none;">
+        <span class="dot-pulse"></span>
+        <span id="last_update_text">—</span>
+      </div>
+      <div class="top-bar-clock" id="chip_regiao" style="display:none;font-weight:700;letter-spacing:.04em;color:white;"></div>
+      <button class="btn-topbar" id="btn_usuarios" onclick="abrirGestaoUsuarios()" style="display:none;">👥 Usuários</button>
+      <button class="btn-topbar btn-topbar-gold" onclick="abrirRelatorio()">📋 Relatório</button>
+      <button class="btn-topbar" onclick="atualizarDados()" id="btn_refresh">↻ Atualizar</button>
+      <button class="btn-topbar" onclick="fazerLogout()">⏻ Sair</button>
+    </div>
+  </div>
+
+  <!-- BANNER ALERTA -->
+  <div id="alerta_banner">
+    <span class="alerta-icon">🚨</span>
+    <span style="white-space:nowrap;flex-shrink:0;font-weight:700;">NOVA(S) OSE EM ATRASO:</span>
+    <div id="alerta_lista" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    <button class="alerta-fechar" onclick="document.getElementById('alerta_banner').style.display='none'">×</button>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="container">
+    <div id="loader"><div class="spinner"></div><p>Sincronizando dados com a planilha...</p></div>
+    <main id="main_content" style="display:none;">
+
+      <!-- FILTROS -->
+      <div class="search-container">
+        <div class="filter-wrapper">
+          <div class="filter-item" id="fi_inicio">
+            <label>Data Início</label>
+            <input type="date" id="filtro_inicio" onchange="validarDatas(); executarFiltro()">
+            <span class="date-error" id="err_data">Data início maior que data fim</span>
+          </div>
+          <div class="filter-item" id="fi_fim">
+            <label>Data Fim</label>
+            <input type="date" id="filtro_fim" onchange="validarDatas(); executarFiltro()">
+          </div>
+          <input type="text" id="busca_geral" class="search-box" placeholder="Filtrar por Comarca, Região, OSE, Sistema..." onkeyup="executarFiltro()">
+          <button class="btn-limpar-filtro" onclick="limparFiltrosDashboard()">✕ Limpar</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-container">
+        <div class="kpi-card"><h3>Histórico Total</h3><div class="value" id="kpi_total">-</div><div class="kpi-sub">chamados registrados</div></div>
+        <div class="kpi-card kpi-concluidas"><h3>Concluídas</h3><div class="value" id="kpi_concluidas">-</div><div class="kpi-sub">no prazo + com atraso</div></div>
+        <div class="kpi-card kpi-aberto"><h3>Em Aberto</h3><div class="value" id="kpi_aberto">-</div><div class="kpi-sub">aguardando atendimento</div></div>
+        <div class="kpi-card kpi-repro"><h3>Reprogramados</h3><div class="value" id="kpi_repro">-</div><div class="kpi-sub">data alterada</div></div>
+        <div class="kpi-card kpi-atraso"><h3>⚠ Em Atraso</h3><div class="value" id="kpi_atraso">-</div><div class="kpi-sub">prazo vencido</div></div>
+        <div class="kpi-card kpi-canceladas"><h3>Cancelados</h3><div class="value" id="kpi_canceladas">-</div><div class="kpi-sub">sem atendimento</div></div>
+      </div>
+
+      <!-- GRÁFICOS -->
+      <div class="grid">
+        <div class="chart-box"><div class="chart-box-title"><span class="dot"></span>Concluídos por Região</div><div id="chart_concluidos"></div></div>
+        <div class="chart-box"><div class="chart-box-title"><span class="dot"></span>Comarcas — Visão Geral</div><div id="chart_comarcas_total"></div></div>
+        <div class="chart-box full-width"><div class="chart-box-title"><span class="dot"></span>Pendências por Região — Status Atualizado</div><div id="chart_pendentes"></div></div>
+        <div class="chart-box"><div class="chart-box-title"><span class="dot"></span>Top Sistemas Críticos</div><div id="chart_sis"></div></div>
+        <div class="chart-box"><div class="chart-box-title"><span class="dot"></span>Top Elementos Críticos</div><div id="chart_ele"></div></div>
+
+        <!-- TABELA -->
+        <div class="chart-box full-width">
+          <div class="section-header">
+            <div class="section-title">
+              📋 Chamados Abertos
+              <span class="section-badge" id="badge_total_abertos">0</span>
+              <span class="section-badge section-badge-danger" id="badge_atraso_abertos" style="display:none;"></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <select id="filtro_status_tabela" class="filtro-tabela-select" onchange="executarFiltro()">
+                <option value="">Todos os status</option>
+                <option value="EM ATRASO">⚠ Em Atraso</option>
+                <option value="ABERTO">Aberto</option>
+                <option value="ABERTO(REPROGRAMADO)">Reprogramado</option>
+              </select>
+              <select id="filtro_regiao_tabela" class="filtro-tabela-select" onchange="executarFiltro()">
+                <option value="">Todas as regiões</option>
+              </select>
+            </div>
+          </div>
+          <div id="tabela_pendentes"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+  const BREAKPOINTS = {
+    xs:  { max:479,   label:'📱 Celular P',   chartH:200 },
+    sm:  { min:480,   max:767,  label:'📱 Celular G',   chartH:240 },
+    md:  { min:768,   max:1023, label:'📱 Tablet/iPad', chartH:290 },
+    lg:  { min:1024,  max:1365, label:'💻 Laptop',      chartH:320 },
+    xl:  { min:1366,  max:1919, label:'🖥️ Desktop',     chartH:360 },
+    '2xl':{ min:1920, max:2559, label:'📺 TV/Monitor',  chartH:460 },
+    '4k': { min:2560, label:'📽️ Projetor/4K', chartH:580 }
+  };
+
+  function getBP() {
+    const w = window.innerWidth;
+    if (w <= 479)  return 'xs';
+    if (w <= 767)  return 'sm';
+    if (w <= 1023) return 'md';
+    if (w <= 1365) return 'lg';
+    if (w <= 1919) return 'xl';
+    if (w <= 2559) return '2xl';
+    return '4k';
+  }
+  function isMobile() { return window.innerWidth <= 767; }
+  function isTV()     { return window.innerWidth >= 1920; }
+
+  let _badgeTimer;
+  function mostrarBadge() {
+    const b = document.getElementById('device-badge');
+    if (!b) return;
+    const bp = getBP();
+    b.textContent = `${BREAKPOINTS[bp].label} · ${window.innerWidth}×${window.innerHeight}`;
+    b.classList.add('show');
+    clearTimeout(_badgeTimer);
+    _badgeTimer = setTimeout(() => b.classList.remove('show'), 3000);
+  }
+
+  function ajustarCharts() {
+    const h = BREAKPOINTS[getBP()].chartH;
+    document.querySelectorAll('[id^="chart_"]').forEach(el => { el.style.minHeight = h + 'px'; });
+  }
+
+  let _resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(_resizeTimer);
+    _resizeTimer = setTimeout(() => {
+      mostrarBadge(); ajustarCharts();
+      if (DADOS_GLOBAIS.length) executarFiltro();
+    }, 300);
+  });
+  window.addEventListener('orientationchange', () => setTimeout(() => {
+    mostrarBadge(); ajustarCharts();
+    if (DADOS_GLOBAIS.length) executarFiltro();
+  }, 450));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const mv = document.getElementById('modalView');
+      const mc = document.getElementById('modalConclusao');
+      const mr = document.getElementById('modalRelatorio');
+      const mu = document.getElementById('modalUsuarios');
+      const me = document.getElementById('modalEditarRegistro');
+      if      (mv && mv.style.display !== 'none') fecharView();
+      else if (mc && mc.style.display !== 'none') fecharModal();
+      else if (mr && mr.style.display !== 'none') fecharRelatorio();
+      else if (mu && mu.style.display !== 'none') fecharGestaoUsuarios();
+      else if (me && me.style.display !== 'none') fecharEditarRegistro();
+    }
+  });
+
+  function getChartsConfig() {
+    const mobile = isMobile(), tv = isTV();
+    return {
+      fontName: 'Inter',
+      titleTextStyle: { fontSize:1, color:'transparent' },
+      legend: {
+        position: mobile ? 'none' : 'bottom',
+        textStyle: { fontSize: mobile ? 9 : tv ? 13 : 10, color:'#64748b' },
+        maxLines: 3
+      },
+      chartArea: {
+        width:  mobile ? '93%' : tv ? '84%' : '88%',
+        height: mobile ? '55%' : tv ? '65%' : '62%',
+        top: mobile ? 8 : 14,
+        bottom: mobile ? 35 : tv ? 95 : 72
+      },
+      hAxis: {
+        textStyle: { fontSize: mobile ? 8 : tv ? 13 : 10, color:'#64748b' },
+        slantedText: true, slantedTextAngle: mobile ? 60 : 40,
+        gridlines: { color:'#f1f5f9' }
+      },
+      vAxis: {
+        textStyle: { fontSize: mobile ? 8 : tv ? 12 : 10, color:'#94a3b8' },
+        minValue: 0, gridlines: { color:'#f1f5f9' }, baselineColor:'#e2e8f0'
+      },
+      backgroundColor: 'transparent',
+      bar: { groupWidth: mobile ? '75%' : '65%' },
+      animation: { startup:true, duration:500, easing:'out' },
+      tooltip: { isHtml: false }
+    };
+  }
+
+  let DADOS_GLOBAIS = [];
+  let MAPA_CASCATA  = {};
+  let DADOS_FILTRADOS_REL = [];
+  let STATUS_ANTERIOR = {};
+
+  let PAG_ATUAL = 1;
+  let PAG_TAMANHO = 20;
+  let PAG_DADOS = [];
+
+  const MAPA_CORES = {
+    "CANCELADO":"#94a3b8","CONCLUÍDO":"#003366",
+    "CONCLUÍDO(ATRASO24)":"#ea580c","CONCLUÍDO(ATRASO48)":"#b91c1c",
+    "CONCLUÍDO(ATRASOACIMA48)":"#5b21b6","EM ATENDIMENTO":"#1b7a3e",
+    "EM ATRASO":"#b91c1c","ABERTO":"#1b7a3e",
+    "NÃO INICIADO":"#1b7a3e","ABERTO(REPROGRAMADO)":"#b45309"
+  };
+
+  google.charts.load('current', { packages:['corechart'], language:'pt-br' });
+
+  /* ── SESSÃO ───────────────────────────────────────── */
+  const SESSAO_DURACAO_MS = 12 * 60 * 60 * 1000;
+  const SESSAO_AVISO_MS   = 5 * 60 * 1000;
+
+  function renovarSessao(nome, regiao) {
+    const s = JSON.parse(localStorage.getItem('comap_session'));
+    const n = nome   || (s ? s.nome   : null);
+    const r = regiao || (s ? s.regiao : null);
+    if (n) localStorage.setItem('comap_session', JSON.stringify({ nome:n, regiao:r, timestamp:Date.now() }));
+  }
+  function verificarSessaoAtiva() {
+    const s = JSON.parse(localStorage.getItem('comap_session'));
+    return s && (Date.now() - s.timestamp < SESSAO_DURACAO_MS) ? s : null;
+  }
+  function getRegiaoUsuario() {
+    const s = JSON.parse(localStorage.getItem('comap_session'));
+    return s ? (s.regiao || '') : '';
+  }
+  function podeMexer(regiaoItem) {
+    const r = getRegiaoUsuario().toUpperCase();
+    if (!r) return false;
+    if (r === 'MASTER') return true;
+    return r === (regiaoItem || '').toUpperCase().trim();
+  }
+
+  let _sessaoToastTimer = null;
+  let _sessaoCountdownInterval = null;
+  function iniciarVigilanciaSessiono() {
+    clearTimeout(_sessaoToastTimer);
+    const s = JSON.parse(localStorage.getItem('comap_session'));
+    if (!s) return;
+    const restante = (s.timestamp + SESSAO_DURACAO_MS) - Date.now();
+    const tempoAteAviso = restante - SESSAO_AVISO_MS;
+    if (tempoAteAviso > 0) {
+      _sessaoToastTimer = setTimeout(() => mostrarSessionToast(SESSAO_AVISO_MS), tempoAteAviso);
+    } else if (restante > 0) {
+      mostrarSessionToast(restante);
+    } else {
+      fazerLogout();
+    }
+  }
+  function mostrarSessionToast(msRestantes) {
+    const toast = document.getElementById('session-toast');
+    if (!toast) return;
+    toast.style.display = 'flex';
+    let secsLeft = Math.floor(msRestantes / 1000);
+    const atualizarContagem = () => {
+      if (secsLeft <= 0) { fecharSessionToast(); fazerLogout(); return; }
+      const m = Math.floor(secsLeft / 60), s = secsLeft % 60;
+      const el = document.getElementById('session-countdown');
+      if (el) el.textContent = `${m}:${String(s).padStart(2,'0')}`;
+      secsLeft--;
+    };
+    atualizarContagem();
+    clearInterval(_sessaoCountdownInterval);
+    _sessaoCountdownInterval = setInterval(atualizarContagem, 1000);
+  }
+  function fecharSessionToast() {
+    const toast = document.getElementById('session-toast');
+    if (toast) toast.style.display = 'none';
+    clearInterval(_sessaoCountdownInterval);
+  }
+
+  /* RELÓGIO */
+  function iniciarRelogio() {
+    const tick = () => {
+      const n = new Date();
+      const el = document.getElementById('relogio_topbar');
+      if (el) el.textContent = [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+    };
+    tick(); setInterval(tick, 1000);
+  }
+
+  /* INIT */
+  window.onload = function () {
+    iniciarRelogio();
+    ajustarCharts();
+    mostrarBadge();
+    const s = verificarSessaoAtiva();
+    if (s) { exibirDashboard(s.nome, s.regiao); }
+    else   { localStorage.removeItem('comap_session'); document.getElementById('login_screen').style.display = 'flex'; }
+  };
+
+  /* LOGIN / LOGOUT */
+  function realizarLogin() {
+    const email = document.getElementById('user_email').value.trim();
+    const senha = document.getElementById('user_pass').value;
+    const msg   = document.getElementById('login_msg');
+    if (!email || !senha) { msg.innerText = 'Preencha todos os campos.'; return; }
+    const btn = document.getElementById('btn_acessar');
+    btn.disabled = true; btn.textContent = 'Verificando...';
+    google.script.run
+      .withSuccessHandler(res => {
+        if (res.sucesso) { renovarSessao(res.nome, res.regiao); exibirDashboard(res.nome, res.regiao); }
+        else { msg.innerText = res.msg; btn.disabled = false; btn.textContent = 'Entrar no Sistema'; }
+      })
+      .withFailureHandler(() => {
+        msg.innerText = 'Erro de conexão. Tente novamente.';
+        btn.disabled = false; btn.textContent = 'Entrar no Sistema';
+      })
+      .emr_validarLogin(email, senha);
+  }
+
+  function exibirDashboard(nome, regiao) {
+    document.getElementById('login_screen').style.display = 'none';
+    document.getElementById('dashboard_content').style.display = 'block';
+    document.getElementById('span_user').innerText = nome;
+    document.getElementById('data_atual').innerText = new Date().toLocaleDateString('pt-BR', {
+      weekday: isMobile() ? undefined : 'short', day:'2-digit', month:'2-digit', year:'numeric'
+    });
+    const r = (regiao || getRegiaoUsuario() || '').toUpperCase();
+    const chip = document.getElementById('chip_regiao');
+    if (chip && r) {
+      chip.textContent = r === 'MASTER' ? '👑 MASTER' : '📍 ' + r;
+      chip.style.background = r === 'MASTER' ? 'rgba(197,160,89,.25)' : 'rgba(255,255,255,.1)';
+      chip.style.borderColor = r === 'MASTER' ? 'rgba(197,160,89,.6)' : 'rgba(255,255,255,.2)';
+      chip.style.display = '';
+    }
+    const btnUsr = document.getElementById('btn_usuarios');
+    if (btnUsr) btnUsr.style.display = r === 'MASTER' ? '' : 'none';
+    iniciarVigilanciaSessiono();
+    atualizarDados();
+    google.script.run.withSuccessHandler(d => { if (typeof inicializarCascata === 'function') inicializarCascata(d); }).emr_buscarListasCascata();
+  }
+
+  function fazerLogout() {
+    fecharSessionToast();
+    clearTimeout(_sessaoToastTimer);
+    localStorage.removeItem('comap_session');
+    document.getElementById('dashboard_content').style.display = 'none';
+    document.getElementById('login_screen').style.display = 'flex';
+    document.getElementById('user_email').value = '';
+    document.getElementById('user_pass').value = '';
+    document.getElementById('login_msg').innerText = '';
+  }
+
+  /* TEMA */
+  function atualizarChipUltimaAtualizacao() {
+    const chip = document.getElementById('last_update_chip');
+    const txt  = document.getElementById('last_update_text');
+    if (!chip || !txt) return;
+    const agora = new Date();
+    const hh = String(agora.getHours()).padStart(2,'0');
+    const mm = String(agora.getMinutes()).padStart(2,'0');
+    txt.textContent = `Atualizado às ${hh}:${mm}`;
+    chip.style.display = '';
+  }
+
+  function ativarOverlayAtualizando(ativo) {
+    const kpiContainer = document.querySelector('.kpi-container');
+    if (!kpiContainer) return;
+    if (ativo) kpiContainer.classList.add('data-stale-overlay');
+    else       kpiContainer.classList.remove('data-stale-overlay');
+  }
+
+  function atualizarDados() {
+    renovarSessao();
+    iniciarVigilanciaSessiono();
+    const btn = document.getElementById('btn_refresh');
+    if (btn) { btn.textContent = '↻ Atualizando...'; btn.disabled = true; }
+    ativarOverlayAtualizando(true);
+    google.script.run.withSuccessHandler(res => {
+      verificarNovosAtrasos(res);
+      DADOS_GLOBAIS = res;
+      popularFiltroRegiao();
+      document.getElementById('loader').style.display = 'none';
+      document.getElementById('main_content').style.display = 'block';
+      ajustarCharts();
+      executarFiltro();
+      ativarOverlayAtualizando(false);
+      atualizarChipUltimaAtualizacao();
+      if (btn) { btn.textContent = '↻ Atualizar'; btn.disabled = false; }
+    }).emr_getDados();
+  }
+
+  function popularFiltroRegiao() {
+    const sel = document.getElementById('filtro_regiao_tabela');
+    const atual = sel.value;
+    const regioes = [...new Set(
+      DADOS_GLOBAIS
+        .filter(d => !d.status.startsWith('CONCLUÍDO') && !d.status.includes('CANCELAD'))
+        .map(d => d.regiao).filter(Boolean)
+    )].sort();
+    sel.innerHTML = '<option value="">Todas as regiões</option>';
+    regioes.forEach(r => { sel.innerHTML += `<option value="${r}">${r}</option>`; });
+    if (regioes.includes(atual)) sel.value = atual;
+  }
+
+  function limparFiltrosDashboard() {
+    ['busca_geral','filtro_inicio','filtro_fim','filtro_status_tabela','filtro_regiao_tabela'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('fi_inicio').classList.remove('has-error');
+    document.getElementById('fi_fim').classList.remove('has-error');
+    PAG_ATUAL = 1;
+    executarFiltro();
+  }
+
+  function validarDatas() {
+    const ini = document.getElementById('filtro_inicio').value;
+    const fim = document.getElementById('filtro_fim').value;
+    const fiIni = document.getElementById('fi_inicio');
+    const fiFim = document.getElementById('fi_fim');
+    if (ini && fim && ini > fim) {
+      fiIni.classList.add('has-error');
+      fiFim.classList.add('has-error');
+      return false;
+    }
+    fiIni.classList.remove('has-error');
+    fiFim.classList.remove('has-error');
+    return true;
+  }
+
+  /* CASCATA */
+  function inicializarCascata(dadosPlanilha) {
+    const mapa = {};
+    dadosPlanilha.forEach(l => {
+      const s=String(l[0]).trim(), sub=String(l[1]).trim(), e=String(l[2]).trim();
+      if (s&&sub&&e) { if(!mapa[s])mapa[s]={}; if(!mapa[s][sub])mapa[s][sub]=[]; if(!mapa[s][sub].includes(e))mapa[s][sub].push(e); }
+    });
+    MAPA_CASCATA = mapa; popularSistema();
+  }
+  function popularSistema() {
+    const sel = document.getElementById('f_sistema');
+    sel.innerHTML = '<option value="">Selecione...</option>';
+    Object.keys(MAPA_CASCATA).sort().forEach(s => { sel.innerHTML += `<option value="${s}">${s}</option>`; });
+    document.getElementById('f_subsistema').innerHTML = '<option value="">Selecione o Sistema primeiro</option>';
+    document.getElementById('f_elemento').innerHTML   = '<option value="">Selecione o Subsistema primeiro</option>';
+  }
+  function popularSubsistema() {
+    const sis=document.getElementById('f_sistema').value;
+    const sel=document.getElementById('f_subsistema');
+    sel.innerHTML='<option value="">Selecione...</option>';
+    if(sis&&MAPA_CASCATA[sis]) Object.keys(MAPA_CASCATA[sis]).sort().forEach(s=>{sel.innerHTML+=`<option value="${s}">${s}</option>`;});
+    document.getElementById('f_elemento').innerHTML='<option value="">Selecione o Subsistema primeiro</option>';
+    validarForm();
+  }
+  function popularElemento() {
+    const sis=document.getElementById('f_sistema').value, sub=document.getElementById('f_subsistema').value;
+    const sel=document.getElementById('f_elemento');
+    sel.innerHTML='<option value="">Selecione...</option>';
+    if(sis&&sub&&MAPA_CASCATA[sis]&&MAPA_CASCATA[sis][sub]) MAPA_CASCATA[sis][sub].sort().forEach(e=>{sel.innerHTML+=`<option value="${e}">${e}</option>`;});
+    validarForm();
+  }
+
+  /* FILTRO */
+  function executarFiltro() {
+    if (!validarDatas()) return;
+    const termo    = document.getElementById('busca_geral').value.toUpperCase().trim();
+    const dtIni    = document.getElementById('filtro_inicio').value;
+    const dtFim    = document.getElementById('filtro_fim').value;
+    const stTabela = document.getElementById('filtro_status_tabela').value;
+    const rgTabela = document.getElementById('filtro_regiao_tabela').value;
+
+    const filtrados = DADOS_GLOBAIS.filter(d => {
+      const bateTexto = !termo || Object.values(d).some(v=>String(v).toUpperCase().includes(termo));
+      let bateData = true;
+      if (dtIni || dtFim) {
+        const dataRef = d.dataFiltro || d.dataConclusao || '';
+        if (dataRef) {
+          if (dtIni && dataRef < dtIni) bateData = false;
+          if (dtFim && dataRef > dtFim) bateData = false;
+        }
+      }
+      return bateTexto && bateData;
+    });
+
+    document.getElementById('kpi_total').innerText      = filtrados.length;
+    document.getElementById('kpi_concluidas').innerText = filtrados.filter(d=>d.status.startsWith('CONCLUÍDO')).length;
+    document.getElementById('kpi_aberto').innerText     = filtrados.filter(d=>d.status==='NÃO INICIADO'||d.status==='ABERTO').length;
+    document.getElementById('kpi_repro').innerText      = filtrados.filter(d=>d.status==='ABERTO(REPROGRAMADO)').length;
+    document.getElementById('kpi_atraso').innerText     = filtrados.filter(d=>d.status==='EM ATRASO').length;
+    document.getElementById('kpi_canceladas').innerText = filtrados.filter(d=>d.status.includes('CANCELAD')).length;
+
+    renderizarGraficos(filtrados);
+
+    const pend = filtrados
+      .filter(d=>!d.status.startsWith('CONCLUÍDO')&&!d.status.includes('CANCELAD'))
+      .filter(d=>!stTabela||d.status===stTabela)
+      .filter(d=>!rgTabela||d.regiao===rgTabela);
+
+    PAG_DADOS = pend;
+    PAG_ATUAL = 1;
+    renderizarTabela();
+  }
+
+  /* ── MODAL VIEW ─────────────────────────────────── */
+  const VIEW_STATUS_COLORS = {
+    "ABERTO":                   { bg:"#1b7a3e" },
+    "NÃO INICIADO":             { bg:"#1b7a3e" },
+    "ABERTO(REPROGRAMADO)":     { bg:"#b45309" },
+    "EM ATRASO":                { bg:"#b91c1c" },
+    "CONCLUÍDO":                { bg:"#003366" },
+    "CONCLUÍDO(ATRASO24)":      { bg:"#ea580c" },
+    "CONCLUÍDO(ATRASO48)":      { bg:"#b91c1c" },
+    "CONCLUÍDO(ATRASOACIMA48)": { bg:"#5b21b6" },
+    "CANCELADO":                { bg:"#64748b" }
+  };
+
+  function abrirView(item) {
+    renovarSessao();
+
+    /* faixa colorida conforme status */
+    const cor = VIEW_STATUS_COLORS[item.status] || { bg:"#003366" };
+    const strip = document.getElementById('view_header_strip');
+    if (strip) strip.style.background = cor.bg;
+
+    /* OSE + subtítulo */
+    document.getElementById('view_ose_num').textContent   = item.ose  || '—';
+    document.getElementById('view_subtitulo').textContent = `${item.comarca || '—'} · ${item.regiao || '—'}`;
+
+    /* badge status */
+    const badgeEl = document.getElementById('view_status_badge');
+    if (badgeEl) {
+      badgeEl.innerHTML = `<span style="
+        display:inline-block;
+        background:rgba(255,255,255,.2);
+        border:1.5px solid rgba(255,255,255,.4);
+        color:white;padding:5px 13px;border-radius:20px;
+        font-size:var(--fs-xs);font-weight:700;
+        text-transform:uppercase;letter-spacing:.06em;
+        white-space:nowrap;
+      ">${item.status}</span>`;
+    }
+
+    /* campos */
+    document.getElementById('view_contrato').textContent   = item.contrato   || '—';
+    document.getElementById('view_regiao').textContent     = item.regiao     || '—';
+    document.getElementById('view_comarca').textContent    = item.comarca    || '—';
+    document.getElementById('view_edificacao').textContent = item.edificacao  || '—';
+    document.getElementById('view_descricao').textContent  = item.descricao   || '—';
+
+    /* data/hora */
+    const dFmt = item.dataFiltro ? formatarDataBR(item.dataFiltro) : '—';
+    const hFmt = item.horaAbertura && item.horaAbertura !== '--:--' ? item.horaAbertura : '—';
+    document.getElementById('view_abertura').textContent = `${dFmt} às ${hFmt}`;
+
+    /* bloco sistema só se preenchido */
+    const temSistema = item.sistema || item.subsistema || item.elemento;
+    const blocoSis   = document.getElementById('view_bloco_sistema');
+    if (blocoSis) {
+      blocoSis.style.display = temSistema ? 'block' : 'none';
+      if (temSistema) {
+        document.getElementById('view_sistema').textContent    = item.sistema    || '—';
+        document.getElementById('view_subsistema').textContent = item.subsistema || '—';
+        document.getElementById('view_elemento').textContent   = item.elemento   || '—';
+      }
+    }
+
+    /* abre o modal */
+    const modal = document.getElementById('modalView');
+    modal.style.display = 'block';
+    if (isMobile()) modal.classList.add('open');
+  }
+
+  function fecharView() {
+    const modal = document.getElementById('modalView');
+    if (modal) { modal.style.display = 'none'; modal.classList.remove('open'); }
+  }
+
+  /* MODAL CONCLUSÃO */
+  function abrirEdicao(item) {
+    renovarSessao();
+    if (!podeMexer(item.regiao)) {
+      const r = getRegiaoUsuario();
+      alert(`⛔ Sem permissão!\n\nVocê está logado como região "${r}" e este chamado pertence à região "${item.regiao}".\n\nApenas usuários MASTER ou da mesma região podem alterar este item.`);
+      return;
+    }
+    const p=item.dataFiltro?item.dataFiltro.split('-'):[];
+    const dFmt=p.length===3?`${p[2]}/${p[1]}/${p[0]}`:'Data n/i';
+    const hFmt=item.horaAbertura&&item.horaAbertura!=='--:--'?item.horaAbertura:'Hora n/i';
+    document.getElementById('info_os').innerHTML=`<strong>OSE ${item.ose}</strong> &nbsp;·&nbsp; ${item.comarca} &nbsp;·&nbsp; ${item.regiao}<br>Abertura: ${dFmt} às ${hFmt}`;
+    document.getElementById('f_ose_val').value=item.ose;
+    document.getElementById('f_linha').value=item.linha;
+    document.getElementById('f_status').value='CONCLUÍDO';
+    document.getElementById('f_causa').value='';
+    const modal = document.getElementById('modalConclusao');
+    modal.style.display = 'block';
+    if (isMobile()) modal.classList.add('open');
+    alternarAba('executar');
+    if (!MAPA_CASCATA||!Object.keys(MAPA_CASCATA).length) {
+      google.script.run.withSuccessHandler(d=>{inicializarCascata(d);validarForm();}).emr_buscarListasCascata();
+    } else { popularSistema(); validarForm(); }
+  }
+
+  function fecharModal() {
+    const modal = document.getElementById('modalConclusao');
+    modal.style.display = 'none'; modal.classList.remove('open');
+  }
+
+  function alternarAba(aba) {
+    const e = aba==='executar';
+    document.getElementById('aba_executar').style.display    = e?'block':'none';
+    document.getElementById('aba_reprogramar').style.display = e?'none':'block';
+    document.getElementById('tab_exec').className  = e?'tab-btn tab-active':'tab-btn tab-inactive';
+    document.getElementById('tab_repro').className = e?'tab-btn tab-inactive':'tab-btn tab-active';
+  }
+
+  function tratarMudancaStatus() {
+    if (document.getElementById('f_status').value==='CANCELADO') {
+      const n=new Date();
+      document.getElementById('f_data').value=n.toISOString().split('T')[0];
+      document.getElementById('f_hora').value=n.toTimeString().substring(0,5);
+      document.getElementById('f_causa').value='CANCELADO';
+      ['f_sistema','f_subsistema','f_elemento'].forEach(id=>{document.getElementById(id).innerHTML='<option value="CANCELADO">CANCELADO</option>';});
+    } else { popularSistema(); }
+    validarForm();
+  }
+
+  function validarForm() {
+    const ok=document.getElementById('f_data').value&&document.getElementById('f_sistema').value&&document.getElementById('f_subsistema').value&&document.getElementById('f_elemento').value;
+    document.getElementById('btn_gravar').disabled=!ok;
+  }
+
+  function enviarDados() {
+    const btn=document.getElementById('btn_gravar');
+    btn.disabled=true; btn.textContent='Gravando...';
+    renovarSessao();
+    const d={ linha:document.getElementById('f_linha').value, ose:document.getElementById('f_ose_val').value, status:document.getElementById('f_status').value, dataConclusao:document.getElementById('f_data').value, horaConclusao:document.getElementById('f_hora').value, sistema:document.getElementById('f_sistema').value, subsistema:document.getElementById('f_subsistema').value, elemento:document.getElementById('f_elemento').value, causaRaiz:document.getElementById('f_causa').value, regiaoUsuario:getRegiaoUsuario() };
+    google.script.run.withSuccessHandler(msg=>{alert(msg);fecharModal();atualizarDados();btn.textContent='Gravar Atualização';}).emr_salvarConclusao(d);
+  }
+
+  function enviarReprogramacao() {
+    const linha=document.getElementById('f_linha').value, data=document.getElementById('r_data').value, hora=document.getElementById('r_hora').value, ose=document.getElementById('f_ose_val').value;
+    const btn=document.getElementById('btn_repro_gravar');
+    if(!data||!hora){alert('Informe a nova data e hora.');return;}
+    renovarSessao(); btn.disabled=true; btn.textContent='Recalculando...';
+    google.script.run
+      .withSuccessHandler(msg=>{alert(msg);document.getElementById('r_data').value='';document.getElementById('r_hora').value='';fecharModal();atualizarDados();btn.disabled=false;btn.textContent='Confirmar Reprogramação';})
+      .withFailureHandler(err=>{alert('Erro: '+err);btn.disabled=false;btn.textContent='Confirmar Reprogramação';})
+      .emr_reprogramarOSE(linha,data,hora,ose,getRegiaoUsuario());
+  }
+
+  /* GRÁFICOS */
+  function renderizarGraficos(dados) {
+    google.charts.setOnLoadCallback(() => {
+      renderizarConcluidosStacked(dados);
+      renderizarComarcasStacked(dados);
+      renderizarStacked(dados);
+      const resS={};
+      dados.forEach(d=>{const s=d.sistema?String(d.sistema).trim().toUpperCase():'';if(s&&s!=='NÃO INFORMADO')resS[s]=(resS[s]||0)+1;});
+      desenharOuLimpar('chart_sis',resS,'#c5a059','BarChart',10);
+      const resE={};
+      dados.forEach(d=>{const e=d.elemento?String(d.elemento).trim().toUpperCase():'';if(e&&e!=='NÃO INFORMADO')resE[e]=(resE[e]||0)+1;});
+      desenharOuLimpar('chart_ele',resE,'#003366','ColumnChart',15);
+    });
+  }
+
+  function renderizarConcluidosStacked(dados) {
+    const el=document.getElementById('chart_concluidos');
+    const cats=['CONCLUÍDO','CONCLUÍDO(ATRASO24)','CONCLUÍDO(ATRASO48)','CONCLUÍDO(ATRASOACIMA48)'];
+    const conc=dados.filter(d=>d.status.startsWith('CONCLUÍDO'));
+    if(!conc.length){el.innerHTML=chartVazio('Nenhum chamado concluído');return;}
+    const mapa={};
+    conc.forEach(d=>{if(!mapa[d.regiao]){mapa[d.regiao]={total:0};cats.forEach(c=>mapa[d.regiao][c]=0);}const s=cats.includes(d.status)?d.status:'CONCLUÍDO';mapa[d.regiao][s]++;mapa[d.regiao].total++;});
+    const dt=new google.visualization.DataTable();
+    dt.addColumn('string','Região'); cats.forEach(c=>dt.addColumn('number',c));
+    Object.entries(mapa).sort((a,b)=>b[1].total-a[1].total).forEach(([r,o])=>dt.addRow([r,...cats.map(c=>o[c]||0)]));
+    new google.visualization.ColumnChart(el).draw(dt,{...getChartsConfig(),isStacked:true,colors:cats.map(c=>MAPA_CORES[c])});
+  }
+
+  function desenharOuLimpar(id,obj,cor,tipo,limit=0) {
+    const el=document.getElementById(id);
+    let entries=Object.entries(obj);
+    if(!entries.length){el.innerHTML=chartVazio('Sem dados suficientes');return;}
+    let sorted=entries.sort((a,b)=>b[1]-a[1]);
+    if(limit>0)sorted=sorted.slice(0,limit);
+    const total=sorted.reduce((s,[,v])=>s+v,0);
+    const arr=[['Item','Qtd',{role:'style'},{role:'tooltip'}]];
+    sorted.forEach(([k,v])=>{
+      const pct = total > 0 ? ((v/total)*100).toFixed(1) : '0.0';
+      arr.push([k, v, cor, `${k}: ${v} (${pct}%)`]);
+    });
+    new google.visualization[tipo](el).draw(google.visualization.arrayToDataTable(arr),{...getChartsConfig(),legend:'none'});
+  }
+
+  function renderizarComarcasStacked(dados) {
+    const el=document.getElementById('chart_comarcas_total');
+    const mapa={},ss=new Set();
+    dados.forEach(d=>{if(!mapa[d.comarca])mapa[d.comarca]={total:0};let s=d.status.includes('CANCELAD')?'CANCELADO':d.status;if(!MAPA_CORES[s])s='ABERTO';mapa[d.comarca][s]=(mapa[d.comarca][s]||0)+1;mapa[d.comarca].total++;ss.add(s);});
+    if(!Object.keys(mapa).length){el.innerHTML=chartVazio('Sem dados');return;}
+    const dt=new google.visualization.DataTable();
+    dt.addColumn('string','Comarca');const sts=Array.from(ss);sts.forEach(s=>dt.addColumn('number',s));
+    Object.entries(mapa).sort((a,b)=>b[1].total-a[1].total).slice(0,10).forEach(([c,o])=>dt.addRow([c,...sts.map(s=>o[s]||0)]));
+    new google.visualization.ColumnChart(el).draw(dt,{...getChartsConfig(),isStacked:true,colors:sts.map(s=>MAPA_CORES[s]||'#ccc')});
+  }
+
+  function renderizarStacked(dados) {
+    const el=document.getElementById('chart_pendentes');
+    const pend=dados.filter(d=>!d.status.startsWith('CONCLUÍDO')&&!d.status.includes('CANCELAD'));
+    if(!pend.length){el.innerHTML=chartVazio('Nenhuma pendência em aberto');return;}
+    const mapa={},ss=new Set();
+    pend.forEach(d=>{if(!mapa[d.regiao])mapa[d.regiao]={total:0};mapa[d.regiao][d.status]=(mapa[d.regiao][d.status]||0)+1;mapa[d.regiao].total++;ss.add(d.status);});
+    const dt=new google.visualization.DataTable();
+    dt.addColumn('string','Região');const sts=Array.from(ss);sts.forEach(s=>dt.addColumn('number',s));
+    Object.entries(mapa).sort((a,b)=>b[1].total-a[1].total).forEach(([r,o])=>dt.addRow([r,...sts.map(s=>o[s]||0)]));
+    new google.visualization.ColumnChart(el).draw(dt,{...getChartsConfig(),isStacked:true,colors:sts.map(s=>MAPA_CORES[s]||'#1b7a3e')});
+  }
+
+  function chartVazio(msg) { return `<div class="chart-empty"><span class="chart-empty-icon">📊</span>${msg}</div>`; }
+
+  /* ── TABELA COM PAGINAÇÃO ── */
+  function renderizarTabela() {
+    const pend = PAG_DADOS;
+    const atraso = pend.filter(d=>d.status==='EM ATRASO').length;
+    document.getElementById('badge_total_abertos').textContent = pend.length+' chamados';
+    const ba=document.getElementById('badge_atraso_abertos');
+    if(atraso>0){ba.textContent='⚠ '+atraso+' em atraso';ba.style.display='';}else ba.style.display='none';
+
+    pend.sort((a,b)=>{const pa=a.status==='EM ATRASO'?0:1,pb=b.status==='EM ATRASO'?0:1;if(pa!==pb)return pa-pb;return b.diasAtraso-a.diasAtraso;});
+
+    if(!pend.length){
+      document.getElementById('tabela_pendentes').innerHTML=`<div style="text-align:center;padding:40px;color:var(--gray-400);"><div style="font-size:32px;margin-bottom:10px;">✅</div>Nenhum chamado aberto com os filtros selecionados.</div>`;
+      return;
+    }
+
+    const mobile=isMobile(), tv=isTV();
+    const totalPags = Math.ceil(pend.length / PAG_TAMANHO);
+    if (PAG_ATUAL > totalPags) PAG_ATUAL = totalPags;
+    const inicio = (PAG_ATUAL - 1) * PAG_TAMANHO;
+    const fim    = Math.min(inicio + PAG_TAMANHO, pend.length);
+    const pagina = pend.slice(inicio, fim);
+
+    const cols = mobile
+      ? ['Ação','OSE','Região','⏱ Prazo','Status']
+      : tv
+        ? ['Ação','OSE','Comarca','Região','Abertura','⏱ Prazo Restante','Dias','Sistema','Status']
+        : ['Ação','OSE','Comarca','Região','Abertura','⏱ Prazo Restante','Dias','Status'];
+
+    let html = `<div class="table-wrapper"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+
+    pagina.forEach(item => {
+      const cls=item.status==='EM ATRASO'?'status-alert':item.status==='ABERTO(REPROGRAMADO)'?'status-reprogramado':'status-aberto';
+      const rowCls=item.status==='EM ATRASO'?'row-atraso':'';
+      const json=JSON.stringify(item).replace(/'/g,'&apos;');
+      const dAb=item.dataFiltro?formatarDataBR(item.dataFiltro):'—';
+      const hAb=item.horaAbertura&&item.horaAbertura!=='--:--'?item.horaAbertura:'—';
+      const diasSt=item.diasAtraso>0?'color:var(--danger);font-weight:700;':'color:var(--gray-500);';
+      const tempoHtml=calcularTempoRestanteHTML(item);
+
+      const podeEditar = podeMexer(item.regiao);
+      const btnEditLabel = mobile
+        ? (podeEditar ? '✏️' : '🔒')
+        : (podeEditar ? '✏️ Alterar' : '🔒');
+      const btnEditStyle = podeEditar
+        ? 'btn-edit-table'
+        : 'btn-edit-table btn-edit-locked';
+
+      let tds = `
+        <td style="white-space:nowrap;">
+          <div style="display:flex;gap:5px;align-items:center;">
+            <button class="btn-view-table" onclick='abrirView(${json})'>
+              ${mobile ? '👁' : '👁 Ver'}
+            </button>
+            <button class="${btnEditStyle}" onclick='abrirEdicao(${json})'>
+              ${btnEditLabel}
+            </button>
+          </div>
+        </td>
+        <td style="font-weight:700;font-family:monospace;font-size:var(--fs-base);color:var(--blue);">${item.ose||'—'}</td>`;
+      if (!mobile) tds += `<td style="font-size:var(--fs-sm);">${item.comarca}</td>`;
+      tds += `<td style="font-weight:600;font-size:var(--fs-sm);">${item.regiao}</td>`;
+      if (!mobile) tds += `<td style="font-size:var(--fs-xs);font-family:monospace;color:var(--gray-600);">${dAb} ${hAb}</td>`;
+      tds += `<td>${tempoHtml}</td>`;
+      if (!mobile) tds += `<td style="text-align:center;font-size:var(--fs-base);${diasSt}">${item.diasAtraso}d</td>`;
+      if (tv) tds += `<td style="font-size:var(--fs-sm);">${item.sistema||'—'}</td>`;
+      tds += `<td><span class="badge ${cls}">${item.status}</span></td>`;
+      html += `<tr class="${rowCls}">${tds}</tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+
+    html += `<div class="legenda-wrap">
+      <span class="legenda-title">Prazo:</span>
+      <span class="tempo-chip tempo-ok" style="font-size:var(--fs-xs);">✅ &gt;4h</span>
+      <span class="tempo-chip tempo-alerta" style="font-size:var(--fs-xs);">⚠ &lt;4h</span>
+      <span class="tempo-chip tempo-critico" style="font-size:var(--fs-xs);">🔴 &lt;1h</span>
+      <span class="tempo-chip tempo-vencido" style="font-size:var(--fs-xs);">❌ Vencido</span>
+    </div>`;
+
+    if (totalPags > 1) {
+      const opcoesTamanho = [10,20,50,100];
+      html += `<div class="paginacao-wrap">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span class="paginacao-info">Exibindo <b>${inicio+1}–${fim}</b> de <b>${pend.length}</b> chamados</span>
+          <select class="pag-select" onchange="mudarTamanhoPag(this.value)" title="Itens por página">`;
+      opcoesTamanho.forEach(n => {
+        html += `<option value="${n}" ${n===PAG_TAMANHO?'selected':''}>${n} por pág.</option>`;
+      });
+      html += `</select></div><div class="paginacao-btns">`;
+      html += `<button class="pag-btn" onclick="irParaPag(1)" ${PAG_ATUAL===1?'disabled':''} title="Primeira">«</button>`;
+      html += `<button class="pag-btn" onclick="irParaPag(${PAG_ATUAL-1})" ${PAG_ATUAL===1?'disabled':''} title="Anterior">‹</button>`;
+      let pStart = Math.max(1, PAG_ATUAL - 2);
+      let pEnd   = Math.min(totalPags, pStart + 4);
+      if (pEnd - pStart < 4) pStart = Math.max(1, pEnd - 4);
+      for (let p = pStart; p <= pEnd; p++) {
+        html += `<button class="pag-btn ${p===PAG_ATUAL?'pag-active':''}" onclick="irParaPag(${p})">${p}</button>`;
+      }
+      html += `<button class="pag-btn" onclick="irParaPag(${PAG_ATUAL+1})" ${PAG_ATUAL===totalPags?'disabled':''} title="Próxima">›</button>`;
+      html += `<button class="pag-btn" onclick="irParaPag(${totalPags})" ${PAG_ATUAL===totalPags?'disabled':''} title="Última">»</button>`;
+      html += `</div></div>`;
+    } else {
+      html += `<div class="paginacao-wrap">
+        <span class="paginacao-info">Total: <b>${pend.length}</b> chamados</span>
+        <select class="pag-select" onchange="mudarTamanhoPag(this.value)" title="Itens por página">`;
+      [10,20,50,100].forEach(n => {
+        html += `<option value="${n}" ${n===PAG_TAMANHO?'selected':''}>${n} por pág.</option>`;
+      });
+      html += `</select></div>`;
+    }
+
+    document.getElementById('tabela_pendentes').innerHTML = html;
+  }
+
+  function irParaPag(p) {
+    const totalPags = Math.ceil(PAG_DADOS.length / PAG_TAMANHO);
+    PAG_ATUAL = Math.max(1, Math.min(p, totalPags));
+    renderizarTabela();
+    document.getElementById('tabela_pendentes').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+
+  function mudarTamanhoPag(val) {
+    PAG_TAMANHO = parseInt(val);
+    PAG_ATUAL = 1;
+    renderizarTabela();
+  }
+
+  setInterval(() => {
+    if (document.getElementById('dashboard_content').style.display !== 'block') return;
+    if (PAG_DADOS.length) renderizarTabela();
+  }, 60000);
+
+  /* PRAZO */
+  const REGIOES_ESPECIAIS_JS = ['NORTE','LESTE','CENTRAL','ZONA DA MATA'];
+  const COMARCAS_VIP_JS = ['MONTES CLAROS','TEÓFILO OTONI','PARACATU','GOVERNADOR VALADARES','IPATINGA','ITABIRA','JUIZ DE FORA','CONSELHEIRO LAFAIETE','UBÁ','CONTAGEM','BETIM','SETE LAGOAS'];
+
+  function calcularPrazoJS(dataFiltro, horaAbertura, comarca, regiao) {
+    if (!dataFiltro) return null;
+    const rn=regiao?regiao.trim().toUpperCase():'', cn=comarca?comarca.trim().toUpperCase():'';
+    const especial=REGIOES_ESPECIAIS_JS.includes(rn);
+    const [ano,mes,dia]=dataFiltro.split('-').map(Number);
+    const hAb=horaAbertura&&horaAbertura!=='--:--'?parseInt(horaAbertura.split(':')[0]):0;
+    const mAb=horaAbertura&&horaAbertura!=='--:--'?parseInt(horaAbertura.split(':')[1]):0;
+    if (!especial) { const dt=new Date(ano,mes-1,dia,hAb,mAb,0); return new Date(dt.getTime()+86400000); }
+    const vip=COMARCAS_VIP_JS.includes(cn), div=vip?12:10;
+    const dl=new Date(ano,mes-1,dia);
+    if(hAb<div){dl.setHours(23,59,59,999);}else{dl.setDate(dl.getDate()+1);dl.setHours(12,0,0,0);}
+    return dl;
+  }
+
+  function calcularTempoRestanteHTML(item) {
+    if(item.status.startsWith('CONCLUÍDO')||item.status.includes('CANCELAD'))return'—';
+    if(item.status==='EM ATRASO'){const d=item.diasAtraso>0?` (${item.diasAtraso}d)`:'';return`<span class="tempo-chip tempo-vencido">❌ Vencido${d}</span>`;}
+    const prazo=calcularPrazoJS(item.dataFiltro,item.horaAbertura,item.comarca,item.regiao);
+    if(!prazo)return'—';
+    const agora=new Date(), diff=prazo-agora;
+    if(diff<=0)return`<span class="tempo-chip tempo-vencido">❌ Vencido</span>`;
+    const [ano,mes,dia]=(item.dataFiltro||'').split('-').map(Number);
+    const hAb=item.horaAbertura&&item.horaAbertura!=='--:--'?parseInt(item.horaAbertura.split(':')[0]):0;
+    const mAb=item.horaAbertura&&item.horaAbertura!=='--:--'?parseInt(item.horaAbertura.split(':')[1]):0;
+    const dtA=new Date(ano,mes-1,dia,hAb,mAb,0);
+    const pct=Math.min(100,Math.round((1-diff/(prazo-dtA))*100));
+    const h=Math.floor(diff/3600000), m=Math.floor((diff%3600000)/60000);
+    let cls,ic,bc;
+    if(h>=4){cls='tempo-ok';ic='✅';bc='#16a34a';}else if(h>=1){cls='tempo-alerta';ic='⚠';bc='#f59e0b';}else{cls='tempo-critico';ic='🔴';bc='#dc2626';}
+    const txt=h>0?`${h}h ${m}min`:`${m}min`;
+    return`<div><span class="tempo-chip ${cls}">${ic} ${txt} restantes</span><div class="tempo-bar-bg"><div class="tempo-bar-fill" style="width:${pct}%;background:${bc};"></div></div></div>`;
+  }
+
+  /* RELATÓRIO */
+  function abrirRelatorio() { renovarSessao(); document.getElementById('modalRelatorio').style.display='block'; popularFiltroContrato(); filtrarRelatorio(); }
+  function fecharRelatorio() { document.getElementById('modalRelatorio').style.display='none'; }
+  function popularFiltroContrato() {
+    const sel=document.getElementById('rel_contrato'), val=sel.value;
+    const c=[...new Set(DADOS_GLOBAIS.map(d=>String(d.contrato||'').trim()).filter(Boolean))].sort();
+    sel.innerHTML='<option value="">Todos</option>';
+    c.forEach(x=>{sel.innerHTML+=`<option value="${x}">${x}</option>`;});
+    sel.value=val;
+  }
+  function limparFiltrosRelatorio() { ['rel_contrato','rel_comarca','rel_ose','rel_status'].forEach(id=>document.getElementById(id).value=''); filtrarRelatorio(); }
+  function filtrarRelatorio() {
+    const ct=document.getElementById('rel_contrato').value.trim().toUpperCase();
+    const co=document.getElementById('rel_comarca').value.trim().toUpperCase();
+    const os=document.getElementById('rel_ose').value.trim().toUpperCase();
+    const st=document.getElementById('rel_status').value.trim().toUpperCase();
+    const f=DADOS_GLOBAIS.filter(d=>{
+      if(ct&&String(d.contrato||'').trim().toUpperCase()!==ct)return false;
+      if(co&&!String(d.comarca||'').toUpperCase().includes(co)&&!String(d.regiao||'').toUpperCase().includes(co))return false;
+      if(os&&!String(d.ose||'').toUpperCase().includes(os))return false;
+      if(st&&String(d.status||'').toUpperCase()!==st)return false;
+      return true;
+    });
+    DADOS_FILTRADOS_REL=f;
+    document.getElementById('rel_counter').innerHTML=`Exibindo <b>${f.length}</b> de <b>${DADOS_GLOBAIS.length}</b> registros`;
+    const tbody=document.getElementById('rel_tbody');
+    const ehMasterRel = getRegiaoUsuario().toUpperCase()==='MASTER';
+    const thAcao = document.getElementById('rel_th_acao');
+    if(thAcao) thAcao.style.display = ehMasterRel ? '' : 'none';
+    const colSpan = ehMasterRel ? 13 : 12;
+    if(!f.length){tbody.innerHTML=`<tr><td colspan="${colSpan}" class="rel-sem-dados">Nenhum registro encontrado.</td></tr>`;return;}
+    const cm={'CANCELADO':'#94a3b8','CONCLUÍDO':'#003366','CONCLUÍDO(ATRASO24)':'#ea580c','CONCLUÍDO(ATRASO48)':'#b91c1c','CONCLUÍDO(ATRASOACIMA48)':'#5b21b6','EM ATENDIMENTO':'#1b7a3e','EM ATRASO':'#b91c1c','ABERTO':'#1b7a3e','NÃO INICIADO':'#1b7a3e','ABERTO(REPROGRAMADO)':'#b45309'};
+    tbody.innerHTML=f.map(d=>{
+      const cor=cm[d.status]||'#999', tc=d.status==='ABERTO(REPROGRAMADO)'?'#78350f':'#fff';
+      const json=JSON.stringify(d).replace(/'/g,'&apos;');
+      const btnEdit = ehMasterRel
+        ? `<td><button class="btn-edit-table" style="background:#7c3aed;font-size:10px;" onclick='abrirEditarRegistro(${json})'>🛠️ Editar</button></td>`
+        : '';
+      return`<tr>${btnEdit}<td><b>${d.ose||'—'}</b></td><td>${d.contrato||'—'}</td><td>${d.comarca||'—'}</td><td>${d.regiao||'—'}</td><td>${d.dataFiltro?formatarDataBR(d.dataFiltro):'—'}</td><td>${d.horaAbertura||'—'}</td><td>${d.dataConclusao?formatarDataBR(d.dataConclusao):'—'}</td><td>${d.horaConclusao&&d.horaConclusao!=='--:--'?d.horaConclusao:'—'}</td><td>${d.sistema||'—'}</td><td>${d.elemento||'—'}</td><td>${d.causaRaiz||'—'}</td><td><span class="rel-badge" style="background:${cor};color:${tc};">${d.status}</span></td></tr>`;
+    }).join('');
+  }
+
+  /* EXPORTAR PDF */
+  function exportarPDF() {
+    if(!DADOS_FILTRADOS_REL.length){alert('Nenhum dado para exportar.');return;}
+    const btn=document.getElementById('btn_exportar');
+    btn.disabled=true; btn.textContent='⏳ Gerando...';
+    const dataGeracao = new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const totalReg = DADOS_FILTRADOS_REL.length;
+    const CORES_STATUS = {'CANCELADO':'#94a3b8','CONCLUÍDO':'#003366','CONCLUÍDO(ATRASO24)':'#ea580c','CONCLUÍDO(ATRASO48)':'#b91c1c','CONCLUÍDO(ATRASOACIMA48)':'#5b21b6','EM ATENDIMENTO':'#1b7a3e','EM ATRASO':'#b91c1c','ABERTO':'#1b7a3e','NÃO INICIADO':'#1b7a3e','ABERTO(REPROGRAMADO)':'#b45309'};
+    const linhasHTML = DADOS_FILTRADOS_REL.map((d,i) => {
+      const cor = CORES_STATUS[d.status] || '#999';
+      const bg  = i % 2 === 0 ? '#fff' : '#f8fafc';
+      return `<tr style="background:${bg};"><td>${d.ose||'—'}</td><td>${d.contrato||'—'}</td><td>${d.comarca||'—'}</td><td>${d.regiao||'—'}</td><td>${d.dataFiltro?formatarDataBR(d.dataFiltro):'—'}</td><td>${d.horaAbertura||'—'}</td><td>${d.dataConclusao?formatarDataBR(d.dataConclusao):'—'}</td><td>${d.horaConclusao&&d.horaConclusao!=='--:--'?d.horaConclusao:'—'}</td><td>${d.sistema||'—'}</td><td>${d.elemento||'—'}</td><td>${d.causaRaiz||'—'}</td><td><span style="background:${cor};color:${d.status==='ABERTO(REPROGRAMADO)'?'#78350f':'#fff'};padding:2px 8px;border-radius:12px;font-size:9px;font-weight:700;white-space:nowrap;">${d.status}</span></td></tr>`;
+    }).join('');
+    const html = `<!DOCTYPE html><html lang="pt-br"><head><meta charset="UTF-8"><title>COMAP – Relatório de Atendimentos</title><style>@page{size:A4 landscape;margin:14mm 10mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;font-size:9px;color:#1e293b}.header{background:#003366;color:white;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #c5a059;margin-bottom:10px;border-radius:6px}.header-left strong{font-size:14px;font-weight:800;letter-spacing:.03em}.header-left span{font-size:9px;opacity:.7;display:block;margin-top:2px}.header-right{text-align:right;font-size:9px;opacity:.75;line-height:1.6}table{width:100%;border-collapse:collapse}thead tr{background:#003366}th{padding:5px 6px;text-align:left;font-size:8px;font-weight:700;color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}td{padding:4px 6px;border-bottom:1px solid #e2e8f0;font-size:8.5px;vertical-align:middle}.footer{margin-top:10px;font-size:8px;color:#94a3b8;text-align:center}</style></head><body><div class="header"><div class="header-left"><strong>COMAP · Atendimentos Emergenciais</strong><span>TJMG — Tribunal de Justiça de Minas Gerais · Coordenação de Manutenção Predial</span></div><div class="header-right">Relatório gerado em: ${dataGeracao}<br>Total de registros: <strong>${totalReg}</strong></div></div><table><thead><tr><th>OSE</th><th>Contrato</th><th>Comarca</th><th>Região</th><th>Dt. Abertura</th><th>Hr. Abertura</th><th>Dt. Conclusão</th><th>Hr. Conclusão</th><th>Sistema</th><th>Elemento</th><th>Causa Raiz</th><th>Status</th></tr></thead><tbody>${linhasHTML}</tbody></table><div class="footer">COMAP TJMG · Sistema de Atendimentos Emergenciais · ${dataGeracao}</div><script>window.onload=()=>{window.print();window.onafterprint=()=>window.close();}<\/script></body></html>`;
+    const w = window.open('', '_blank', 'width=1100,height=700');
+    if (!w) { alert('Permita popups para exportar o PDF.'); btn.disabled=false; btn.textContent='📄 Exportar PDF'; return; }
+    w.document.write(html); w.document.close();
+    btn.disabled=false; btn.textContent='📄 Exportar PDF';
+    const ok=document.getElementById('export_ok');
+    ok.textContent='✅ PDF aberto — use Ctrl+P / Cmd+P para salvar!';
+    ok.style.display='flex';
+    setTimeout(()=>{ok.style.display='none';},5000);
+  }
+
+  /* NOVOS ATRASOS */
+  function verificarNovosAtrasos(novos) {
+    const lista=[];
+    novos.forEach(d=>{if(d.status==='EM ATRASO'&&STATUS_ANTERIOR[d.linha]&&STATUS_ANTERIOR[d.linha]!=='EM ATRASO')lista.push(d.ose);});
+    STATUS_ANTERIOR={};
+    novos.forEach(d=>{STATUS_ANTERIOR[d.linha]=d.status;});
+    if(lista.length){
+      const el=document.getElementById('alerta_lista');el.innerHTML='';
+      lista.forEach(ose=>{const s=document.createElement('span');s.className='alerta-ose-chip';s.textContent=ose;el.appendChild(s);});
+      document.getElementById('alerta_banner').style.display='flex';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+  }
+
+  /* UTILS */
+  function formatarDataBR(iso) {
+    if(!iso||iso.length<10)return iso;
+    const p=iso.split('-');return`${p[2]}/${p[1]}/${p[0]}`;
+  }
+
+  // Auto-refresh a cada 5 minutos
+  setInterval(()=>{ if(document.getElementById('dashboard_content').style.display==='block') atualizarDados(); }, 300000);
+
+  /* ── GESTÃO DE USUÁRIOS — MASTER ONLY ── */
+  let USUARIOS_CACHE = [];
+
+  function abrirGestaoUsuarios() {
+    renovarSessao();
+    const r = getRegiaoUsuario().toUpperCase();
+    if (r !== 'MASTER') { alert('⛔ Acesso restrito.\nApenas o perfil MASTER pode gerenciar usuários.'); return; }
+    document.getElementById('modalUsuarios').style.display = 'block';
+    mostrarListaUsuarios();
+    carregarUsuarios();
+  }
+  function fecharGestaoUsuarios() { document.getElementById('modalUsuarios').style.display = 'none'; }
+  function carregarUsuarios() {
+    document.getElementById('usuarios_tbody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:28px;color:var(--gray-400);">⏳ Carregando...</td></tr>';
+    document.getElementById('usuarios_counter').textContent = 'Carregando...';
+    google.script.run
+      .withSuccessHandler(dados => { USUARIOS_CACHE = dados; renderizarListaUsuarios(dados); })
+      .withFailureHandler(err => { alert('Erro ao carregar usuários: ' + err); })
+      .emr_listarUsuarios();
+  }
+  function renderizarListaUsuarios(dados) {
+    const tbody   = document.getElementById('usuarios_tbody');
+    const counter = document.getElementById('usuarios_counter');
+    counter.innerHTML = `Total: <b>${dados.length}</b> usuário(s) cadastrado(s)`;
+    if (!dados.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px;color:var(--gray-400);">Nenhum usuário cadastrado.</td></tr>'; return; }
+    tbody.innerHTML = dados.map(u => {
+      const ehMaster = (u.regiao || '').toUpperCase() === 'MASTER';
+      const badgeBg  = ehMaster ? '#c5a059' : '#003366';
+      const badgeTC  = ehMaster ? '#003366' : 'white';
+      const regiaoLabel = ehMaster ? '👑 MASTER' : '📍 ' + (u.regiao || '—');
+      return `<tr>
+        <td style="font-weight:600;font-size:var(--fs-sm);">${escHtml(u.nome || '—')}</td>
+        <td style="font-size:var(--fs-xs);color:var(--gray-500);font-family:monospace;">${escHtml(u.email || '—')}</td>
+        <td><span style="background:${badgeBg};color:${badgeTC};padding:3px 10px;border-radius:12px;font-size:var(--fs-xs);font-weight:700;white-space:nowrap;">${regiaoLabel}</span></td>
+        <td style="text-align:center;">
+          <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
+            <button class="btn-edit-table" onclick="mostrarFormUsuario(${u.linha})">✏️ Editar</button>
+            <button class="btn-edit-table" style="background:#b91c1c;" onclick="confirmarExcluirUsuario(${u.linha},'${escAttr(u.email)}')">🗑️ Excluir</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+  function mostrarListaUsuarios() {
+    document.getElementById('usuarios_lista_view').style.display = 'block';
+    document.getElementById('usuarios_form_view').style.display  = 'none';
+  }
+  function mostrarFormUsuario(linha) {
+    document.getElementById('usuarios_lista_view').style.display = 'none';
+    document.getElementById('usuarios_form_view').style.display  = 'block';
+    ['u_nome','u_email','u_senha','u_senha_conf'].forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('u_regiao').value        = '';
+    document.getElementById('u_linha').value         = '';
+    document.getElementById('u_email_original').value = '';
+    document.getElementById('u_senha_erro').style.display = 'none';
+    document.getElementById('btn_salvar_usuario').disabled = true;
+    if (linha) {
+      const u = USUARIOS_CACHE.find(x => x.linha === linha);
+      if (!u) { mostrarListaUsuarios(); return; }
+      document.getElementById('form_titulo_usuario').textContent = '✏️ Editar Usuário';
+      document.getElementById('u_senha_label').textContent = 'Nova Senha (deixe em branco para manter a atual)';
+      document.getElementById('u_form_hint').innerHTML = '📌 Edite apenas os campos desejados. Deixe os campos de senha em branco para <strong>não alterá-la</strong>.';
+      document.getElementById('u_nome').value   = u.nome  || '';
+      document.getElementById('u_email').value  = u.email || '';
+      document.getElementById('u_regiao').value = u.regiao || '';
+      document.getElementById('u_linha').value  = String(u.linha);
+      document.getElementById('u_email_original').value = u.email || '';
+    } else {
+      document.getElementById('form_titulo_usuario').textContent = '+ Novo Usuário';
+      document.getElementById('u_senha_label').textContent = 'Senha (mínimo 4 caracteres)';
+      document.getElementById('u_form_hint').innerHTML = '📌 O e-mail deve estar no formato <strong>usuario@tjmg.jus.br</strong>. A senha é definida pelo gestor MASTER e pode ser alterada depois.';
+    }
+    validarFormUsuario();
+  }
+  function validarFormUsuario() {
+    const nome     = document.getElementById('u_nome').value.trim();
+    const email    = document.getElementById('u_email').value.trim();
+    const senha    = document.getElementById('u_senha').value;
+    const conf     = document.getElementById('u_senha_conf').value;
+    const regiao   = document.getElementById('u_regiao').value;
+    const ehEdicao = !!document.getElementById('u_linha').value;
+    const senhaErro = document.getElementById('u_senha_erro');
+    if (senha && senha !== conf) { senhaErro.style.display = 'block'; } else { senhaErro.style.display = 'none'; }
+    const emailOk = email.length > 4 && email.includes('@');
+    const senhaOk = ehEdicao
+      ? (!senha || (senha.length >= 4 && senha === conf))
+      : (senha.length >= 4 && senha === conf);
+    const tudo = nome && emailOk && senhaOk && regiao;
+    document.getElementById('btn_salvar_usuario').disabled = !tudo;
+  }
+  function salvarUsuarioModal() {
+    const btn = document.getElementById('btn_salvar_usuario');
+    btn.disabled = true; btn.textContent = '⏳ Salvando...';
+    const dados = {
+      linha:         document.getElementById('u_linha').value || '',
+      emailOriginal: document.getElementById('u_email_original').value || '',
+      nome:          document.getElementById('u_nome').value.trim(),
+      email:         document.getElementById('u_email').value.trim().toLowerCase(),
+      senha:         document.getElementById('u_senha').value,
+      regiao:        document.getElementById('u_regiao').value.toUpperCase(),
+      regiaoUsuario: getRegiaoUsuario()
+    };
+    google.script.run
+      .withSuccessHandler(msg => {
+        alert(msg); btn.textContent = '💾 Salvar Usuário';
+        if (msg.startsWith('✅')) { carregarUsuarios(); mostrarListaUsuarios(); } else { btn.disabled = false; }
+      })
+      .withFailureHandler(err => { alert('Erro ao salvar: ' + err); btn.disabled = false; btn.textContent = '💾 Salvar Usuário'; })
+      .emr_salvarUsuario(dados);
+  }
+  function confirmarExcluirUsuario(linha, email) {
+    if (!confirm(`⚠️ Confirma a EXCLUSÃO do usuário:\n\n${email}\n\nEsta ação não pode ser desfeita.`)) return;
+    google.script.run
+      .withSuccessHandler(msg => { alert(msg); if (msg.startsWith('✅')) carregarUsuarios(); })
+      .withFailureHandler(err => alert('Erro ao excluir: ' + err))
+      .emr_excluirUsuario(linha, getRegiaoUsuario());
+  }
+  function toggleSenhaUsuario(id) { const el = document.getElementById(id); el.type = el.type === 'password' ? 'text' : 'password'; }
+  function escHtml(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function escAttr(str) { return String(str).replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+  /* ── EDIÇÃO COMPLETA — MASTER ONLY ── */
+  function abrirEditarRegistro(item) {
+    const r = getRegiaoUsuario().toUpperCase();
+    if (r !== 'MASTER') { alert('⛔ Acesso negado. Apenas o perfil MASTER pode editar registros completos.'); return; }
+    renovarSessao();
+    document.getElementById('er_linha').value         = item.linha || '';
+    document.getElementById('er_ose').value           = item.ose   || '';
+    document.getElementById('er_contrato').value      = item.contrato || '';
+    var _rNormEmr = (item.regiao||'').toString().toUpperCase().replace(/\s+/g,'_').replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I').replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C');
+    document.getElementById('er_regiao').value = _rNormEmr;
+    // Cascata: popula Comarcas → seta comarca → popula Edifs (Emergencial não tem edificacao no item)
+    if (typeof ComapDropdowns !== 'undefined') {
+      ComapDropdowns.init(function(){
+        ComapDropdowns.onRegiao(_rNormEmr,'er_comarca','er_edificacao');
+        setTimeout(function(){
+          var sc=document.getElementById('er_comarca'); var cv=(item.comarca||'').toUpperCase();
+          var ok=false; for(var i=0;i<sc.options.length;i++){if(sc.options[i].value.toUpperCase()===cv){sc.selectedIndex=i;ok=true;break;}}
+          if(!ok&&item.comarca){var op=document.createElement('option');op.value=item.comarca;op.textContent=item.comarca+' (não cadastrada)';sc.appendChild(op);sc.value=item.comarca;}
+          ComapDropdowns.onComarca(_rNormEmr, sc.value, 'er_edificacao');
+        },60);
+      });
+    } else {
+      document.getElementById('er_comarca').value = (item.comarca || '').toUpperCase();
+    }
+    document.getElementById('er_data_abertura').value = item.dataFiltro || '';
+    document.getElementById('er_hora_abertura').value = (item.horaAbertura && item.horaAbertura !== '--:--') ? item.horaAbertura : '';
+    document.getElementById('er_data_conclusao').value = item.dataConclusao || '';
+    document.getElementById('er_hora_conclusao').value = (item.horaConclusao && item.horaConclusao !== '--:--') ? item.horaConclusao : '';
+    document.getElementById('er_sistema').value       = item.sistema    || '';
+    document.getElementById('er_subsistema').value    = item.subsistema || '';
+    document.getElementById('er_elemento').value      = item.elemento   || '';
+    document.getElementById('er_causa').value         = item.causaRaiz  || '';
+    document.getElementById('er_status').value        = item.status     || 'ABERTO';
+    const sub = document.getElementById('er_subtitulo');
+    if (sub) sub.textContent = `Linha ${item.linha} · OSE ${item.ose || '—'} · ${item.comarca || '—'}`;
+    const btn = document.getElementById('btn_salvar_edicao');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Salvar Alterações'; }
+    document.getElementById('modalEditarRegistro').style.display = 'block';
+  }
+  function fecharEditarRegistro() { document.getElementById('modalEditarRegistro').style.display = 'none'; }
+  function salvarEdicaoCompleta() {
+    const btn = document.getElementById('btn_salvar_edicao');
+    btn.disabled = true; btn.textContent = '⏳ Salvando...';
+    renovarSessao();
+    const dados = {
+      linha:         document.getElementById('er_linha').value,
+      ose:           document.getElementById('er_ose').value.trim(),
+      contrato:      document.getElementById('er_contrato').value.trim(),
+      comarca:       document.getElementById('er_comarca').value.trim().toUpperCase(),
+      regiao:        document.getElementById('er_regiao').value.trim().toUpperCase(),
+      dataAbertura:  document.getElementById('er_data_abertura').value,
+      horaAbertura:  document.getElementById('er_hora_abertura').value,
+      dataConclusao: document.getElementById('er_data_conclusao').value,
+      horaConclusao: document.getElementById('er_hora_conclusao').value,
+      sistema:       document.getElementById('er_sistema').value.trim(),
+      subsistema:    document.getElementById('er_subsistema').value.trim(),
+      elemento:      document.getElementById('er_elemento').value.trim(),
+      causaRaiz:     document.getElementById('er_causa').value.trim(),
+      status:        document.getElementById('er_status').value,
+      regiaoUsuario: getRegiaoUsuario()
+    };
+    google.script.run
+      .withSuccessHandler(msg => {
+        alert(msg); btn.textContent = '💾 Salvar Alterações';
+        if (msg.startsWith('✅')) {
+          fecharEditarRegistro(); atualizarDados();
+          const modalRel = document.getElementById('modalRelatorio');
+          if (modalRel && modalRel.style.display !== 'none') { setTimeout(() => filtrarRelatorio(), 1200); }
+        } else { btn.disabled = false; }
+      })
+      .withFailureHandler(err => { alert('Erro ao salvar: ' + err); btn.disabled = false; btn.textContent = '💾 Salvar Alterações'; })
+      .emr_editarRegistroCompleto(dados);
+  }
+</script>
+
+<script>
+/* ⬇ Helper Dropdowns COMAP — Região > Comarca > Edificação */
+(function(){
+  if (window.ComapDropdowns) return;
+  var C={_d:null,_l:false,_p:[],
+    init:function(cb){var s=this;if(s._d){if(cb)cb(s._d);return;}if(s._l){if(cb)s._p.push(cb);return;}s._l=true;
+      google.script.run.withSuccessHandler(function(r){s._l=false;s._d=(r&&r.ok)?r:{data:{},totalRegistros:0};if(cb)cb(s._d);s._p.forEach(function(f){try{f(s._d);}catch(e){}});s._p=[];})
+      .withFailureHandler(function(){s._l=false;s._d={data:{},totalRegistros:0};if(cb)cb(s._d);}).util_carregarTodasComarcas();},
+    _n:function(r){if(!r)return'';return r.toString().toUpperCase().replace(/\s+/g,'_').replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I').replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C').trim();},
+    listarComarcasDaRegiao:function(r){if(!this._d)return[];var reg=this._n(r);var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca)s[d.comarca.toUpperCase()]=d.comarca;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarEdificacoesPorComarca:function(r,c){if(!this._d)return[];var reg=this._n(r);var co=(c||'').toString().trim().toUpperCase();if(!co)return[];var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca.toUpperCase()===co&&d.edificacao)s[d.edificacao.toUpperCase()]=d.edificacao;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarTodasComarcasGlobais:function(){if(!this._d)return[];var s={};var d=this._d.data||{};Object.keys(d).forEach(function(r){(d[r]||[]).forEach(function(x){if(x.comarca)s[x.comarca.toUpperCase()]=x.comarca;});});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    _popular:function(id,ops,ph){var el=document.getElementById(id);if(!el)return;var at=el.value;el.innerHTML='';var v=document.createElement('option');v.value='';v.textContent=ph||'Selecione...';el.appendChild(v);ops.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=o;el.appendChild(op);});if(at){var aU=at.toUpperCase();for(var i=0;i<el.options.length;i++){if(el.options[i].value.toUpperCase()===aU){el.selectedIndex=i;break;}}}},
+    onRegiao:function(r,iC,iE){var s=this;var f=function(){s._popular(iC,s.listarComarcasDaRegiao(r),'Selecione a comarca...');if(iE)s._popular(iE,[],'Selecione a comarca primeiro');};if(!s._d)s.init(f);else f();},
+    onComarca:function(r,c,iE){var s=this;var f=function(){s._popular(iE,s.listarEdificacoesPorComarca(r,c),'Selecione a edificação...');};if(!s._d)s.init(f);else f();}
+  };
+  window.ComapDropdowns=C;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){C.init();});else C.init();
+})();
+</script>
+</body>

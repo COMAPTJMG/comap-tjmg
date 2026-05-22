@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --tj-blue: #003366; --tj-gold: #c5a059; --tj-light: #f4f7f6;
+      --success: #27ae60; --danger: #e74c3c; --warning: #f39c12; --reagendado: #8e44ad;
+    }
+    body { font-family:'Montserrat',sans-serif; margin:0; padding:0; background:var(--tj-light); overflow-x:hidden; }
+
+    .tabs-header { display:flex; gap:5px; margin-bottom:0; padding:20px 20px 0 20px; }
+    .tab-btn { padding:12px 25px; cursor:pointer; border:none; background:#ddd; color:#666; font-weight:bold; border-radius:8px 8px 0 0; font-size:0.75rem; transition:0.3s; }
+    .tab-btn.active-tab { background:var(--tj-blue); color:white; }
+    .tab-btn:disabled { cursor:not-allowed; opacity:0.5; }
+
+    .grid-form { display:grid; grid-template-columns:1.8fr 1.2fr; gap:20px; padding:20px; box-sizing:border-box; align-items:start; }
+    .list-container { max-height:75vh; overflow-y:auto; padding-right:10px; }
+    .card { background:white; padding:25px; border-radius:0 8px 8px 8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); border-top:5px solid var(--tj-blue); margin-bottom:20px; }
+
+    h3 { color:var(--tj-blue); margin-top:0; font-size:1.1rem; border-bottom:1px solid #eee; padding-bottom:10px; text-transform:uppercase; letter-spacing:1px; }
+    label { display:block; margin-top:12px; font-size:0.7rem; color:#666; font-weight:700; text-transform:uppercase; }
+    input,select,textarea { width:100%; padding:10px; margin-top:5px; border:1px solid #ccc; border-radius:4px; box-sizing:border-box; font-family:'Montserrat',sans-serif; font-size:0.85rem; }
+    input:focus,select:focus { border-color:var(--tj-gold); outline:none; box-shadow:0 0 5px rgba(197,160,89,0.3); }
+    input:disabled,select:disabled,textarea:disabled { background:#f2f2f2; cursor:not-allowed; color:#888; border-style:dashed; }
+
+    .btn-save { background:var(--tj-blue); color:white; width:100%; padding:15px; border:none; border-radius:4px; cursor:pointer; font-weight:bold; text-transform:uppercase; margin-top:20px; transition:0.3s; font-size:0.9rem; }
+    .btn-save:hover    { background:var(--tj-gold); transform:translateY(-1px); }
+    .btn-save:disabled { background:#ccc !important; cursor:wait; transform:none; }
+
+    .filter-bar { background:#f9f9f9; padding:10px; border-radius:4px; border:1px solid #eee; margin-bottom:15px; }
+    .os-card-item { background:#fff; border:1px solid #eee; border-left:5px solid var(--tj-blue); padding:12px; margin-bottom:10px; border-radius:4px; cursor:pointer; transition:0.2s; }
+    .os-card-item:hover { border-color:var(--tj-gold); box-shadow:2px 2px 8px rgba(0,0,0,0.05); transform:scale(1.01); }
+    .badge-item { display:inline-block; font-size:0.6rem; padding:3px 8px; border-radius:12px; font-weight:bold; float:right; text-transform:uppercase; }
+
+    .comarca-editavel { border:2px solid var(--tj-gold) !important; background:#fffde7 !important; }
+    .calc-field { background-color:#fffde7 !important; border:1px solid var(--tj-gold) !important; font-weight:600; color:#856404; }
+  </style>
+</head>
+<body>
+
+<div class="tabs-header">
+  <button id="btnTabL" class="tab-btn active-tab" onclick="abaCadastro()">1 - CADASTRO DE OSP</button>
+  <button id="btnTabA" class="tab-btn" onclick="abaDetalhes()" disabled>2 - ATUALIZAÇÃO / STATUS</button>
+</div>
+
+<div class="grid-form">
+
+  <!-- ======== FORMULÁRIO ======== -->
+  <div class="card" id="formCardOS">
+    <h3 id="formTituloOS">Lançamento de OSP</h3>
+    <input type="hidden" id="f_os_id_ref">
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+      <div>
+        <label>Data Abertura</label>
+        <input type="date" id="f_dataAbertura">
+
+        <label>Região</label>
+        <!-- ⬇⬇⬇ DROPDOWN CASCATEADO: ao mudar Região, popula Comarca + zera Edificação -->
+        <select id="f_regiao" onchange="ComapDropdowns.onRegiao(this.value, 'f_comarca', 'f_edificacao')">
+          <option value="">Selecione...</option>
+          <option value="CENTRAL">CENTRAL</option>
+          <option value="SUL">SUL</option>
+          <option value="NORTE">NORTE</option>
+          <option value="ZONA_DA_MATA">ZONA DA MATA</option>
+          <option value="SUDOESTE">SUDOESTE</option>
+          <option value="LESTE">LESTE</option>
+          <option value="TRIANGULO">TRIÂNGULO</option>
+        </select>
+
+        <label>Comarca</label>
+        <!-- ⬇⬇⬇ ERA <input type="text"> — virou <select> populado dinamicamente -->
+        <select id="f_comarca" onchange="ComapDropdowns.onComarca(document.getElementById('f_regiao').value, this.value, 'f_edificacao')">
+          <option value="">Selecione a região primeiro</option>
+        </select>
+
+        <label>Edificação</label>
+        <!-- ⬇⬇⬇ Agora populado dinamicamente pela comarca selecionada -->
+        <select id="f_edificacao">
+          <option value="">Selecione a comarca primeiro</option>
+        </select>
+
+        <label>Nº OSP / Referência</label>
+        <input type="text" id="f_osp" placeholder="Ex: OSP-2025-001">
+      </div>
+
+      <div>
+        <label>Data para Início (Planejado)</label>
+        <input type="date" id="f_dataInicio" onchange="calcularDataConclusao()">
+
+        <label>Prazo de Execução (Dias)</label>
+        <input type="number" id="f_prazo" oninput="calcularDataConclusao()" placeholder="Ex: 10">
+
+        <label style="color:var(--tj-gold)">Data Prevista de Conclusão (auto)</label>
+        <input type="date" id="f_dataConclusao" class="calc-field" readonly>
+
+        <label>Status</label>
+        <select id="f_status" onchange="verificarStatusReagendado()">
+          <option value="ABERTO">ABERTO</option>
+          <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+          <option value="CONCLUÍDO (NO PRAZO)">CONCLUÍDO (NO PRAZO)</option>
+          <option value="CONCLUÍDO (ATRASO)">CONCLUÍDO (ATRASO)</option>
+          <option value="REAGENDADO">REAGENDADO</option>
+          <option value="CANCELADO">CANCELADO</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Datas Reais -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; background:#eef2f7; padding:15px; border-radius:8px; margin-top:20px; border:1px solid #d1d9e6;">
+      <div>
+        <label style="color:var(--tj-blue)">Início da Execução (Real)</label>
+        <input type="date" id="f_inicio_execucao">
+      </div>
+      <div>
+        <label style="color:var(--tj-blue)">Final da Execução (Real)</label>
+        <input type="date" id="f_final_execucao">
+      </div>
+    </div>
+
+    <label>Motivação da Abertura</label>
+    <input type="text" id="f_motivacao" placeholder="Ex: Vazamento ou Manutenção Preventiva">
+
+    <label>Serviço Principal (Causa Raiz)</label>
+    <textarea id="f_servicoPrincipal" rows="2" placeholder="Descreva o serviço principal"></textarea>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+      <div><label>Serviço Secundário 1</label><input type="text" id="f_servicoSec1"></div>
+      <div><label>Serviço Secundário 2</label><input type="text" id="f_servicoSec2"></div>
+    </div>
+
+    <label>Responsáveis</label>
+    <input type="text" id="f_responsavel" placeholder="Nomes dos técnicos responsáveis">
+
+    <button id="btnSalvarOS" class="btn-save" onclick="salvarOS()">CADASTRAR O.S.</button>
+  </div>
+
+  <!-- ======== LISTA ======== -->
+  <div class="card" style="border-top-color:var(--tj-gold)">
+    <h3>PROGRAMADAS CADASTRADAS</h3>
+    <div id="filtrosOS" class="filter-bar" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+      <div>
+        <label>Status:</label>
+        <select id="f_filtroStatus" onchange="carregarListaOS()">
+          <option value="TODOS">TODOS</option>
+          <option value="ABERTO">ABERTO</option>
+          <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+          <option value="CONCLUÍDO">CONCLUÍDO</option>
+          <option value="REAGENDADO">REAGENDADO</option>
+        </select>
+      </div>
+      <div>
+        <label>Região:</label>
+        <select id="f_filtroRegiao" onchange="carregarListaOS()">
+          <option value="TODOS">TODAS</option>
+          <option value="CENTRAL">CENTRAL</option>
+          <option value="SUL">SUL</option>
+          <option value="NORTE">NORTE</option>
+          <option value="ZONA_DA_MATA">ZONA DA MATA</option>
+          <option value="SUDOESTE">SUDOESTE</option>
+          <option value="LESTE">LESTE</option>
+          <option value="TRIANGULO">TRIÂNGULO</option>
+        </select>
+      </div>
+      <div style="grid-column:span 2; display:flex; gap:10px; align-items:end;">
+        <div style="flex:1"><label>De:</label><input type="date" id="f_filtroDataDe" onchange="carregarListaOS()"></div>
+        <div style="flex:1"><label>Até:</label><input type="date" id="f_filtroDataAte" onchange="carregarListaOS()"></div>
+        <button onclick="limparFiltros()" style="padding:8px; font-size:0.7rem; cursor:pointer; border:1px solid #ccc; border-radius:4px; background:white;">Limpar</button>
+      </div>
+    </div>
+    <div id="listaOS" class="list-container">
+      <p style="text-align:center; color:#999; font-size:0.8rem;">Carregando...</p>
+    </div>
+  </div>
+</div>
+
+<!-- ⬇⬇⬇ HELPER DE DROPDOWNS — carrega aba COMARCA e expõe window.ComapDropdowns -->
+<script>
+(function(){
+  if (window.ComapDropdowns) return;
+  var ComapDropdowns = {
+    _data: null, _loading: false, _pending: [],
+    init: function(cb){
+      var self=this;
+      if (self._data) { if(cb)cb(self._data); return; }
+      if (self._loading) { if(cb)self._pending.push(cb); return; }
+      self._loading=true;
+      google.script.run.withSuccessHandler(function(res){
+        self._loading=false;
+        self._data = (res && res.ok) ? res : {data:{},totalRegistros:0};
+        if(cb)cb(self._data);
+        self._pending.forEach(function(fn){try{fn(self._data);}catch(e){}});
+        self._pending=[];
+      }).withFailureHandler(function(){
+        self._loading=false; self._data={data:{},totalRegistros:0};
+        if(cb)cb(self._data);
+      }).util_carregarTodasComarcas();
+    },
+    _norm: function(r){
+      if(!r)return''; return r.toString().toUpperCase().replace(/\s+/g,'_')
+        .replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I')
+        .replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C').trim();
+    },
+    listarComarcasDaRegiao: function(regiao){
+      if(!this._data)return[]; var reg=this._norm(regiao);
+      var arr=(this._data.data||{})[reg]||[]; var set={};
+      arr.forEach(function(d){if(d.comarca)set[d.comarca.toUpperCase()]=d.comarca;});
+      return Object.values(set).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+    },
+    listarEdificacoesPorComarca: function(regiao, comarca){
+      if(!this._data)return[]; var reg=this._norm(regiao);
+      var com=(comarca||'').toString().trim().toUpperCase(); if(!com)return[];
+      var arr=(this._data.data||{})[reg]||[]; var set={};
+      arr.forEach(function(d){if(d.comarca.toUpperCase()===com&&d.edificacao)set[d.edificacao.toUpperCase()]=d.edificacao;});
+      return Object.values(set).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+    },
+    _popular: function(selId, opcoes, ph){
+      var el=document.getElementById(selId); if(!el)return;
+      var atual=el.value; el.innerHTML='';
+      var v=document.createElement('option'); v.value=''; v.textContent=ph||'Selecione...'; el.appendChild(v);
+      opcoes.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=o;el.appendChild(op);});
+      if(atual){var aUp=atual.toUpperCase(); for(var i=0;i<el.options.length;i++){if(el.options[i].value.toUpperCase()===aUp){el.selectedIndex=i;break;}}}
+    },
+    onRegiao: function(regiao, idCom, idEd){
+      var self=this; var apply=function(){
+        self._popular(idCom, self.listarComarcasDaRegiao(regiao), 'Selecione a comarca...');
+        if(idEd) self._popular(idEd, [], 'Selecione a comarca primeiro');
+      };
+      if(!self._data)self.init(apply); else apply();
+    },
+    onComarca: function(regiao, comarca, idEd){
+      var self=this; var apply=function(){
+        self._popular(idEd, self.listarEdificacoesPorComarca(regiao,comarca), 'Selecione a edificação...');
+      };
+      if(!self._data)self.init(apply); else apply();
+    }
+  };
+  window.ComapDropdowns = ComapDropdowns;
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',function(){ComapDropdowns.init();});
+  else ComapDropdowns.init();
+})();
+</script>
+
+<script>
+  window.onload = () => {
+    document.getElementById('f_dataAbertura').value = new Date().toISOString().split('T')[0];
+    carregarListaOS();
+  };
+
+  function abaCadastro() {
+    resetarFormOS();
+    _setAbaAtiva('btnTabL');
+  }
+
+  function abaDetalhes() {
+    if (!document.getElementById('f_os_id_ref').value) {
+      alert("Selecione uma O.S. na lista lateral.");
+      abaCadastro();
+      return;
+    }
+    _setAbaAtiva('btnTabA');
+  }
+
+  function _setAbaAtiva(idBtn) {
+    ['btnTabL','btnTabA'].forEach(id => document.getElementById(id).classList.remove('active-tab'));
+    document.getElementById(idBtn).classList.add('active-tab');
+  }
+
+  function calcularDataConclusao() {
+    const dataInicioVal = document.getElementById('f_dataInicio').value;
+    const prazoVal      = parseInt(document.getElementById('f_prazo').value);
+    if (dataInicioVal && !isNaN(prazoVal) && prazoVal > 0) {
+      const d = new Date(dataInicioVal + 'T12:00:00');
+      d.setDate(d.getDate() + prazoVal);
+      document.getElementById('f_dataConclusao').value = d.toISOString().split('T')[0];
+    }
+  }
+
+  function verificarStatusReagendado() {
+    const status   = document.getElementById('f_status').value;
+    const isEdicao = document.getElementById('f_os_id_ref').value !== "";
+    if (status === "REAGENDADO") {
+      document.getElementById('f_dataInicio').disabled = false;
+      document.getElementById('f_prazo').disabled      = false;
+    } else if (isEdicao) {
+      document.getElementById('f_dataInicio').disabled = true;
+      document.getElementById('f_prazo').disabled      = true;
+    }
+    atualizarEstiloCard();
+  }
+
+  function atualizarEstiloCard() {
+    const status = document.getElementById('f_status').value;
+    const cores  = {
+      'ABERTO':               'var(--tj-blue)',
+      'EM ANDAMENTO':         'var(--warning)',
+      'CONCLUÍDO (NO PRAZO)': 'var(--success)',
+      'CONCLUÍDO (ATRASO)':   'var(--danger)',
+      'CANCELADO':            'var(--danger)',
+      'REAGENDADO':           'var(--reagendado)'
+    };
+    document.getElementById('formCardOS').style.borderTopColor = cores[status] || 'var(--tj-blue)';
+  }
+
+  function carregarListaOS() {
+    const fStatus  = document.getElementById('f_filtroStatus').value;
+    const fRegiao  = document.getElementById('f_filtroRegiao').value;
+    const fDataDe  = document.getElementById('f_filtroDataDe').value;
+    const fDataAte = document.getElementById('f_filtroDataAte').value;
+    const lista    = document.getElementById('listaOS');
+    lista.innerHTML = "<p style='text-align:center;color:#999;font-size:0.8rem;'>Processando...</p>";
+
+    google.script.run
+      .withSuccessHandler(function(dados) {
+        lista.innerHTML = "";
+        const filtrados = dados.filter(r => {
+          const matchStatus = (fStatus === "TODOS" || (r[11] && r[11].toString().toUpperCase().includes(fStatus.toUpperCase())));
+          // Normaliza região para casar "ZONA_DA_MATA" com "ZONA DA MATA" etc.
+          const regCadUp = (r[2]||'').toString().toUpperCase().replace(/\s+/g,'_');
+          const matchRegiao = (fRegiao === "TODOS" || regCadUp === fRegiao);
+          let matchData = true;
+          if (fDataDe  && r[6])  matchData = matchData && (r[6]  >= fDataDe);
+          if (fDataAte && r[12]) matchData = matchData && (r[12] <= fDataAte);
+          return matchStatus && matchRegiao && matchData;
+        });
+
+        if (filtrados.length === 0) {
+          lista.innerHTML = "<p style='text-align:center;font-size:0.8rem;margin-top:20px;'>Nenhum resultado.</p>";
+          return;
+        }
+
+        filtrados.slice().reverse().forEach(row => {
+          const st  = (row[11] || "ABERTO").toString().toUpperCase();
+          let cor   = "#eee";
+          if      (st.includes("ABERTO"))     cor = "#fff3cd";
+          else if (st.includes("CONCLUÍDO"))  cor = "#d4edda";
+          else if (st.includes("ANDAMENTO"))  cor = "#d1ecf1";
+          else if (st.includes("REAGENDADO")) cor = "#e8daef";
+          else if (st.includes("CANCELADO"))  cor = "#f8d7da";
+
+          const ospNum = row[17] ? '<br><b>OSP:</b> ' + row[17] : '';
+
+          lista.innerHTML += `
+            <div class="os-card-item" onclick='preencherEditar(${JSON.stringify(row)})'>
+              <span class="badge-item" style="background:${cor}">${row[11] || 'ABERTO'}</span>
+              <strong style="color:var(--tj-blue)">#${row[0]} - ${row[3]}</strong><br>
+              <div style="font-size:0.7rem;color:#666;margin-top:5px;">
+                <b>Região:</b> ${row[2]} | <b>Edif:</b> ${row[4]}<br>
+                <b>Início:</b> ${row[6] || '--'} | <b>Prev. Fim:</b> ${row[12] || '--'}
+                ${ospNum}
+              </div>
+            </div>`;
+        });
+      })
+      .withFailureHandler(err => {
+        lista.innerHTML = "<p style='color:red;font-size:0.8rem;'>Erro: " + err + "</p>";
+      })
+      .per_buscarTodasOS();
+  }
+
+  function limparFiltros() {
+    document.getElementById('f_filtroStatus').value  = "TODOS";
+    document.getElementById('f_filtroRegiao').value  = "TODOS";
+    document.getElementById('f_filtroDataDe').value  = "";
+    document.getElementById('f_filtroDataAte').value = "";
+    carregarListaOS();
+  }
+
+  // ⬇⬇⬇ Função auxiliar: normaliza região vinda da planilha para o value do select
+  function _normalizarRegiaoParaSelect(reg) {
+    if (!reg) return '';
+    return reg.toString().toUpperCase()
+      .replace(/\s+/g,'_')
+      .replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I')
+      .replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C').trim();
+  }
+
+  function preencherEditar(row) {
+    document.querySelectorAll('#formCardOS input, #formCardOS select, #formCardOS textarea')
+      .forEach(el => {
+        el.disabled = false;
+        el.style.borderColor = "";
+        el.classList.remove('comarca-editavel');
+        el.title = "";
+      });
+
+    document.getElementById('f_os_id_ref').value         = row[0];
+    document.getElementById('f_dataAbertura').value       = row[1]  || "";
+
+    // ⬇⬇⬇ Cascata na edição: setar Região → carregar comarcas → setar Comarca → carregar edifs → setar Edif
+    const regiaoNorm = _normalizarRegiaoParaSelect(row[2]);
+    document.getElementById('f_regiao').value             = regiaoNorm || "";
+
+    // Carrega comarcas da região, depois seta a comarca e carrega edifs
+    ComapDropdowns.init(function(){
+      ComapDropdowns.onRegiao(regiaoNorm, 'f_comarca', 'f_edificacao');
+      // Pequeno delay pra DOM atualizar
+      setTimeout(function(){
+        const comarcaVal = (row[3] || "").toString().toUpperCase();
+        const selCom = document.getElementById('f_comarca');
+        // Tenta achar a comarca; se não existir, adiciona como option livre
+        let achou = false;
+        for (let i=0; i<selCom.options.length; i++) {
+          if (selCom.options[i].value.toUpperCase() === comarcaVal) { selCom.selectedIndex = i; achou = true; break; }
+        }
+        if (!achou && row[3]) {
+          const op = document.createElement('option');
+          op.value = row[3]; op.textContent = row[3] + ' (não cadastrada)';
+          selCom.appendChild(op);
+          selCom.value = row[3];
+        }
+        // Carrega edificações
+        ComapDropdowns.onComarca(regiaoNorm, selCom.value, 'f_edificacao');
+        setTimeout(function(){
+          const edifVal = (row[4] || "").toString().toUpperCase();
+          const selEd = document.getElementById('f_edificacao');
+          let achouE = false;
+          for (let i=0; i<selEd.options.length; i++) {
+            if (selEd.options[i].value.toUpperCase() === edifVal) { selEd.selectedIndex = i; achouE = true; break; }
+          }
+          if (!achouE && row[4]) {
+            const op = document.createElement('option');
+            op.value = row[4]; op.textContent = row[4] + ' (não cadastrada)';
+            selEd.appendChild(op);
+            selEd.value = row[4];
+          }
+        }, 60);
+      }, 60);
+    });
+
+    document.getElementById('f_motivacao').value         = row[5]  || "";
+    document.getElementById('f_dataInicio').value        = row[6]  || "";
+    document.getElementById('f_servicoPrincipal').value  = row[7]  || "";
+    document.getElementById('f_servicoSec1').value       = row[8]  || "";
+    document.getElementById('f_servicoSec2').value       = row[9]  || "";
+    document.getElementById('f_prazo').value             = row[10] || "";
+    document.getElementById('f_status').value =
+      ['ABERTO','EM ANDAMENTO','CONCLUÍDO (NO PRAZO)','CONCLUÍDO (ATRASO)','REAGENDADO','CANCELADO']
+        .includes(row[11]) ? row[11] : "ABERTO";
+    document.getElementById('f_dataConclusao').value     = row[12] || "";
+    document.getElementById('f_responsavel').value       = row[14] || "";
+    document.getElementById('f_inicio_execucao').value   = row[15] || "";
+    document.getElementById('f_final_execucao').value    = row[16] || "";
+    document.getElementById('f_osp').value               = row[17] || "";
+
+    // Bloqueia região e data abertura na edição (mas Comarca/Edif ficam editáveis)
+    ['f_regiao', 'f_dataAbertura'].forEach(id => {
+      document.getElementById(id).disabled = true;
+    });
+
+    // Destaque visual: comarca editável
+    const campoComarca = document.getElementById('f_comarca');
+    campoComarca.classList.add('comarca-editavel');
+    campoComarca.title = "Editável — alterações serão salvas na planilha";
+
+    verificarStatusReagendado();
+    document.getElementById('formTituloOS').innerText  = "Editar O.S. #" + row[0];
+    document.getElementById('btnSalvarOS').innerText   = "SALVAR ALTERAÇÕES";
+    document.getElementById('btnSalvarOS').style.background = "var(--tj-gold)";
+    document.getElementById('btnTabA').disabled        = false;
+    _setAbaAtiva('btnTabA');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetarFormOS() {
+    document.querySelectorAll('#formCardOS input, #formCardOS select, #formCardOS textarea')
+      .forEach(el => {
+        el.value = ""; el.disabled = false;
+        el.style.borderColor = "#ccc";
+        el.classList.remove('comarca-editavel');
+        el.title = "";
+      });
+    // Reset dos selects cascateados
+    const selCom = document.getElementById('f_comarca');
+    selCom.innerHTML = '<option value="">Selecione a região primeiro</option>';
+    const selEd = document.getElementById('f_edificacao');
+    selEd.innerHTML = '<option value="">Selecione a comarca primeiro</option>';
+
+    document.getElementById('f_dataAbertura').value    = new Date().toISOString().split('T')[0];
+    document.getElementById('f_status').value          = "ABERTO";
+    document.getElementById('f_os_id_ref').value       = "";
+    document.getElementById('formTituloOS').innerText  = "Lançamento de OSP";
+    document.getElementById('btnSalvarOS').innerText   = "CADASTRAR O.S.";
+    document.getElementById('btnSalvarOS').style.background = "var(--tj-blue)";
+    document.getElementById('btnSalvarOS').disabled    = false;
+    document.getElementById('btnTabA').disabled        = true;
+    atualizarEstiloCard();
+  }
+
+  function salvarOS() {
+    const btn       = document.getElementById('btnSalvarOS');
+    const iniExec   = document.getElementById('f_inicio_execucao').value;
+    const finExec   = document.getElementById('f_final_execucao').value;
+    const status    = document.getElementById('f_status').value;
+    const dataAbert = document.getElementById('f_dataAbertura').value;
+
+    if (finExec && !iniExec && status !== "CANCELADO") {
+      alert("⚠️ Informe a 'Data de Início da Execução' antes de informar a data final.");
+      document.getElementById('f_inicio_execucao').focus();
+      return;
+    }
+    if (iniExec && dataAbert && new Date(iniExec) < new Date(dataAbert)) {
+      alert("⚠️ A data de início da execução não pode ser anterior à data de abertura.");
+      return;
+    }
+    const comarca = document.getElementById('f_comarca').value.trim().toUpperCase();
+    if (!comarca) { alert("⚠️ Informe a Comarca."); document.getElementById('f_comarca').focus(); return; }
+
+    const dados = {
+      id_ref:                document.getElementById('f_os_id_ref').value,
+      dataAbertura:          dataAbert,
+      regiao:                document.getElementById('f_regiao').value,
+      comarca:               comarca,
+      edificacao:            document.getElementById('f_edificacao').value,
+      motivacao:             document.getElementById('f_motivacao').value,
+      dataInicio:            document.getElementById('f_dataInicio').value,
+      servicoPrincipal:      document.getElementById('f_servicoPrincipal').value,
+      servicoSec1:           document.getElementById('f_servicoSec1').value  || "",
+      servicoSec2:           document.getElementById('f_servicoSec2').value  || "",
+      prazo:                 document.getElementById('f_prazo').value,
+      status:                status,
+      dataPrevistaConclusao: document.getElementById('f_dataConclusao').value,
+      dataInicioExecucao:    iniExec,
+      dataFinalExecucao:     finExec,
+      responsavel:           document.getElementById('f_responsavel').value,
+      osp:                   document.getElementById('f_osp').value
+    };
+
+    if (!dados.regiao || !dados.comarca || !dados.edificacao) {
+      alert("Campos obrigatórios: Região, Comarca e Edificação.");
+      return;
+    }
+
+    btn.disabled  = true;
+    btn.innerText = "SALVANDO...";
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        alert(res);
+        resetarFormOS();
+        carregarListaOS();
+      })
+      .withFailureHandler(function(err) {
+        alert("Erro ao salvar: " + err);
+        btn.disabled  = false;
+        btn.innerText = "TENTAR NOVAMENTE";
+      })
+      .per_salvarDadosOS(dados);
+  }
+</script>
+</body>
+</html>

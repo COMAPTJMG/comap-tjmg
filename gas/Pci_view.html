@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<script>
+/* COMAP UNIFICADO — bootstrap de sessão v2 (servidor injetou via window.__COMAP_SESSAO__) */
+(function(){
+  try {
+    var s = window.__COMAP_SESSAO__ || {};
+    // Se servidor não injetou (acesso direto sem login), redireciona para shell
+    if (!s.email) {
+      // Tenta query string como fallback
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('email')) {
+        s = {
+          nome: p.get('n') || '',
+          email: p.get('email') || '',
+          regiao: (p.get('r') || '').toUpperCase(),
+          global: p.get('g') === '1'
+        };
+      } else {
+        // Sem sessão de jeito nenhum — manda pro shell sem o ?modulo
+        window.location.href = window.location.pathname;
+        return;
+      }
+    }
+    // Garante que esteja no formato esperado pelos sistemas originais
+    var compat = {
+      nome: s.nome || '',
+      regiao: (s.regiao || '').toUpperCase(),
+      login: s.email || '',
+      email: s.email || '',
+      global: !!s.global,
+      timestamp: Date.now()
+    };
+    if (compat.global && compat.regiao !== 'MASTER') compat.regiao = 'MASTER';
+    try {
+      localStorage.setItem('comap_session', JSON.stringify(compat));
+      localStorage.setItem('comap_unificado', JSON.stringify(s));
+    } catch(e) {}
+    window.__COMAP_SESSAO__ = s;
+  } catch(e) { console.error('Bootstrap COMAP:', e); }
+})();
+</script>
+
+
+  <base target="_top">
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root{--tjmg-blue:#003366;--tjmg-dark:#002244;--tjmg-gold:#c5a059;--bg:#f0f4f8}
+    *{box-sizing:border-box}
+    body{background:var(--bg);font-family:'Segoe UI',Arial,sans-serif;font-size:14px}
+    .navbar-tjmg{background:var(--tjmg-dark);border-bottom:4px solid var(--tjmg-gold);padding:12px 20px}
+    .navbar-tjmg .brand{font-size:1.15rem;font-weight:800;color:var(--tjmg-gold);letter-spacing:1px}
+    .navbar-tjmg .sub{font-size:.7rem;color:#94a3b8;letter-spacing:.5px}
+    .nav-tabs{border:none;background:white;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.07);margin-bottom:20px}
+    .nav-link{color:#64748b;font-weight:600;border:none!important;padding:13px 12px;cursor:pointer;font-size:.8rem}
+    .nav-link.active{color:var(--tjmg-blue)!important;border-bottom:3px solid var(--tjmg-gold)!important;background:transparent!important}
+    .nav-link:hover:not(.active){color:var(--tjmg-blue)}
+    .card-pci{border:none;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+    .card-kpi{border:none;border-radius:12px;position:relative;transition:transform .2s}
+    .card-kpi:hover{transform:translateY(-4px)}
+    .kpi-icon{font-size:2rem;opacity:.2;position:absolute;right:14px;bottom:10px}
+    .badge-vencido{background:#fee2e2;color:#dc2626;font-weight:700;padding:4px 10px;border-radius:20px;font-size:.7rem}
+    .badge-30d{background:#fef3c7;color:#d97706;font-weight:700;padding:4px 10px;border-radius:20px;font-size:.7rem}
+    .badge-60d{background:#fef9c3;color:#ca8a04;font-weight:700;padding:4px 10px;border-radius:20px;font-size:.7rem}
+    .badge-90d{background:#dbeafe;color:#2563eb;font-weight:700;padding:4px 10px;border-radius:20px;font-size:.7rem}
+    .badge-vigente{background:#dcfce7;color:#16a34a;font-weight:700;padding:4px 10px;border-radius:20px;font-size:.7rem}
+    .badge-suspenso{background:#f1f5f9;color:#64748b;font-weight:700;padding:4px 10px;border-radius:20px;font-size:.7rem;border:1.5px dashed #94a3b8}
+    .form-section{background:white;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:16px}
+    .form-section-title{font-size:.7rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--tjmg-gold);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .form-section-title::after{content:'';flex:1;height:1px;background:#e2e8f0}
+    .form-label{font-size:.75rem;font-weight:700;color:#374151;margin-bottom:4px}
+    .form-control,.form-select{font-size:.85rem;border-color:#e2e8f0;border-radius:8px}
+    .form-control:focus,.form-select:focus{border-color:var(--tjmg-gold);box-shadow:0 0 0 3px rgba(197,160,89,.2)}
+    .pci-item-row{background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0;margin-bottom:12px;padding:16px;transition:border-color .2s}
+    .pci-item-row:hover{border-color:var(--tjmg-gold)}
+    .pci-item-num{font-size:.7rem;font-weight:800;color:var(--tjmg-gold);letter-spacing:.1em}
+    .rti-upload-zone{display:none;margin-top:10px;border:2px dashed #cbd5e1;border-radius:10px;padding:12px 14px;background:#f8fafc}
+    .rti-upload-zone.has-file{border-color:#16a34a;background:#f0fdf4}
+    .rti-upload-zone.rti-active{border-color:var(--tjmg-gold);background:#fffbf0}
+    .rti-btn-open{display:inline-flex;align-items:center;gap:6px;background:#003366;color:white;border:none;border-radius:8px;padding:6px 14px;font-size:.75rem;font-weight:700;cursor:pointer;text-decoration:none}
+    .rti-btn-open:hover{background:#004488;color:white}
+    .rti-btn-subst{display:inline-flex;align-items:center;gap:5px;background:white;color:#64748b;border:1.5px solid #cbd5e1;border-radius:8px;padding:5px 12px;font-size:.72rem;font-weight:600;cursor:pointer}
+    .rti-btn-subst:hover{border-color:var(--tjmg-gold);color:var(--tjmg-gold)}
+    .rti-file-label{display:inline-flex;align-items:center;gap:6px;background:var(--tjmg-blue);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:.75rem;font-weight:700;cursor:pointer}
+    .rti-file-label:hover{background:#004488}
+    .rti-file-input{display:none}
+    .rti-filename{font-size:.72rem;color:#475569;font-style:italic;margin-top:4px}
+    .rti-existing-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+    .rti-badge-ok{display:inline-flex;align-items:center;gap:5px;background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:.7rem;font-weight:700}
+    .table th{font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#64748b;border-bottom:2px solid #e2e8f0}
+    .table td{font-size:.82rem;vertical-align:middle}
+    .table tr:hover{background:#f8fafc}
+    .btn-action{width:30px;height:30px;padding:0;border-radius:6px;font-size:.75rem}
+    .btn-rti-open{display:inline-flex;align-items:center;gap:4px;background:#003366;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:.7rem;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap}
+    .btn-rti-open:hover{background:#004488;color:white}
+    .btn-rti-none{color:#cbd5e1;font-size:.75rem}
+    .pag-wrap{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;font-size:.78rem;color:#94a3b8;border-top:1px solid #f0f4f8}
+    .med-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;padding:10px;background:#f1f5f9;border-radius:8px;border:1px dashed #cbd5e1}
+    .med-grid label{font-size:.68rem;font-weight:700;color:var(--tjmg-blue);margin-bottom:2px;display:block}
+    .med-toggle{font-size:.7rem;color:var(--tjmg-blue);cursor:pointer;font-weight:600;text-decoration:underline;margin-top:6px;display:inline-block}
+    .mes-btn{border:1.5px solid #e2e8f0;background:white;color:#64748b;font-size:.72rem;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .15s}
+    .mes-btn.active{background:var(--tjmg-blue);color:white;border-color:var(--tjmg-blue)}
+    .mes-btn:hover:not(.active){border-color:var(--tjmg-blue);color:var(--tjmg-blue)}
+    .card-equip{border:none;border-radius:12px;background:white;box-shadow:0 2px 8px rgba(0,0,0,.07);padding:12px 14px;transition:transform .2s,box-shadow .2s;height:100%}
+    .card-equip:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.11)}
+    .equip-nome{font-size:.72rem;font-weight:800;color:#333;text-transform:uppercase;letter-spacing:.03em;flex:1;line-height:1.3}
+    .equip-icon{font-size:1.4rem;opacity:.18}
+    .equip-total{font-size:1.9rem;font-weight:900;color:var(--tjmg-blue);line-height:1;margin:8px 0}
+    .equip-total small{font-size:.6rem;font-weight:600;color:#aaa;display:block;margin-top:1px}
+    .equip-pill{font-size:.62rem;font-weight:700;padding:3px 7px;border-radius:20px;display:inline-flex;align-items:center;gap:3px}
+    .pill-v{background:#fee2e2;color:#dc2626}.pill-a{background:#fef3c7;color:#d97706}.pill-ok{background:#dcfce7;color:#16a34a}
+    .equip-bar-fill{height:4px;border-radius:10px;transition:width .6s}
+    .equip-section-title{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#aaa;padding:4px 0 6px;margin-bottom:6px;border-bottom:2px solid #f0f4f8;display:flex;align-items:center;gap:6px}
+    .alerta-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f0f4f8}
+    .alerta-item:last-child{border-bottom:none}
+    .alerta-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+    .hidden{display:none!important}
+    .sticky-bottom-btn{position:sticky;bottom:20px;z-index:100}
+    /* ABA RTI */
+    .rti-card{background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden;transition:transform .15s,box-shadow .15s;border:1.5px solid transparent}
+    .rti-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.11);border-color:var(--tjmg-gold)}
+    .rti-card-header{background:var(--tjmg-blue);color:white;padding:10px 14px;display:flex;align-items:flex-start;gap:8px}
+    .rti-card-header .comarca{font-size:.72rem;font-weight:800;letter-spacing:.05em}
+    .rti-card-header .edificio{font-size:.65rem;opacity:.75;margin-top:1px}
+    .rti-card-body{padding:12px 14px}
+    .rti-tipo{font-size:.73rem;font-weight:700;color:#334155;margin-bottom:6px}
+    .rti-meta{font-size:.67rem;color:#94a3b8;margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap}
+    .rti-meta span{display:flex;align-items:center;gap:3px}
+    .rti-open-btn{display:flex;align-items:center;justify-content:center;gap:7px;color:white;border:none;border-radius:8px;padding:9px 0;font-size:.78rem;font-weight:700;cursor:pointer;text-decoration:none;width:100%;transition:background .15s}
+    .rti-open-btn.pdf-btn{background:#dc2626}.rti-open-btn.pdf-btn:hover{background:#b91c1c}
+    .rti-open-btn.img-btn{background:#0891b2}.rti-open-btn.img-btn:hover{background:#0e7490}
+    .rti-open-btn.doc-btn{background:#1d4ed8}.rti-open-btn.doc-btn:hover{background:#1e40af}
+    .rti-open-btn.gen-btn{background:#003366}.rti-open-btn.gen-btn:hover{background:#004a99}
+    .rti-del-btn{flex-shrink:0;width:38px;height:38px;border:none;border-radius:8px;background:#fee2e2;color:#dc2626;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
+    .rti-del-btn:hover{background:#dc2626;color:white;}
+    .rti-status-pill{font-size:.63rem;font-weight:700;padding:2px 8px;border-radius:20px;display:inline-block}
+    .rti-orfao .rti-card-header{background:#92400e}
+    .rti-sem-arquivo .rti-card-header{background:#475569}
+    .rti-loading{text-align:center;padding:60px 20px;color:#94a3b8}
+    .rti-loading i{font-size:2.5rem;margin-bottom:12px;display:block;animation:spin 1s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .rti-empty{text-align:center;padding:60px 20px;color:#94a3b8}
+    .rti-kpi-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
+    .rti-kpi{flex:1;min-width:130px;background:white;border-radius:10px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);text-align:center}
+    .rti-kpi .val{font-size:1.8rem;font-weight:900;line-height:1}
+    .rti-kpi .lbl{font-size:.65rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-top:3px}
+    .rti-filter-bar{background:white;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.06);padding:12px 14px;margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .rti-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+    .subgrupo-sep{font-size:.62rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px 4px;color:white;border-radius:6px;display:inline-flex;align-items:center;gap:5px;margin-bottom:4px}
+    /* Filtro de Status para PDF/E-mail */
+    .status-filter-box{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-top:10px}
+    .status-filter-box .sf-title{font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tjmg-blue);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+    .status-filter-box .sf-hint{font-size:.65rem;color:#94a3b8;margin-top:6px;border-top:1px dashed #e2e8f0;padding-top:6px}
+    .sf-check-wrap{display:flex;flex-wrap:wrap;gap:6px}
+    .sf-cb-label{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;cursor:pointer;font-size:.72rem;font-weight:700;border:1.5px solid transparent;user-select:none;transition:all .15s}
+    .sf-cb-label input{display:none}
+    .sf-cb-label.vencido{background:#fee2e2;color:#dc2626;border-color:#fca5a5}
+    .sf-cb-label.d30{background:#fef3c7;color:#d97706;border-color:#fcd34d}
+    .sf-cb-label.d60{background:#fef9c3;color:#ca8a04;border-color:#fde68a}
+    .sf-cb-label.d60m{background:#dbeafe;color:#2563eb;border-color:#93c5fd}
+    .sf-cb-label.vencido.checked{background:#dc2626;color:white;border-color:#dc2626}
+    .sf-cb-label.d30.checked{background:#d97706;color:white;border-color:#d97706}
+    .sf-cb-label.d60.checked{background:#ca8a04;color:white;border-color:#ca8a04}
+    .sf-cb-label.d60m.checked{background:#2563eb;color:white;border-color:#2563eb}
+    .sf-active-badge{display:inline-flex;align-items:center;gap:5px;background:var(--tjmg-blue);color:white;border-radius:20px;padding:3px 10px;font-size:.68rem;font-weight:700;margin-left:6px}
+    /* Modal Edição */
+    .modal-edicao-header{background:var(--tjmg-dark);border-bottom:3px solid var(--tjmg-gold)}
+    .modal-edicao-body{background:var(--bg)}
+    .modal-edicao-footer{background:white;border-top:2px solid #e2e8f0}
+    .modal-edit-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(197,160,89,.2);color:var(--tjmg-gold);border:1px solid var(--tjmg-gold);border-radius:20px;padding:3px 12px;font-size:.68rem;font-weight:700;letter-spacing:.05em}
+    /* Botão limpar referência inválida */
+    .rti-clear-btn{flex-shrink:0;width:38px;height:38px;border:none;border-radius:8px;background:#fef3c7;color:#d97706;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s;}
+    .rti-clear-btn:hover{background:#d97706;color:white;}
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style id="tjmg-design-system">
+/* ─── TOKENS GLOBAIS ─────────────────────────────────────── */
+:root {
+  --tjmg-blue:        #003366 !important;
+  --tjmg-blue-dark:   #00234d !important;
+  --tjmg-blue-mid:    #004080 !important;
+  --tjmg-blue-light:  #0a4f8a !important;
+  --tjmg-blue-pale:   #e8f0fb !important;
+  --tjmg-gold:        #c5a059 !important;
+  --tjmg-gold-light:  #d4b06a !important;
+  --tjmg-gold-pale:   #fdf6e8 !important;
+  --tjmg-success:     #1b7a3e !important;
+  --tjmg-success-bg:  #e8f5ee !important;
+  --tjmg-warning:     #b45309 !important;
+  --tjmg-warning-bg:  #fef3c7 !important;
+  --tjmg-danger:      #b91c1c !important;
+  --tjmg-danger-bg:   #fee2e2 !important;
+  --tjmg-gray-50:     #f8fafc !important;
+  --tjmg-gray-100:    #f1f5f9 !important;
+  --tjmg-gray-200:    #e2e8f0 !important;
+  --tjmg-gray-300:    #cbd5e1 !important;
+  --tjmg-gray-400:    #94a3b8 !important;
+  --tjmg-gray-500:    #64748b !important;
+  --tjmg-gray-600:    #475569 !important;
+  --tjmg-gray-700:    #334155 !important;
+  --tjmg-gray-900:    #0f172a !important;
+  --tjmg-radius-sm:   6px !important;
+  --tjmg-radius:      10px !important;
+  --tjmg-radius-lg:   14px !important;
+  --tjmg-shadow-sm:   0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04) !important;
+  --tjmg-shadow:      0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04) !important;
+  --tjmg-shadow-lg:   0 10px 28px rgba(0,0,0,.10) !important;
+  --tjmg-topbar-h:    62px !important;
+  --tjmg-font:        'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif !important;
+}
+
+/* ─── RESET TIPOGRÁFICO ──────────────────────────────────── */
+html, body, button, input, select, textarea, table, td, th,
+.top-bar, .navbar-tjmg, .header-pci, .topo,
+.kpi-card, .card-kpi, .card-surface, .card-pci, .card,
+.btn, .btn-topbar, .nav-tab-btn, .nav-link,
+.modal-header, .modal-body, .modal-footer, .modal-content,
+.form-control, .form-select, .form-label,
+h1, h2, h3, h4, h5, h6, p, span, div, label, small, strong, b {
+  font-family: var(--tjmg-font);
+}
+body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; font-size: 14px !important; line-height: 1.55 !important; }
+
+/* Desativa cores de tema escuro (Emergencial) — fallback se sobrar algo */
+html[data-theme="dark"], html[data-theme="dark"] body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR — altura 62px, azul TJMG + borda dourada
+═══════════════════════════════════════════════════════════ */
+.top-bar, .navbar-tjmg, .header-pci, .topo, header.top-bar, header.header-pci, nav.navbar-tjmg {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,.18) !important;
+  position: sticky !important;
+  top: 34px !important;
+  z-index: 200 !important;
+  color: #fff !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+.top-bar *, .navbar-tjmg *, .header-pci *, .topo * { color: inherit; }
+.top-bar h2, .navbar-tjmg h2, .header-pci h2, .topo h2,
+.top-bar-title, .brand,
+.header-pci .brand, .navbar-tjmg .brand {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: .02em !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+.top-bar-sub, .header-pci .sub, .navbar-tjmg .sub, .topo .sub,
+.top-bar small, .header-pci small {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.55) !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+  display: block !important;
+  margin-top: 1px !important;
+}
+/* Ícone "C" do topbar */
+.top-bar-icon, .login-badge-icon {
+  width: 34px !important; height: 34px !important;
+  background: var(--tjmg-gold) !important;
+  border-radius: 8px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 15px !important; font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  flex-shrink: 0 !important;
+}
+.top-bar-brand, .header-pci > div:first-child { display: flex !important; align-items: center !important; gap: 14px !important; }
+.top-bar-right, .header-pci > div:last-child { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+
+/* Chips do topbar (relógio, data, região) */
+.top-bar-clock, .last-update-chip, .header-badge, #dataRefBadge, #chip_regiao {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.85) !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+}
+
+/* Botões do topbar */
+.btn-topbar {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  padding: 7px 14px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .03em !important;
+  height: 32px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  transition: background .15s !important;
+}
+.btn-topbar:hover { background: rgba(255,255,255,.20) !important; }
+.btn-topbar-gold {
+  background: var(--tjmg-gold) !important;
+  border-color: var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-topbar-gold:hover { background: var(--tjmg-gold-light) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PCI: navbar Bootstrap → topbar TJMG (overrides estruturais)
+═══════════════════════════════════════════════════════════ */
+.navbar-tjmg .container-fluid { padding: 0 !important; width: 100% !important; max-width: none !important; }
+.navbar-tjmg .brand { display: flex !important; align-items: center !important; gap: 10px !important; font-size: 15px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.navbar-tjmg .brand::before { content: "C"; display:flex; align-items:center; justify-content:center; width:32px; height:32px; background: var(--tjmg-gold); color: var(--tjmg-blue); border-radius:8px; font-weight:800; font-size:14px; }
+.navbar-tjmg .brand .fa-fire-extinguisher,
+.navbar-tjmg .brand i.fas { display: none !important; }
+.navbar-tjmg .sub { font-size: 10px !important; color: rgba(255,255,255,.55) !important; letter-spacing: .04em !important; margin-top: 1px !important; text-transform: uppercase !important; }
+.navbar-tjmg .text-end small { color: rgba(255,255,255,.70) !important; font-size: 11px !important; font-weight: 500 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAUDOS: header-pci gradient → solid TJMG
+═══════════════════════════════════════════════════════════ */
+.header-pci h2 { font-size: 16px !important; font-weight: 800 !important; letter-spacing: .02em !important; margin: 0 !important; color: #fff !important; }
+.header-pci h2 i.bi { color: var(--tjmg-gold) !important; font-size: 18px !important; margin-right: 6px !important; }
+.header-pci small { font-size: 11px !important; opacity: .55 !important; letter-spacing: .04em !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABS DE NAVEGAÇÃO
+═══════════════════════════════════════════════════════════ */
+.nav-tabs-bar {
+  background: var(--tjmg-blue-mid) !important;
+  border-bottom: 1px solid rgba(255,255,255,.1) !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  gap: 0 !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  position: sticky !important;
+  top: calc(34px + var(--tjmg-topbar-h)) !important;
+  z-index: 190 !important;
+}
+.nav-tabs-bar::-webkit-scrollbar { display: none; }
+.nav-tab {
+  padding: 12px 22px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.55) !important;
+  cursor: pointer !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  background: transparent !important;
+  transition: all .15s !important;
+  white-space: nowrap !important;
+  letter-spacing: .03em !important;
+  text-transform: uppercase !important;
+  user-select: none !important;
+  line-height: 1.2 !important;
+}
+.nav-tab:hover { color: rgba(255,255,255,.9) !important; background: rgba(255,255,255,.05) !important; }
+.nav-tab.active { color: var(--tjmg-gold) !important; border-bottom-color: var(--tjmg-gold) !important; font-weight: 700 !important; background: transparent !important; }
+
+/* Bootstrap nav-tabs (PCI) e tabs-wrapper (Laudos) */
+.nav.nav-tabs, .tabs-wrapper {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  padding: 4px !important;
+  display: flex !important;
+  gap: 2px !important;
+  margin-bottom: 18px !important;
+}
+.nav.nav-tabs .nav-link, .tabs-wrapper .nav-tab-btn {
+  color: var(--tjmg-gray-500) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  letter-spacing: .02em !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+  transition: all .15s !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.nav.nav-tabs .nav-link:hover, .tabs-wrapper .nav-tab-btn:hover { color: var(--tjmg-blue) !important; background: var(--tjmg-gray-100) !important; }
+.nav.nav-tabs .nav-link.active, .tabs-wrapper .nav-tab-btn.active {
+  background: var(--tjmg-blue) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(0,51,102,.25) !important;
+}
+
+/* Inner tabs (Periódica: cadastro/atualização) */
+.inner-tab {
+  padding: 10px 18px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  cursor: pointer !important;
+  border-radius: 8px 8px 0 0 !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  transition: all .15s !important;
+}
+.inner-tab-inactive { background: var(--tjmg-gray-200) !important; color: var(--tjmg-gray-500) !important; }
+.inner-tab-active   { background: var(--tjmg-blue) !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   CARDS / SURFACES
+═══════════════════════════════════════════════════════════ */
+.kpi-card, .card-kpi, .card-pci, .card-surface, .form-section, .chart-box, .search-container, .dash-filter-bar, .filter-bar {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card, .card-kpi {
+  padding: 16px 18px !important;
+  border-top: 4px solid var(--tjmg-blue) !important;
+  transition: transform .15s, box-shadow .15s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.kpi-card:hover, .card-kpi:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.kpi-card h3, .card-kpi h3, .kpi-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-gray-400) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card .value, .card-kpi h2, .kpi-value {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1 !important;
+  letter-spacing: -.02em !important;
+  font-family: var(--tjmg-font) !important;
+  margin: 0 !important;
+}
+.kpi-card .kpi-sub, .card-kpi small, .kpi-sub {
+  font-size: 10px !important;
+  color: var(--tjmg-gray-400) !important;
+  margin-top: 4px !important;
+  font-weight: 500 !important;
+  font-family: var(--tjmg-font) !important;
+  display: block !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+/* Variantes de cor KPI */
+.kpi-aberto, .kpi-success { border-top-color: var(--tjmg-success) !important; }
+.kpi-aberto .value, .kpi-success .kpi-value { color: var(--tjmg-success) !important; }
+.kpi-concluidas { border-top-color: #0369a1 !important; }
+.kpi-concluidas .value { color: #0369a1 !important; }
+.kpi-repro, .kpi-warning { border-top-color: #d97706 !important; }
+.kpi-repro .value, .kpi-warning .kpi-value { color: #d97706 !important; }
+.kpi-atraso, .kpi-danger { border-top-color: var(--tjmg-danger) !important; }
+.kpi-atraso .value, .kpi-danger .kpi-value { color: var(--tjmg-danger) !important; }
+.kpi-canceladas { border-top-color: var(--tjmg-gray-400) !important; }
+.kpi-canceladas .value { color: var(--tjmg-gray-500) !important; }
+.kpi-info { border-top-color: var(--tjmg-blue) !important; }
+.kpi-info .kpi-value { color: var(--tjmg-blue) !important; }
+.kpi-gold { border-top-color: var(--tjmg-gold) !important; }
+.kpi-gold .kpi-value { color: #8a6a00 !important; }
+
+/* PCI: card-kpi com background colorido — manter, mas com radius/sombra padronizados */
+.card-kpi[style*="background"] { border: none !important; border-top: none !important; }
+.card-kpi[style*="background"] h2 { color: inherit !important; }
+
+/* Form sections */
+.form-section, .card-surface, .chart-box {
+  padding: 22px !important;
+  margin-bottom: 18px !important;
+}
+.form-section-title, .section-title, .card-title, .chart-box-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 2px solid var(--tjmg-gray-100) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.form-section-title::after, .section-title::after { content: none !important; }
+.chart-box-title .dot, .card-title .dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; background: var(--tjmg-gold) !important; flex-shrink: 0 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   FORM CONTROLS — Inputs, selects, textareas
+═══════════════════════════════════════════════════════════ */
+input[type="text"], input[type="email"], input[type="password"], input[type="date"],
+input[type="time"], input[type="number"], input[type="search"], textarea,
+select, .form-control, .form-select, .filtro-tabela-select, .search-box {
+  font-family: var(--tjmg-font) !important;
+  font-size: 13px !important;
+  color: var(--tjmg-gray-700) !important;
+  background: #fff !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 9px 12px !important;
+  outline: none !important;
+  transition: border-color .15s, box-shadow .15s !important;
+  line-height: 1.4 !important;
+}
+input:focus, textarea:focus, select:focus, .form-control:focus, .form-select:focus {
+  border-color: var(--tjmg-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0,51,102,.10) !important;
+}
+input:disabled, select:disabled, textarea:disabled,
+.form-control:disabled, .form-select:disabled {
+  background: var(--tjmg-gray-100) !important;
+  color: var(--tjmg-gray-400) !important;
+  border-style: dashed !important;
+  cursor: not-allowed !important;
+}
+label, .form-label, .filter-item label, .form-group label, .label-tecnica, .dash-filter-item label, .mf-group label, .rel-filter-item label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  margin-bottom: 5px !important;
+  display: block !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTÕES (Bootstrap + custom)
+═══════════════════════════════════════════════════════════ */
+.btn {
+  font-family: var(--tjmg-font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 8px 16px !important;
+  letter-spacing: .02em !important;
+  transition: all .15s !important;
+  line-height: 1.3 !important;
+  cursor: pointer !important;
+}
+.btn-primary, .btn-tjmg, .btn-save, .btn-login {
+  background: var(--tjmg-blue) !important;
+  border: 1px solid var(--tjmg-blue) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+.btn-primary:hover, .btn-tjmg:hover, .btn-save:hover, .btn-login:hover {
+  background: var(--tjmg-blue-light) !important;
+  border-color: var(--tjmg-blue-light) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,51,102,.25) !important;
+}
+.btn-tjmg-gold, .btn-primary-gold, .btn-repro {
+  background: var(--tjmg-gold) !important;
+  border: 1px solid var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-tjmg-gold:hover, .btn-primary-gold:hover, .btn-repro:hover {
+  background: var(--tjmg-gold-light) !important;
+  border-color: var(--tjmg-gold-light) !important;
+}
+.btn-danger { background: var(--tjmg-danger) !important; border-color: var(--tjmg-danger) !important; color: #fff !important; }
+.btn-success { background: var(--tjmg-success) !important; border-color: var(--tjmg-success) !important; color: #fff !important; }
+.btn-warning { background: #d97706 !important; border-color: #d97706 !important; color: #fff !important; }
+.btn-secondary { background: var(--tjmg-gray-500) !important; border-color: var(--tjmg-gray-500) !important; color: #fff !important; }
+.btn-outline-primary { background: transparent !important; border: 1.5px solid var(--tjmg-blue) !important; color: var(--tjmg-blue) !important; }
+.btn-outline-primary:hover { background: var(--tjmg-blue-pale) !important; }
+.btn-outline-secondary { background: #fff !important; border: 1.5px solid var(--tjmg-gray-200) !important; color: var(--tjmg-gray-600) !important; }
+.btn-outline-secondary:hover { background: var(--tjmg-gray-100) !important; }
+.btn-outline-warning { background: transparent !important; border: 1.5px solid #d97706 !important; color: #d97706 !important; }
+.btn-outline-warning:hover { background: #fef3c7 !important; }
+.btn-outline-danger { background: transparent !important; border: 1.5px solid var(--tjmg-danger) !important; color: var(--tjmg-danger) !important; }
+.btn-outline-danger:hover { background: var(--tjmg-danger-bg) !important; }
+.btn-outline-success { background: transparent !important; border: 1.5px solid var(--tjmg-success) !important; color: var(--tjmg-success) !important; }
+.btn-sm { padding: 6px 12px !important; font-size: 11px !important; }
+.btn-lg { padding: 11px 20px !important; font-size: 13px !important; }
+
+.btn-limpar-filtro, .btn-rel-limpar {
+  background: var(--tjmg-gray-100) !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  color: var(--tjmg-gray-600) !important;
+  padding: 9px 16px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-family: var(--tjmg-font) !important;
+}
+.btn-limpar-filtro:hover, .btn-rel-limpar:hover { background: var(--tjmg-gray-200) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABELAS
+═══════════════════════════════════════════════════════════ */
+table, .table, .table-tjmg, .rel-table, .preview-table {
+  font-family: var(--tjmg-font) !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+table thead tr, .table thead tr, .table-tjmg thead tr {
+  background: var(--tjmg-blue) !important;
+}
+table thead th, .table thead th, .table-tjmg thead th, .rel-table thead th, .preview-table thead th {
+  background: var(--tjmg-blue) !important;
+  color: rgba(255,255,255,.92) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  padding: 10px 14px !important;
+  text-align: left !important;
+  border-bottom: 2px solid var(--tjmg-gold) !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody td, .table tbody td, .table-tjmg tbody td {
+  padding: 9px 14px !important;
+  font-size: 12.5px !important;
+  color: var(--tjmg-gray-700) !important;
+  border-bottom: 1px solid var(--tjmg-gray-100) !important;
+  vertical-align: middle !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody tr:hover, .table tbody tr:hover { background: var(--tjmg-blue-pale) !important; }
+.table-tjmg tbody tr:hover { background: var(--tjmg-gray-50) !important; }
+tbody tr.row-atraso, tbody tr.row-vencido { background: #fff5f5 !important; }
+tbody tr.row-atraso:hover, tbody tr.row-vencido:hover { background: var(--tjmg-danger-bg) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   BADGES / STATUS
+═══════════════════════════════════════════════════════════ */
+.badge, .badge-status, .badge-item, .rel-badge, .section-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  line-height: 1.4 !important;
+}
+.section-badge { background: var(--tjmg-blue) !important; color: #fff !important; }
+.section-badge-danger { background: var(--tjmg-danger) !important; }
+.status-aberto, .badge-agendado { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.status-aberto::before, .badge-agendado::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-reprogramado, .badge-30d, .badge-andamento {
+  background: var(--tjmg-warning-bg) !important;
+  color: var(--tjmg-warning) !important;
+}
+.status-reprogramado::before, .badge-andamento::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-alert, .badge-vencido, .badge-atraso {
+  background: var(--tjmg-danger-bg) !important;
+  color: var(--tjmg-danger) !important;
+}
+.status-alert::before, .badge-atraso::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.badge-ok, .badge-vigente { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.badge-60d { background: #fef9c3 !important; color: #854d0e !important; }
+.badge-90d { background: #dbeafe !important; color: #1e40af !important; }
+.badge-suspenso { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-500) !important; border: 1.5px dashed var(--tjmg-gray-300) !important; }
+.badge-na { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-400) !important; }
+
+/* Tempo-chip (prazo) — preserva cores semânticas */
+.tempo-chip { font-family: var(--tjmg-font) !important; padding: 4px 10px !important; border-radius: 20px !important; font-size: 11px !important; font-weight: 600 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   MODAIS
+═══════════════════════════════════════════════════════════ */
+.modal-content, .modal-relatorio-content, .modal-email {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: none !important;
+  box-shadow: var(--tjmg-shadow-lg) !important;
+  overflow: hidden !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header, .rel-header, .modal-edicao-header {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 16px 22px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+.modal-header h2, .modal-header h5, .rel-header h2 {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin: 0 !important;
+  letter-spacing: .02em !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header p, .rel-header p {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.6) !important;
+  margin: 2px 0 0 !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-close, .btn-close {
+  background: rgba(255,255,255,.15) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+.modal-close:hover, .btn-close:hover { background: rgba(255,255,255,.28) !important; opacity: 1 !important; }
+.modal-body, .rel-body { padding: 22px !important; background: #fff !important; font-family: var(--tjmg-font) !important; }
+.modal-footer, .modal-edicao-footer { background: var(--tjmg-gray-50) !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding: 14px 22px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE / CONTAINER
+═══════════════════════════════════════════════════════════ */
+.container, .container-fluid, main.container {
+  max-width: 1800px !important;
+  margin: 0 auto !important;
+  padding: 22px 24px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.welcome h2 { font-size: 22px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; }
+.welcome .sub { color: var(--tjmg-gray-500) !important; font-size: 13px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════════════════════════ */
+#login_screen, #tela-login {
+  background: var(--tjmg-blue) !important;
+  background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(197,160,89,.20) 0%, transparent 60%) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 32px 28px !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  border-top: 4px solid var(--tjmg-gold) !important;
+  color: #fff !important;
+}
+.login-card h1, .login-card h2 { color: #fff !important; font-weight: 800 !important; font-size: 18px !important; }
+.login-card .login-sub, .login-card > p { color: rgba(255,255,255,.55) !important; font-size: 12px !important; }
+.login-field label, .login-card label, .login-card label span {
+  color: rgba(255,255,255,.65) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  font-weight: 700 !important;
+}
+.login-card input, .login-field input, #form-login input {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  color: #fff !important;
+  padding: 12px 14px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 14px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card input::placeholder { color: rgba(255,255,255,.30) !important; }
+.login-card input:focus { border-color: var(--tjmg-gold) !important; background: rgba(255,255,255,.14) !important; box-shadow: none !important; }
+.btn-login, #btn_acessar, #btn-login {
+  background: var(--tjmg-gold) !important;
+  border: none !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  padding: 13px !important;
+  border-radius: var(--tjmg-radius) !important;
+  box-shadow: 0 4px 14px rgba(197,160,89,.4) !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+  cursor: pointer !important;
+}
+.btn-login:hover, #btn_acessar:hover, #btn-login:hover { background: var(--tjmg-gold-light) !important; transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════════════════════
+   SHELL HOME (index.html — cards de módulos)
+═══════════════════════════════════════════════════════════ */
+.topo {
+  background: var(--tjmg-blue) !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.topo .marca { font-size: 16px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.topo .versao { font-size: 11px !important; color: rgba(255,255,255,.5) !important; }
+.topo .info-user { font-size: 12px !important; color: rgba(255,255,255,.85) !important; font-weight: 500 !important; }
+.topo .btn-icon {
+  background: rgba(255,255,255,.10) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  padding: 7px 14px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  height: 32px !important;
+}
+.cards .card {
+  background: #fff !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  padding: 22px !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  transition: transform .15s, box-shadow .15s !important;
+}
+.cards .card:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.card-titulo { font-weight: 700 !important; font-size: 15px !important; color: var(--tjmg-blue) !important; font-family: var(--tjmg-font) !important; }
+.card-total { font-size: 32px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; line-height: 1 !important; font-family: var(--tjmg-font) !important; }
+.card-rotulo { font-size: 10px !important; color: var(--tjmg-gray-400) !important; text-transform: uppercase !important; letter-spacing: .07em !important; font-weight: 600 !important; }
+.card-acessar { color: var(--tjmg-blue) !important; font-size: 12px !important; font-weight: 700 !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding-top: 12px !important; margin-top: 12px !important; }
+
+/* Welcome */
+.welcome { margin-bottom: 24px !important; }
+.welcome h2 { color: var(--tjmg-blue) !important; }
+
+.info-box {
+  background: var(--tjmg-blue-pale) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  padding: 14px 18px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 12px !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1.6 !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ELEMENTOS QUE NÃO DEVEM SER ALTERADOS
+═══════════════════════════════════════════════════════════ */
+/* Gráficos preservam visual original — Google Charts / Chart.js renderizam canvas próprio */
+#chartHist, #chartLaudos, #chartPizza,
+#chart_concluidos, #chart_comarcas_total, #chart_pendentes, #chart_sis, #chart_ele,
+#grafico_gauge, #grafico_barras, #grafico_pizza_tipo {
+  font-family: var(--tjmg-font) !important;
+}
+
+/* Login do PCI/Laudos: o body com gradient azul precisa de margem para a navbar superior */
+body { padding-top: 34px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVO
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .top-bar, .navbar-tjmg, .header-pci, .topo {
+    height: auto !important;
+    min-height: var(--tjmg-topbar-h) !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap !important;
+  }
+  .top-bar-sub, .header-pci small, .navbar-tjmg .sub, #data_atual, .last-update-chip { display: none !important; }
+  .btn-topbar { padding: 6px 10px !important; font-size: 10px !important; height: 30px !important; }
+  table thead th { padding: 8px 10px !important; font-size: 9px !important; }
+  table tbody td { padding: 7px 10px !important; font-size: 11.5px !important; }
+  .kpi-card .value, .card-kpi h2, .kpi-value { font-size: 22px !important; }
+  .container, .container-fluid { padding: 14px 12px !important; }
+}
+</style>
+</head>
+<body>
+
+<style>
+#comap-unif-nav {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  background: #0a1929 !important;
+  color: #fff !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  gap: 10px !important;
+  z-index: 99999 !important;
+  font: 600 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  border-bottom: 1px solid #c5a059 !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+#comap-unif-nav * {
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+#comap-unif-nav a {
+  color: #fff !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+#comap-unif-nav .comap-sep {
+  opacity: .3 !important;
+  color: #fff !important;
+}
+#comap-unif-nav select {
+  background: rgba(255,255,255,.1) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  /* FIX: força largura fixa — sobrescreve width:100% do CSS do módulo */
+  width: 180px !important;
+  min-width: 140px !important;
+  max-width: 180px !important;
+  flex: 0 0 180px !important;
+  margin: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+}
+#comap-unif-nav select option {
+  background: #0a1929 !important;
+  color: #fff !important;
+}
+#comap-unif-nav .comap-spacer {
+  flex: 1 1 auto !important;
+}
+#comap-unif-nav button.comap-sair {
+  background: rgba(220,38,38,.2) !important;
+  color: #fff !important;
+  border: 1px solid rgba(220,38,38,.5) !important;
+  padding: 3px 10px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+#comap-unif-nav .comap-mod-label {
+  opacity: .7 !important;
+  font-size: 11px !important;
+  margin-left: 6px !important;
+  color: #fff !important;
+}
+#comap-loading {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(10,25,41,.92) !important;
+  z-index: 100000 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  color: #fff !important;
+  font: 600 14px sans-serif !important;
+}
+#comap-loading.show {
+  display: flex !important;
+}
+#comap-loading .comap-spin {
+  width: 40px !important;
+  height: 40px !important;
+  border: 3px solid rgba(197,160,89,.3) !important;
+  border-top-color: #c5a059 !important;
+  border-radius: 50% !important;
+  animation: comap-spin 0.8s linear infinite !important;
+  margin-bottom: 14px !important;
+}
+@keyframes comap-spin { to { transform: rotate(360deg) } }
+body { padding-top: 34px !important; }
+</style>
+<div id="comap-unif-nav">
+  <a href="#" onclick="event.preventDefault();if(window.__COMAP_HOME__)window.__COMAP_HOME__();else{var a=document.createElement('a');a.href=window.__COMAP_URL__||'/';a.target='_top';document.body.appendChild(a);a.click();}return false;">🏠 <span>COMAP</span></a>
+  <span class="comap-sep">│</span>
+  <select id="comap-unif-sel" onchange="(function(sel){if(!sel.value)return;var ov=document.getElementById('comap-loading');if(ov)ov.classList.add('show');var s=window.__COMAP_SESSAO__||{};var p=new URLSearchParams({modulo:sel.value,n:s.nome||'',email:s.email||'',r:s.regiao||'',g:s.global?'1':'0'});var a=document.createElement('a');a.href=(window.__COMAP_URL__||window.location.pathname)+'?'+p.toString();a.target='_top';document.body.appendChild(a);a.click();})(this)">
+    <option value="">— Trocar módulo —</option>
+    <option value="emergencial" >🚨 Emergencial</option>
+    <option value="periodica"   >🔄 Periódica</option>
+    <option value="pci"         selected>🔥 PCI</option>
+    <option value="laudos"      >📋 Laudos</option>
+  </select>
+  <span class="comap-spacer"></span>
+  <button class="comap-sair" onclick="if(window.__COMAP_LOGOUT__)window.__COMAP_LOGOUT__();">⏻ SAIR</button>
+  <span class="comap-mod-label">PCI</span>
+</div>
+<div id="comap-loading">
+  <div class="comap-spin"></div>
+  <div>Carregando módulo...</div>
+</div>
+
+
+
+
+<nav class="navbar-tjmg mb-3">
+  <div class="container-fluid d-flex align-items-center justify-content-between">
+    <div>
+      <div class="brand"><i class="fas fa-fire-extinguisher me-2"></i>COMAP | PCI NORTE</div>
+      <div class="sub">GESTÃO DE PREVENÇÃO CONTRA INCÊNDIO — TJMG</div>
+    </div>
+    <div class="text-end">
+      <small id="data_ref_display" class="text-white-50" style="font-size:.75rem;"></small><br>
+      <small id="total_registros" class="text-white-50" style="font-size:.7rem;"></small>
+    </div>
+  </div>
+</nav>
+
+<div class="container-fluid px-3 pb-5" style="max-width:1200px;">
+  <ul class="nav nav-tabs nav-fill">
+    <li class="nav-item"><a class="nav-link active" id="tab_form"   onclick="novoLancamento()"><i class="fas fa-plus-circle me-1"></i>Lançar</a></li>
+    <li class="nav-item"><a class="nav-link"        id="tab_lista"  onclick="switchTab('aba_lista')"><i class="fas fa-list me-1"></i>Consultar</a></li>
+    <li class="nav-item"><a class="nav-link"        id="tab_dash"   onclick="switchTab('aba_dash')"><i class="fas fa-chart-bar me-1"></i>Dashboard</a></li>
+    <li class="nav-item"><a class="nav-link"        id="tab_rti"    onclick="switchTab('aba_rti')"><i class="fas fa-paperclip me-1"></i>RTI</a></li>
+    <li class="nav-item"><a class="nav-link"        id="tab_config" onclick="switchTab('aba_config')"><i class="fas fa-cog me-1"></i>Config.</a></li>
+  </ul>
+
+  <!-- ABA FORM -->
+  <div id="aba_form">
+    <div class="form-section">
+      <div class="form-section-title"><i class="fas fa-file-contract"></i>Dados do Contrato / Localização</div>
+      <div class="row g-3">
+        <div class="col-md-2 col-6"><label class="form-label">CONTRATO</label><select id="f_contrato" class="form-select"><option>194/2023</option><option>017/2026</option></select></div>
+        <div class="col-md-2 col-6"><label class="form-label">REGIÃO</label><select id="f_regiao" class="form-select" onchange="ComapDropdowns.onRegiao(this.value,'f_comarca','f_edificacao')"><option value="NORTE">NORTE</option><option value="CENTRAL">CENTRAL</option><option value="LESTE">LESTE</option><option value="SUL">SUL</option><option value="SUDOESTE">SUDOESTE</option><option value="TRIANGULO">TRIANGULO</option><option value="ZONA_DA_MATA">ZONA DA MATA</option></select></div>
+        <div class="col-md-4 col-6"><label class="form-label">COMARCA</label><select id="f_comarca" class="form-select" onchange="ComapDropdowns.onComarca(document.getElementById('f_regiao').value,this.value,'f_edificacao')"></select></div>
+        <div class="col-md-4 col-12"><label class="form-label">EDIFICAÇÃO</label><select id="f_edificacao" class="form-select"></select></div>
+      </div>
+    </div>
+    <div id="container_itens"></div>
+    <button class="btn btn-outline-primary w-100 mb-3" style="border-style:dashed;border-radius:10px;" onclick="gerarLinhaPci()"><i class="fas fa-plus me-2"></i>ADICIONAR OUTRO EQUIPAMENTO</button>
+    <div class="form-section">
+      <div class="form-section-title"><i class="fas fa-comment-alt"></i>Observações</div>
+      <textarea id="f_obs" class="form-control" rows="2" placeholder="Relate avarias, condições ou observações..."></textarea>
+    </div>
+    <button id="btnSalvar" class="btn btn-lg w-100 sticky-bottom-btn fw-bold" style="background:var(--tjmg-blue);color:white;border-radius:12px;font-size:1rem;border-bottom:3px solid var(--tjmg-gold);" onclick="salvarFormulario()"><i class="fas fa-save me-2"></i>FINALIZAR E GRAVAR</button>
+  </div>
+
+  <!-- ABA LISTA -->
+  <div id="aba_lista" class="hidden">
+    <div class="form-section mb-3">
+      <div class="row g-2">
+        <div class="col-md-2 col-6"><input type="text" id="busca" class="form-control" placeholder="🔍 Buscar..." oninput="renderTabela()"></div>
+        <div class="col-md-2 col-6"><select id="filt_contrato" class="form-select" onchange="renderTabela()"><option value="">Todos Contratos</option><option>194/2023</option><option>017/2026</option></select></div>
+        <div class="col-md-2 col-6"><select id="filt_comarca" class="form-select" onchange="renderTabela()"><option value="">Todas Comarcas</option></select></div>
+        <div class="col-md-2 col-6"><select id="filt_edif" class="form-select" onchange="renderTabela()"><option value="">Todas Edificações</option></select></div>
+        <div class="col-md-2 col-6"><select id="filt_status" class="form-select" onchange="renderTabela()"><option value="">Todos Status</option><option value="VENCIDO">Vencidos</option><option value="30">30d</option><option value="60">60d</option><option value="90">90d</option><option value="VIGENTE">Vigente</option><option value="SUSPENSO">Suspenso</option></select></div>
+        <div class="col-md-2 col-6 d-flex gap-1">
+          <button class="btn btn-success flex-fill" onclick="exportarCSV()" title="CSV"><i class="fas fa-file-csv"></i></button>
+          <button class="btn btn-warning flex-fill" onclick="atualizarBaseDados(true,renderTabela)" title="Atualizar"><i class="fas fa-sync-alt"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="card-pci bg-white">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>ID</th><th>Status</th><th>Região</th><th>Comarca / Edif.</th><th>Tipo PCI</th><th class="text-center">Qtd</th><th class="text-center">Validade</th><th>Medições</th><th class="text-center">Últ. Med.</th><th class="text-center">RTI</th><th class="text-center">Ações</th></tr></thead>
+          <tbody id="corpo_tabela"></tbody>
+        </table>
+      </div>
+      <div class="pag-wrap" id="paginacao"></div>
+    </div>
+  </div>
+
+  <!-- ABA DASHBOARD -->
+  <div id="aba_dash" class="hidden">
+    <div class="form-section mb-3">
+      <div class="row align-items-start g-2">
+        <div class="col-md-2 col-12 small fw-bold text-muted pt-2">FILTRAR CONTRATO:</div>
+        <div class="col-md-3 col-12">
+          <select id="dash_contrato" class="form-select" onchange="renderDash()">
+            <option value="">Todos os Contratos</option>
+            <option>194/2023</option>
+            <option>017/2026</option>
+          </select>
+        </div>
+        <div class="col-md-7 col-12 d-flex gap-2 justify-content-end flex-wrap align-items-start">
+          <button class="btn btn-danger btn-sm" onclick="exportarPDF()"><i class="fas fa-file-pdf me-1"></i>PDF</button>
+          <button class="btn btn-success btn-sm" onclick="exportarCSVDash()"><i class="fas fa-file-csv me-1"></i>CSV</button>
+          <button class="btn btn-primary btn-sm" onclick="enviarEmail()"><i class="fas fa-envelope me-1"></i>E-mail</button>
+          <button class="btn btn-secondary btn-sm" onclick="recalcularStatus()"><i class="fas fa-sync me-1"></i>Recalcular</button>
+        </div>
+        <div class="col-12">
+          <div class="status-filter-box">
+            <div class="sf-title"><i class="fas fa-filter"></i>FILTRO DE STATUS — PDF / E-MAIL<span id="sf_modo_badge"></span></div>
+            <div class="sf-check-wrap">
+              <label class="sf-cb-label vencido" id="lbl_VENCIDO" onclick="toggleSfCheck('VENCIDO')"><input type="checkbox" id="sf_VENCIDO"><i class="fas fa-times-circle"></i> Vencidos</label>
+              <label class="sf-cb-label d30" id="lbl_30" onclick="toggleSfCheck('30')"><input type="checkbox" id="sf_30"><i class="fas fa-exclamation-triangle"></i> Vence em 30d</label>
+              <label class="sf-cb-label d60" id="lbl_60" onclick="toggleSfCheck('60')"><input type="checkbox" id="sf_60"><i class="fas fa-clock"></i> Vence em 60d</label>
+              <label class="sf-cb-label d60m" id="lbl_60MAIS" onclick="toggleSfCheck('60MAIS')"><input type="checkbox" id="sf_60MAIS"><i class="fas fa-calendar-check"></i> Acima de 60d</label>
+            </div>
+            <div class="sf-hint" id="sf_hint"><i class="fas fa-info-circle me-1"></i><span id="sf_hint_txt">Nenhum status marcado — será usado o filtro de <strong>Vencimentos por Mês</strong> abaixo.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- KPIs -->
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3"><div class="card-kpi p-3" style="background:#dc2626;color:white;"><small style="font-size:.7rem;">VENCIDOS</small><h2 id="kpi_v">0</h2><div style="font-size:.68rem;opacity:.8;" id="kpi_v_pct"></div><i class="fas fa-times-circle kpi-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="card-kpi p-3" style="background:#f59e0b;color:white;"><small style="font-size:.7rem;">VENCEM EM 30d</small><h2 id="kpi_30">0</h2><div style="font-size:.68rem;opacity:.8;" id="kpi_30_pct"></div><i class="fas fa-exclamation-triangle kpi-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="card-kpi p-3" style="background:#16a34a;color:white;"><small style="font-size:.7rem;">VIGENTE</small><h2 id="kpi_ok">0</h2><div style="font-size:.68rem;opacity:.8;" id="kpi_ok_pct"></div><i class="fas fa-check-circle kpi-icon"></i></div></div>
+      <div class="col-6 col-md-3"><div class="card-kpi p-3 text-white" style="background:var(--tjmg-blue);border-bottom:3px solid var(--tjmg-gold);"><small style="font-size:.7rem;">TOTAL</small><h2 id="kpi_tot">0</h2><div style="font-size:.68rem;opacity:.8;" id="kpi_cond"></div><i class="fas fa-fire-extinguisher kpi-icon"></i></div></div>
+    </div>
+    <!-- Inventário por tipo -->
+    <div class="form-section mb-3">
+      <h6 class="fw-bold mb-3"><i class="fas fa-fire-extinguisher me-2 text-danger"></i>INVENTÁRIO POR TIPO</h6>
+      <div class="equip-section-title"><i class="fas fa-fire-extinguisher" style="color:#dc2626;"></i>Extintores</div>
+      <div id="cards_extintores"></div>
+      <div class="equip-section-title mt-3"><i class="fas fa-water" style="color:#0984e3;"></i>Mangueiras</div>
+      <div id="cards_mangueiras"></div>
+    </div>
+    <!-- Histograma -->
+    <div class="form-section mb-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-calendar-alt me-2 text-info"></i>VENCIMENTOS POR MÊS</h6>
+        <div class="d-flex gap-1 flex-wrap align-items-center">
+          <span style="font-size:.7rem;font-weight:700;color:#64748b;">PERÍODO:</span>
+          <button class="mes-btn" onclick="setMeses(1)" id="mb1">1m</button>
+          <button class="mes-btn" onclick="setMeses(2)" id="mb2">2m</button>
+          <button class="mes-btn" onclick="setMeses(3)" id="mb3">3m</button>
+          <button class="mes-btn" onclick="setMeses(6)" id="mb6">6m</button>
+          <button class="mes-btn active" onclick="setMeses(12)" id="mb12">12m</button>
+          <span class="badge bg-secondary ms-1" id="hist_badge" style="font-size:.65rem;">—</span>
+        </div>
+      </div>
+      <div id="hist_aviso" class="alert alert-info py-2 px-3 mb-2 hidden" style="font-size:.78rem;"><i class="fas fa-info-circle me-1"></i>PDF e E-mail gerados com: <strong id="hist_aviso_periodo"></strong></div>
+      <canvas id="chartHist" height="80"></canvas>
+    </div>
+    <!-- Alertas -->
+    <div class="form-section">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h6 class="fw-bold mb-0"><i class="fas fa-bell me-2 text-danger"></i>ALERTAS PRIORITÁRIOS</h6>
+        <div class="d-flex align-items-center gap-2">
+          <small class="text-muted" id="alertas_label"></small>
+          <span id="alertas_filtro_badge" class="hidden" style="background:var(--tjmg-blue);color:white;font-size:.7rem;font-weight:700;padding:3px 10px;border-radius:20px;cursor:pointer;" onclick="limparFiltroMes()"><i class="fas fa-filter me-1"></i><span id="alertas_filtro_txt"></span> <i class="fas fa-times ms-1"></i></span>
+        </div>
+      </div>
+      <div id="lista_alertas" style="max-height:360px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- ABA RTI -->
+  <div id="aba_rti" class="hidden">
+    <div class="rti-kpi-bar">
+      <div class="rti-kpi"><div class="val text-primary" id="rti_kpi_total">—</div><div class="lbl text-muted">Total no Drive</div></div>
+      <div class="rti-kpi"><div class="val text-success" id="rti_kpi_vinc">—</div><div class="lbl text-muted">Vinculados</div></div>
+      <div class="rti-kpi"><div class="val" style="color:#ca8a04" id="rti_kpi_orfao">—</div><div class="lbl text-muted">Órfãos</div></div>
+      <div class="rti-kpi"><div class="val text-danger" id="rti_kpi_sem">—</div><div class="lbl text-muted">Registros sem RTI</div></div>
+    </div>
+    <div class="rti-filter-bar">
+      <input type="text" id="rti_busca" class="form-control" style="max-width:220px;" placeholder="🔍 Comarca, edificação, tipo..." oninput="renderRtiGrid()">
+      <select id="rti_filt_comarca" class="form-select" style="max-width:200px;" onchange="renderRtiGrid()"><option value="">Todas Comarcas</option></select>
+      <select id="rti_filt_tipo" class="form-select" style="max-width:160px;" onchange="renderRtiGrid()"><option value="">Todos Tipos</option><option value="pdf">PDF</option><option value="img">Imagem</option><option value="doc">Documento</option></select>
+      <div class="ms-auto d-flex gap-2">
+        <button class="btn btn-success btn-sm fw-bold" onclick="vincularOrfaos()"><i class="fas fa-link me-1"></i>Vincular Automático</button>
+        <a href="https://drive.google.com/drive/folders/1Z7Xifwna9Pbt46t96QlUdEZ3yWTpXrBa" target="_blank" class="btn btn-outline-success btn-sm fw-bold"><i class="fab fa-google-drive me-1"></i>Pasta Drive</a>
+        <button class="btn btn-warning btn-sm fw-bold" onclick="carregarRTIs(true)"><i class="fas fa-sync-alt me-1"></i>Atualizar</button>
+      </div>
+    </div>
+    <div id="rti_container"><div class="rti-loading"><i class="fas fa-spinner"></i>Aguardando carregamento...</div></div>
+  </div>
+
+  <!-- ABA CONFIG -->
+  <div id="aba_config" class="hidden">
+    <div class="form-section">
+      <div class="form-section-title"><i class="fas fa-envelope"></i>Destinatários de E-mail</div>
+      <p class="small text-muted mb-3">Um e-mail por linha.</p>
+      <textarea id="cfg_emails" class="form-control mb-3" rows="6" placeholder="exemplo@tjmg.jus.br"></textarea>
+      <button class="btn btn-primary" onclick="salvarDestinatarios()"><i class="fas fa-save me-2"></i>Salvar Destinatários</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL DE EDIÇÃO
+     ══════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalEdicao" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content" style="border:none;border-radius:14px;overflow:hidden;">
+
+      <!-- Header -->
+      <div class="modal-header modal-edicao-header py-3 px-4">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <h5 class="modal-title text-white fw-bold mb-0" style="font-size:1rem;">
+            <i class="fas fa-edit me-2" style="color:var(--tjmg-gold);"></i>
+            <span id="modal_titulo">Editar Registro</span>
+          </h5>
+          <span class="modal-edit-badge"><i class="fas fa-pen-to-square"></i>MODO EDIÇÃO</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body modal-edicao-body p-3">
+
+        <!-- Aviso visual de edição -->
+        <div class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-3" style="font-size:.8rem;border-radius:10px;border-left:4px solid #d97706;">
+          <i class="fas fa-exclamation-triangle text-warning"></i>
+          <span>Você está <strong>editando</strong> um registro existente. Para lançar novos equipamentos, feche este painel e use a aba <strong>Lançar</strong>.</span>
+        </div>
+
+        <!-- Cabeçalho contrato/comarca/edificação -->
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-file-contract"></i>Dados do Contrato / Localização</div>
+          <div class="row g-3">
+            <div class="col-md-2 col-6">
+              <label class="form-label">CONTRATO</label>
+              <select id="m_contrato" class="form-select"><option>194/2023</option><option>017/2026</option></select>
+            </div>
+            <div class="col-md-2 col-6">
+              <label class="form-label">REGIÃO</label>
+              <select id="m_regiao" class="form-select" onchange="ComapDropdowns.onRegiao(this.value,'m_comarca','m_edificacao')"><option value="NORTE">NORTE</option><option value="CENTRAL">CENTRAL</option><option value="LESTE">LESTE</option><option value="SUL">SUL</option><option value="SUDOESTE">SUDOESTE</option><option value="TRIANGULO">TRIANGULO</option><option value="ZONA_DA_MATA">ZONA DA MATA</option></select>
+            </div>
+            <div class="col-md-4 col-12">
+              <label class="form-label">COMARCA</label>
+              <select id="m_comarca" class="form-select" onchange="ComapDropdowns.onComarca(document.getElementById('m_regiao').value,this.value,'m_edificacao')"></select>
+            </div>
+            <div class="col-md-4 col-12">
+              <label class="form-label">EDIFICAÇÃO</label>
+              <select id="m_edificacao" class="form-select"></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Container de itens PCI do modal -->
+        <div id="modal_container_itens"></div>
+
+        <!-- Botão adicionar outro equipamento no modal -->
+        <button class="btn btn-outline-primary w-100 mb-3" style="border-style:dashed;border-radius:10px;" onclick="gerarLinhaPciModal()">
+          <i class="fas fa-plus me-2"></i>ADICIONAR OUTRO EQUIPAMENTO
+        </button>
+
+        <!-- Observações -->
+        <div class="form-section">
+          <div class="form-section-title"><i class="fas fa-comment-alt"></i>Observações</div>
+          <textarea id="m_obs" class="form-control" rows="2" placeholder="Relate avarias, condições ou observações..."></textarea>
+        </div>
+
+      </div><!-- /modal-body -->
+
+      <!-- Footer -->
+      <div class="modal-footer modal-edicao-footer px-4 py-3">
+        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Cancelar
+        </button>
+        <button type="button" id="btnSalvarModal"
+          class="btn btn-lg fw-bold px-5"
+          style="background:var(--tjmg-blue);color:white;border-radius:10px;border-bottom:3px solid var(--tjmg-gold);"
+          onclick="salvarEdicaoModal()">
+          <i class="fas fa-save me-2"></i>SALVAR ALTERAÇÕES
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+<!-- /MODAL EDIÇÃO -->
+
+<script>
+const COMARCAS=["ÁGUAS FORMOSAS","ALMENARA","ARAÇUAÍ","ARINOS","BOCAIÚVA","BONFINÓPOLIS DE MINAS","BRASÍLIA DE MINAS","BUENÓPOLIS","BURITIS","CAPELINHA","CARLOS CHAGAS","CORAÇÃO DE JESUS","CORINTO","CURVELO","DIAMANTINA","ESPINOSA","FRANCISCO SÁ","GRÃO MOGOL","ITAMARANDIBA","ITAMBACURI","JACINTO","JAÍBA","JANAÚBA","JANUÁRIA","JEQUITINHONHA","JOÃO PINHEIRO","MALACACHETA","MANGA","MEDINA","MINAS NOVAS","MONTALVÂNIA","MONTE AZUL","MONTES CLAROS","NANUQUE","NOVO CRUZEIRO","PADRE PARAÍSO (ARAÇUAÍ)","PARACATU","PEDRA AZUL","PIRAPORA","PORTEIRINHA","RIO PARDO DE MINAS","SALINAS","SÃO FRANCISCO","SÃO JOÃO DA PONTE","SÃO JOÃO DO PARAÍSO","SÃO ROMÃO","TAIOBEIRAS","TEÓFILO OTONI","TRÊS MARIAS","TURMALINA","UNAI","VÁRZEA DA PALMA"];
+const EDIFS=["ARQUIVO","Casa do Juiz","FÓRUM","FÓRUM DIGITAL","Fórum Provisório","FÓRUM/NOVO FÓRUM","JESP","MUSEU","NOVO FÓRUM","OUTRO"];
+const PCIS=["EXTINTOR AP 10L","EXTINTOR AP 75L","EXTINTOR CO² 4KG","EXTINTOR CO² 6KG","EXTINTOR CO² 10KG","EXTINTOR PQS BC 4KG","EXTINTOR PQS BC 4,5KG","EXTINTOR PQS BC 6KG","EXTINTOR PQS BC 12KG","EXTINTOR PQS BC 30KG","EXTINTOR PQS BC 50KG","EXTINTOR ABC 4KG","EXTINTOR ABC 4,5KG","EXTINTOR ABC 6KG","EXTINTOR ABC 8KG","MANGUEIRA 15m","MANGUEIRA 20m"];
+const GRUPOS_EQUIP=[
+  {key:'ap',    label:'Água Pressurizada',icon:'fa-tint',           cor:'#0984e3',prefixos:['EXTINTOR AP']},
+  {key:'co2',   label:'CO²',              icon:'fa-snowflake',      cor:'#6c5ce7',prefixos:['EXTINTOR CO²']},
+  {key:'pqs',   label:'PQS BC',           icon:'fa-atom',           cor:'#e17055',prefixos:['EXTINTOR PQS BC']},
+  {key:'abc',   label:'ABC',              icon:'fa-fire',           cor:'#d63031',prefixos:['EXTINTOR ABC']},
+  {key:'mang15',label:'Mangueira 15m',    icon:'fa-project-diagram',cor:'#00b894',prefixos:['MANGUEIRA 15']},
+  {key:'mang20',label:'Mangueira 20m',    icon:'fa-project-diagram',cor:'#00cec9',prefixos:['MANGUEIRA 20']}
+];
+const ITEMS_PG=50;
+let db=[],dataRefGlobal="",chartHist=null,dadosFiltrados=[],paginaAtual=1;
+let mesesSel=12,_lastFetch=0,_filtroMesKey=null,_mesArrGlobal=[],_itemCounter=0,_mItemCounter=0;
+let _rtiData=[],_rtiCarregado=false;
+
+/* ═══ FILTRO STATUS (checkboxes dashboard) ═══ */
+const SF_OPTS={VENCIDO:{cls:'vencido',label:'Vencidos'},'30':{cls:'d30',label:'Vence em 30d'},'60':{cls:'d60',label:'Vence em 60d'},'60MAIS':{cls:'d60m',label:'Acima de 60d'}};
+function toggleSfCheck(key){const inp=document.getElementById('sf_'+key);if(!inp)return;inp.checked=!inp.checked;const lbl=document.getElementById('lbl_'+key);inp.checked?lbl.classList.add('checked'):lbl.classList.remove('checked');_atualizarSfHint();}
+function _getSfSelected(){return Object.keys(SF_OPTS).filter(k=>{const el=document.getElementById('sf_'+k);return el&&el.checked;});}
+function _atualizarSfHint(){const sel=_getSfSelected();const hint=document.getElementById('sf_hint_txt');const badge=document.getElementById('sf_modo_badge');if(sel.length===0){hint.innerHTML='Nenhum status marcado — será usado o filtro de <strong>Vencimentos por Mês</strong> abaixo.';badge.innerHTML='';}else{const labels=sel.map(k=>SF_OPTS[k].label).join(', ');hint.innerHTML=`<strong>Filtro ativo:</strong> PDF e E-mail incluirão apenas: <strong>${labels}</strong>.`;badge.innerHTML=`<span class="sf-active-badge"><i class="fas fa-filter me-1"></i>${sel.length} status</span>`;}}
+
+/* ═══ INIT ═══ */
+function rtiFileUrl(fid){return fid&&String(fid).trim()?'https://drive.google.com/file/d/'+String(fid).trim()+'/view':'';}
+
+window.onload=()=>{
+  const sort=(a,b)=>a.localeCompare(b,'pt-BR');
+  // ⬇ Cascateado da aba COMARCA: popula com a região atual do select
+  if (typeof ComapDropdowns !== 'undefined') {
+    ComapDropdowns.init(function(){
+      var rIni = document.getElementById('f_regiao').value || 'NORTE';
+      ComapDropdowns.onRegiao(rIni,'f_comarca','f_edificacao');
+      var rIniM = document.getElementById('m_regiao').value || 'NORTE';
+      ComapDropdowns.onRegiao(rIniM,'m_comarca','m_edificacao');
+    });
+  }
+  // Filtros continuam com lista global agregada
+  popularSelect('filt_comarca',[...COMARCAS].sort(sort),'Todas Comarcas');
+  popularSelect('filt_edif',[...EDIFS].sort(sort),'Todas Edificações');
+  const rs=document.getElementById('rti_filt_comarca');
+  [...COMARCAS].sort(sort).forEach(c=>{rs.innerHTML+=`<option>${c}</option>`;});
+
+  // ── TRAVA DE REGIÃO ──
+  // Se o usuário não é MASTER/global, fixa a região na sua e desabilita o select
+  try {
+    const s = window.__COMAP_SESSAO__ || {};
+    const minhaReg = (s.regiao || '').toUpperCase();
+    const ehGlobal = !!s.global || minhaReg === 'MASTER';
+    const fReg = document.getElementById('f_regiao');
+    if (fReg && minhaReg && !ehGlobal) {
+      fReg.value = minhaReg;
+      fReg.disabled = true;
+      fReg.style.background = '#f1f5f9';
+      fReg.style.cursor = 'not-allowed';
+      fReg.title = 'Travado para sua região: ' + minhaReg;
+    }
+  } catch(e) { console.error('Trava de região:', e); }
+
+  gerarLinhaPci();
+  atualizarBaseDados(true);
+  carregarDestinatarios();
+};
+
+function popularSelect(id,lista,def){
+  const s=document.getElementById(id);
+  s.innerHTML=def?`<option value="">${def}</option>`:'';
+  lista.forEach(i=>s.innerHTML+=`<option>${i}</option>`);
+}
+
+function atualizarBaseDados(forcar=false,cb){
+  if(!forcar&&db.length>0&&Date.now()-_lastFetch<30000){if(cb)cb();return;}
+  // Passa a sessão do usuário ao servidor para filtrar por região
+  const ses = window.__COMAP_SESSAO__ || {};
+  const filtroSes = { regiao: ses.regiao || '', global: !!ses.global };
+  google.script.run.withSuccessHandler(res=>{
+    db=res.dados;dataRefGlobal=res.dataRef;_lastFetch=Date.now();
+    // SEGURANÇA: trava f_regiao na região do usuário se não for global
+    (function travarRegiao(){
+      const sel = document.getElementById('f_regiao');
+      const selM = document.getElementById('m_regiao');
+      const minhaReg = res.minhaRegiao;
+      const ehGlobal = res.minhaGlobal;
+      if (sel && minhaReg && !ehGlobal) {
+        sel.value = minhaReg;
+        sel.disabled = true;
+        sel.title = 'Região travada: você só pode lançar/editar registros da região ' + minhaReg;
+        sel.style.background = '#f1f5f9';
+        sel.style.cursor = 'not-allowed';
+      }
+      if (selM && minhaReg && !ehGlobal) {
+        selM.value = minhaReg;
+        selM.disabled = true;
+      }
+    })();
+    // Salva info da sessão para uso na renderização (filtro travado)
+    window.__PCI_MINHA_REGIAO__ = res.minhaRegiao || '';
+    window.__PCI_GLOBAL__ = !!res.minhaGlobal;
+    const d=dataRefGlobal.split('-');
+    document.getElementById('data_ref_display').innerText=`Data Ref.: ${d[2]}/${d[1]}/${d[0]}`;
+    document.getElementById('total_registros').innerText=`${db.length>1?db.length-1:0} registros`;
+    if(cb)cb();
+  }).withFailureHandler(e=>Swal.fire('Erro',e.message,'error')).pci_lerDados(filtroSes);
+}
+
+function switchTab(id){
+  ['aba_form','aba_lista','aba_dash','aba_rti','aba_config'].forEach(a=>document.getElementById(a).classList.add('hidden'));
+  ['tab_form','tab_lista','tab_dash','tab_rti','tab_config'].forEach(t=>document.getElementById(t).classList.remove('active'));
+  document.getElementById(id).classList.remove('hidden');
+  document.getElementById('tab_'+id.replace('aba_','')).classList.add('active');
+  if(id==='aba_lista') atualizarBaseDados(true,renderTabela);
+  if(id==='aba_dash')  atualizarBaseDados(false,renderDash);
+  if(id==='aba_rti')   carregarRTIs(false);
+}
+
+/* Aba Lançar: sempre como novo */
+function novoLancamento(){
+  limparForm();
+  switchTab('aba_form');
+}
+
+/* ═══ ABA RTI ═══ */
+function carregarRTIs(forcar){
+  if(!forcar&&_rtiCarregado){renderRtiGrid();return;}
+  document.getElementById('rti_container').innerHTML='<div class="rti-loading"><i class="fas fa-spinner"></i>Buscando arquivos RTI no Drive...<br><small class="mt-2 d-block">Aguarde alguns segundos</small></div>';
+  const timeoutId=setTimeout(()=>{document.getElementById('rti_container').innerHTML=`<div class="rti-empty"><i class="fas fa-clock fa-2x text-warning mb-3 d-block"></i><strong>Tempo esgotado.</strong><br><span style="font-size:.82rem;">Verifique se o <code>Code.gs</code> foi atualizado e republicado com a função <code>listarArquivosRTI</code>.<br>Após republicar, clique em <strong>Atualizar</strong>.</span></div>`;},40000);
+  google.script.run
+    .withSuccessHandler(res=>{
+      clearTimeout(timeoutId);
+      if(!res||!res.sucesso){document.getElementById('rti_container').innerHTML=`<div class="rti-empty"><i class="fas fa-exclamation-circle fa-2x text-danger mb-3 d-block"></i><strong>Erro ao carregar RTIs:</strong><br><span style="font-size:.82rem;">${res?res.erro:'Resposta inválida do servidor'}</span></div>`;return;}
+      _rtiData=res.itens||[];_rtiCarregado=true;
+      const vinc=_rtiData.filter(x=>!x.orfao).length,orfao=_rtiData.filter(x=>x.orfao).length;
+      const semRti=db.length>1?db.slice(1).filter(r=>!String(r[19]||'').trim()).length:'—';
+      document.getElementById('rti_kpi_total').innerText=res.totalDrive||0;
+      document.getElementById('rti_kpi_vinc').innerText=vinc;
+      document.getElementById('rti_kpi_orfao').innerText=orfao;
+      document.getElementById('rti_kpi_sem').innerText=semRti;
+      renderRtiGrid();
+    })
+    .withFailureHandler(e=>{clearTimeout(timeoutId);document.getElementById('rti_container').innerHTML=`<div class="rti-empty"><i class="fas fa-exclamation-circle fa-2x text-danger mb-3 d-block"></i><strong>${e.message||'Erro desconhecido'}</strong></div>`;})
+    .pci_listarArquivosRTI();
+}
+
+function vincularOrfaos(){
+  Swal.fire({title:'Vincular Automático',html:`Lê o nome de cada arquivo no Drive (<code>RTI_ID&lt;n&gt;_...</code>), extrai o número e grava o vínculo na planilha.<br><br>Continuar?`,icon:'question',showCancelButton:true,confirmButtonText:'<i class="fas fa-link me-1"></i>Vincular',cancelButtonText:'Cancelar',confirmButtonColor:'#16a34a'})
+  .then(r=>{
+    if(!r.isConfirmed)return;
+    Swal.fire({title:'Vinculando...',html:'Lendo Drive e atualizando planilha...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+    google.script.run
+      .withSuccessHandler(res=>{
+        Swal.close();
+        const icon=res.sucesso&&res.vinculados>0?'success':res.sucesso?'info':'error';
+        const extra=res.naoEncontrados&&res.naoEncontrados.length?'<br><small class="text-muted">IDs sem arquivo: '+res.naoEncontrados.join(', ')+'</small>':'';
+        const jaVinc=res.jaVinculados?'<br><small class="text-muted">'+res.jaVinculados+' já estavam vinculados.</small>':'';
+        Swal.fire({title:res.sucesso?'Concluído!':'Erro',html:res.msg+jaVinc+extra,icon});
+        if(res.vinculados>0){_rtiCarregado=false;atualizarBaseDados(true,()=>carregarRTIs(true));}
+      })
+      .withFailureHandler(e=>{Swal.close();Swal.fire('Erro',e.message,'error');})
+      .pci_relinkarOrfaos();
+  });
+}
+
+function deletarVinculoRTI(recordId, fileId) {
+  Swal.fire({
+    title: 'Remover RTI?',
+    html: `Remove o vínculo do registro <strong>#${recordId}</strong> e envia o arquivo para a lixeira do Drive.<br><br>Depois você pode verificar o Drive e vincular novamente com <strong>Vincular Automático</strong>.`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '<i class="fas fa-trash me-1"></i>Remover',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#dc2626'
+  }).then(r => {
+    if (!r.isConfirmed) return;
+    Swal.fire({ title: 'Removendo...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    google.script.run
+      .withSuccessHandler(res => {
+        Swal.close();
+        Swal.fire({
+          title: res.success ? 'Removido!' : 'Erro',
+          text: res.message,
+          icon: res.success ? 'success' : 'error',
+          timer: res.success ? 1600 : undefined,
+          showConfirmButton: !res.success
+        });
+        if (res.success) {
+          _rtiCarregado = false;
+          atualizarBaseDados(true, () => carregarRTIs(true));
+        }
+      })
+      .withFailureHandler(e => { Swal.close(); Swal.fire('Erro', e.message, 'error'); })
+      .pci_removerRTI(recordId);
+  });
+}
+
+// ─── FIX v4.5: Limpar referência inválida (arquivo não existe mais no Drive) ───
+// Chamado quando o card mostra "Arquivo não encontrado no Drive".
+// Apenas zera a coluna 20 para permitir re-vínculo via Vincular Automático.
+function limparReferenciaInvalida(recordId) {
+  Swal.fire({
+    title: 'Limpar referência inválida?',
+    html: `O arquivo do registro <strong>#${recordId}</strong> não foi encontrado no Drive.<br><br>
+           Isso pode ter ocorrido porque ele foi <strong>substituído</strong> mas o novo vínculo não foi salvo.<br><br>
+           Limpar a referência e depois usar <strong>Vincular Automático</strong> para re-associar o arquivo correto?`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: '<i class="fas fa-broom me-1"></i>Limpar',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#d97706'
+  }).then(r => {
+    if (!r.isConfirmed) return;
+    Swal.fire({ title: 'Limpando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    google.script.run
+      .withSuccessHandler(res => {
+        Swal.close();
+        Swal.fire({
+          title: res.success ? 'Referência limpa!' : 'Erro',
+          html: res.success
+            ? `${res.message}<br><br><small class="text-muted">Agora clique em <strong>Vincular Automático</strong> para re-associar o arquivo.</small>`
+            : res.message,
+          icon: res.success ? 'success' : 'error',
+          confirmButtonText: res.success ? '<i class="fas fa-link me-1"></i>Vincular Automático agora' : 'OK',
+          showCancelButton: res.success,
+          cancelButtonText: 'Fechar'
+        }).then(r2 => {
+          if (res.success) {
+            _rtiCarregado = false;
+            atualizarBaseDados(true, () => {
+              carregarRTIs(true);
+              if (r2.isConfirmed) vincularOrfaos();
+            });
+          }
+        });
+      })
+      .withFailureHandler(e => { Swal.close(); Swal.fire('Erro', e.message, 'error'); })
+      .pci_limparReferenciaRTI(recordId);
+  });
+}
+
+function _mimeBtn(mime){if(!mime)return{cls:'gen-btn',icon:'fa-file',label:'Abrir Arquivo'};if(mime.includes('pdf'))return{cls:'pdf-btn',icon:'fa-file-pdf',label:'Abrir PDF'};if(mime.includes('image'))return{cls:'img-btn',icon:'fa-file-image',label:'Ver Imagem'};if(mime.includes('word')||mime.includes('document'))return{cls:'doc-btn',icon:'fa-file-word',label:'Abrir Documento'};return{cls:'gen-btn',icon:'fa-file',label:'Abrir Arquivo'};}
+function _fmtBytes(b){if(!b)return'—';if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function _statusCls(s){if(!s||s==='—')return'';if(s.includes('VENCIDO'))return'badge-vencido';if(s.includes('30'))return'badge-30d';if(s.includes('60'))return'badge-60d';if(s.includes('90'))return'badge-90d';if(s==='VIGENTE')return'badge-vigente';if(s==='SUSPENSO')return'badge-suspenso';return'';}
+
+// ─── FIX v4.5: renderRtiGrid com botão 🧹 para referências inválidas ──────────
+// Quando item.url está vazio (arquivo sumiu do Drive) mas não é órfão (tem ID de registro),
+// mostramos botão amarelo "Limpar" em vez de texto estático.
+function renderRtiGrid(){
+  const busca=(document.getElementById('rti_busca').value||'').toLowerCase();
+  const fCo=(document.getElementById('rti_filt_comarca').value||'').toUpperCase();
+  const fTipo=document.getElementById('rti_filt_tipo').value||'';
+  const filtrado=_rtiData.filter(item=>{
+    if(fCo&&item.comarca!==fCo)return false;
+    if(busca&&![item.comarca,item.edificacao,item.tipoPci,item.nome].some(v=>String(v||'').toLowerCase().includes(busca)))return false;
+    if(fTipo){const m=String(item.mimeType||'');if(fTipo==='pdf'&&!m.includes('pdf'))return false;if(fTipo==='img'&&!m.includes('image'))return false;if(fTipo==='doc'&&!m.includes('word')&&!m.includes('document'))return false;}
+    return true;
+  });
+  const c=document.getElementById('rti_container');
+  if(!filtrado.length){c.innerHTML='<div class="rti-empty"><i class="fas fa-folder-open fa-3x mb-3 d-block text-muted"></i>Nenhum RTI encontrado.</div>';return;}
+  c.innerHTML='<div class="rti-grid" id="rti_grid"></div>';
+  const grid=document.getElementById('rti_grid');
+  filtrado.forEach(item=>{
+    const{cls,icon,label}=_mimeBtn(item.mimeType);
+    const isOrfao=!!item.orfao;
+    // Arquivo não encontrado no Drive mas tem vínculo na planilha (referência inválida)
+    const isSemArquivo=!item.url&&!isOrfao&&item.id!=='—';
+    const valFmt=item.validade&&item.validade!=='—'?item.validade.split('-').reverse().join('/'):'—';
+    const stCls=_statusCls(item.status);
+    const card=document.createElement('div');
+    card.className='rti-card'+(isOrfao?' rti-orfao':isSemArquivo?' rti-sem-arquivo':'');
+
+    // ── Botão de ação (abertura / limpeza / sem ação) ──────────────────────
+    let btnAbrir;
+    if(item.url){
+      // Arquivo encontrado no Drive — botão abrir + botão excluir (só para vinculados)
+      btnAbrir=`<div class="d-flex gap-2">
+        <a href="${item.url}" target="_blank" class="rti-open-btn ${cls}" style="flex:1;">
+          <i class="fas ${icon}"></i>${label}
+        </a>
+        ${!isOrfao?`<button onclick="deletarVinculoRTI('${item.id}','${item.fileId}')"
+          title="Remover vínculo e enviar para lixeira do Drive"
+          class="rti-del-btn"><i class="fas fa-times"></i></button>`:''}
+      </div>`;
+    } else if(isSemArquivo){
+      // Referência inválida: arquivo não está mais no Drive mas a coluna 20 tem um fileId.
+      // Mostramos o botão 🧹 para limpar a referência e permitir re-vínculo.
+      btnAbrir=`<div class="d-flex gap-2 align-items-center">
+        <span style="flex:1;font-size:.72rem;color:#94a3b8;">
+          <i class="fas fa-unlink me-1"></i>Arquivo não encontrado no Drive
+        </span>
+        <button onclick="limparReferenciaInvalida('${item.id}')"
+          title="Limpar referência inválida — permite re-vincular via Vincular Automático"
+          class="rti-clear-btn">
+          <i class="fas fa-broom"></i>
+        </button>
+      </div>`;
+    } else {
+      btnAbrir=`<div class="text-center text-muted py-2" style="font-size:.75rem;">
+        <i class="fas fa-unlink me-1"></i>Arquivo não encontrado no Drive
+      </div>`;
+    }
+
+    card.innerHTML=`
+      <div class="rti-card-header">
+        <i class="fas fa-paperclip" style="opacity:.7;font-size:.85rem;flex-shrink:0;margin-top:2px;"></i>
+        <div style="flex:1;min-width:0;">
+          <div class="comarca">${isOrfao?'⚠️ SEM VÍNCULO':isSemArquivo?'⚠️ SEM ARQUIVO':item.comarca}</div>
+          <div class="edificio">${isOrfao?(item.nome.length>38?item.nome.substring(0,38)+'…':item.nome):item.edificacao||'—'}</div>
+        </div>
+        <small style="font-size:.6rem;opacity:.6;flex-shrink:0;">ID #${item.id}</small>
+      </div>
+      <div class="rti-card-body">
+        ${!isOrfao?`<div class="rti-tipo"><i class="fas fa-fire-extinguisher me-1 text-danger"></i>${item.tipoPci||'—'}</div>`:''}
+        <div class="rti-meta">
+          <span><i class="fas fa-calendar-times" style="color:#dc2626;"></i>Val: ${valFmt}</span>
+          <span><i class="fas fa-hdd" style="color:#94a3b8;"></i>${_fmtBytes(item.tamanho)}</span>
+          <span><i class="fas fa-clock" style="color:#94a3b8;"></i>${item.dataCriacao||'—'}</span>
+        </div>
+        ${stCls&&!isOrfao?`<div class="mb-2"><span class="rti-status-pill ${stCls}">${item.status}</span></div>`:''}
+        ${btnAbrir}
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+/* ═══ HELPER HTML LINHA PCI ═══
+   Gera o innerHTML de uma .pci-item-row.
+   idPrefix diferencia IDs entre form principal ('') e modal ('m').
+*/
+function _linhaHtml(num, dados, idPrefix){
+  const rtiFileId=dados&&dados.rtiUrl?String(dados.rtiUrl).trim():'';
+  const rtiExistenteUrl=rtiFileId?rtiFileUrl(rtiFileId):'';
+  const normStr=v=>String(v||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+  const tipoPciNorm=dados?normStr(dados.tipoPci):'';
+  return `
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <span class="pci-item-num"><i class="fas fa-fire-extinguisher me-1"></i>EQUIPAMENTO #${num}${dados&&dados.id?` <small class="text-muted fw-normal">(ID:${dados.id})</small>`:''}</span>
+      <button class="btn btn-sm text-danger" onclick="removerLinha${idPrefix?'Modal':''}(this)"><i class="fas fa-trash"></i></button>
+    </div>
+    <div class="row g-2">
+      <div class="col-md-4 col-12"><label class="form-label">TIPO PCI</label><select class="form-select s-pci">${PCIS.map(p=>`<option${dados&&normStr(p)===tipoPciNorm?' selected':''}>${p}</option>`).join('')}</select></div>
+      <div class="col-md-2 col-4"><label class="form-label">QTD</label><input type="number" class="form-control i-qtd" min="1" value="${dados?dados.qtd:1}"></div>
+      <div class="col-md-3 col-4"><label class="form-label text-primary">RECARGA</label><input type="date" class="form-control i-recarga" value="${dados&&dados.recarga?dados.recarga:''}" onchange="autoValidade(this)"></div>
+      <div class="col-md-3 col-4"><label class="form-label text-success">VALIDADE</label><input type="date" class="form-control i-validade" value="${dados&&dados.validade?dados.validade:''}" onchange="autoRecarga(this)"></div>
+      <div class="col-12 d-flex gap-3 flex-wrap pt-1 align-items-start">
+        <div class="form-check mt-1"><input class="form-check-input c-rti" type="checkbox" id="${idPrefix}rti_check_${num}" ${dados&&(String(dados.rti).toUpperCase()==='SIM'||dados.rti===true)?' checked':''} onchange="toggleRtiUpload(this)"><label class="form-check-label fw-bold" for="${idPrefix}rti_check_${num}">Possui RTI</label></div>
+        <div class="form-check mt-1"><input class="form-check-input c-cond" type="checkbox"${dados&&String(dados.condenado).toUpperCase()==='SIM'?' checked':''}><label class="form-check-label fw-bold text-danger">Condenado</label></div>
+        <div class="form-check mt-1"><input class="form-check-input c-susp" type="checkbox"${dados&&(String(dados.suspenso).toUpperCase()==='SIM'||dados.suspenso===true)?' checked':''}><label class="form-check-label fw-bold text-secondary"><i class="fas fa-pause-circle me-1"></i>Suspenso</label></div>
+      </div>
+      <div class="col-12">
+        <div class="rti-upload-zone rti-zone" ${(dados&&(String(dados.rti).toUpperCase()==='SIM'||dados.rti===true))?'style="display:block;"':''}>
+          ${rtiExistenteUrl?`<div class="rti-existing-row"><span class="rti-badge-ok"><i class="fas fa-paperclip"></i>RTI já anexado</span><a href="${rtiExistenteUrl}" target="_blank" class="rti-btn-open"><i class="fas fa-external-link-alt"></i> Abrir RTI</a><button class="rti-btn-subst" onclick="mostrarInputArquivo(this)"><i class="fas fa-sync-alt"></i> Substituir</button></div>`:''}
+          <div class="rti-input-wrap" ${rtiExistenteUrl?'style="display:none;"':''}>
+            <label class="rti-file-label"><i class="fas fa-paperclip me-1"></i>Selecionar Arquivo RTI<input type="file" class="rti-file-input" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="aoSelecionarArquivo(this)"></label>
+            <div class="rti-filename text-muted mt-1">Nenhum arquivo selecionado</div>
+          </div>
+          <input type="hidden" class="rti-fileid-atual" value="${rtiFileId}">
+        </div>
+      </div>
+    </div>
+    <span class="med-toggle" onclick="toggleMed(this)"><i class="fas fa-calendar-plus me-1"></i>▼ Datas de Medição Anual</span>
+    <div class="med-grid" style="display:none;">
+      <div><label>MED. 1º ANO</label><input type="date" class="form-control form-control-sm i-med1" value="${dados&&dados.med1?dados.med1:''}" onchange="atualizarMedToggle(this)"></div>
+      <div><label>MED. 2º ANO</label><input type="date" class="form-control form-control-sm i-med2" value="${dados&&dados.med2?dados.med2:''}" onchange="atualizarMedToggle(this)"></div>
+      <div><label>MED. 3º ANO</label><input type="date" class="form-control form-control-sm i-med3" value="${dados&&dados.med3?dados.med3:''}" onchange="atualizarMedToggle(this)"></div>
+      <div><label>MED. 4º ANO</label><input type="date" class="form-control form-control-sm i-med4" value="${dados&&dados.med4?dados.med4:''}" onchange="atualizarMedToggle(this)"></div>
+    </div>`;
+}
+
+/* ═══ FORM PRINCIPAL — Lançar ═══ */
+function gerarLinhaPci(dados=null){
+  _itemCounter++;
+  const div=document.createElement('div');
+  div.className='pci-item-row';div.dataset.itemNum=_itemCounter;
+  div.innerHTML=_linhaHtml(_itemCounter,dados,'');
+  document.getElementById('container_itens').appendChild(div);
+  if(dados&&(dados.med1||dados.med2||dados.med3||dados.med4)){
+    const tg=div.querySelector('.med-toggle'),gr=div.querySelector('.med-grid');
+    gr.style.display='grid';tg.innerHTML='<i class="fas fa-calendar-check me-1 text-success"></i>▲ Datas de Medição Anual';
+  }
+}
+function removerLinha(btn){if(document.querySelectorAll('#container_itens .pci-item-row').length<=1){Swal.fire('Atenção','Deve haver ao menos um equipamento.','warning');return;}btn.closest('.pci-item-row').remove();}
+function limparForm(){document.getElementById('container_itens').innerHTML='';document.getElementById('f_obs').value='';_itemCounter=0;gerarLinhaPci();}
+
+/* ═══ MODAL — Editar ═══ */
+function gerarLinhaPciModal(dados=null){
+  _mItemCounter++;
+  const div=document.createElement('div');
+  div.className='pci-item-row';div.dataset.itemNum=_mItemCounter;
+  if(dados&&dados.id) div.dataset.editId=dados.id;
+  div.innerHTML=_linhaHtml(_mItemCounter,dados,'m');
+  document.getElementById('modal_container_itens').appendChild(div);
+  if(dados&&(dados.med1||dados.med2||dados.med3||dados.med4)){
+    const tg=div.querySelector('.med-toggle'),gr=div.querySelector('.med-grid');
+    gr.style.display='grid';tg.innerHTML='<i class="fas fa-calendar-check me-1 text-success"></i>▲ Datas de Medição Anual';
+  }
+}
+function removerLinhaModal(btn){if(document.querySelectorAll('#modal_container_itens .pci-item-row').length<=1){Swal.fire('Atenção','Deve haver ao menos um equipamento.','warning');return;}btn.closest('.pci-item-row').remove();}
+
+function prepararEdicao(id){
+  const r=db.find(row=>String(row[0])===String(id));
+  if(!r){Swal.fire('Atenção','Registro não encontrado.','warning');return;}
+
+  // Título do modal
+  const comarca=String(r[3]||'').trim().toUpperCase();
+  document.getElementById('modal_titulo').textContent=`Editar Registro #${r[0]} — ${comarca}`;
+
+  // Preenche cabeçalho
+  document.getElementById('m_contrato').value=r[2]||'';
+  document.getElementById('m_obs').value=r[11]||'';
+  // REGIÃO está em r[20] — normaliza para casar com value do select
+  var _rNormPci = (r[20]||'').toString().toUpperCase().replace(/\s+/g,'_').replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I').replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C');
+  const _selMReg = document.getElementById('m_regiao');
+  if (_selMReg && _rNormPci) _selMReg.value = _rNormPci;
+  // Cascata: popula Comarcas → seta r[3] → popula Edifs → seta r[4]
+  if (typeof ComapDropdowns !== 'undefined') {
+    ComapDropdowns.init(function(){
+      var reg = _rNormPci || (_selMReg ? _selMReg.value : '');
+      ComapDropdowns.onRegiao(reg, 'm_comarca','m_edificacao');
+      setTimeout(function(){
+        var sc=document.getElementById('m_comarca'); var cv=(r[3]||'').toString().toUpperCase();
+        var ok=false; for(var i=0;i<sc.options.length;i++){if(sc.options[i].value.toUpperCase()===cv){sc.selectedIndex=i;ok=true;break;}}
+        if(!ok&&r[3]){var op=document.createElement('option');op.value=r[3];op.textContent=r[3]+' (não cadastrada)';sc.appendChild(op);sc.value=r[3];}
+        ComapDropdowns.onComarca(reg, sc.value, 'm_edificacao');
+        setTimeout(function(){
+          var se=document.getElementById('m_edificacao'); var ev=(r[4]||'').toString().toUpperCase();
+          var okE=false; for(var i=0;i<se.options.length;i++){if(se.options[i].value.toUpperCase()===ev){se.selectedIndex=i;okE=true;break;}}
+          if(!okE&&r[4]){var op=document.createElement('option');op.value=r[4];op.textContent=r[4]+' (não cadastrada)';se.appendChild(op);se.value=r[4];}
+        },60);
+      },60);
+    });
+  } else {
+    setSelectVal('m_comarca',r[3]);
+    setSelectVal('m_edificacao',r[4]);
+  }
+
+  // Reseta itens do modal
+  document.getElementById('modal_container_itens').innerHTML='';
+  _mItemCounter=0;
+
+  // Gera linha com dados do registro
+  gerarLinhaPciModal({
+    id:r[0],tipoPci:r[5],qtd:r[6],recarga:r[7],validade:r[8],
+    rti:r[9],condenado:r[10],suspenso:r[18],
+    med1:r[14]||'',med2:r[15]||'',med3:r[16]||'',med4:r[17]||'',
+    rtiUrl:r[19]||''
+  });
+
+  // Abre o modal Bootstrap
+  const modal=new bootstrap.Modal(document.getElementById('modalEdicao'));
+  modal.show();
+}
+
+async function salvarEdicaoModal(){
+  const rows=[...document.querySelectorAll('#modal_container_itens .pci-item-row')];
+  if(!rows.length){Swal.fire('Atenção','Adicione ao menos um equipamento.','warning');return;}
+  if(rows.some(el=>!el.querySelector('.i-validade').value)){Swal.fire('Atenção','Preencha a data de validade.','warning');return;}
+
+  const btn=document.getElementById('btnSalvarModal');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-2"></i>SALVANDO...';
+
+  const itens=rows.map(el=>({
+    id:el.dataset.editId||null,
+    tipoPci:el.querySelector('.s-pci').value,
+    qtd:el.querySelector('.i-qtd').value,
+    recarga:el.querySelector('.i-recarga').value,
+    validade:el.querySelector('.i-validade').value,
+    rti:el.querySelector('.c-rti').checked,
+    condenado:el.querySelector('.c-cond').checked,
+    suspenso:el.querySelector('.c-susp').checked,
+    med1:el.querySelector('.i-med1').value,
+    med2:el.querySelector('.i-med2').value,
+    med3:el.querySelector('.i-med3').value,
+    med4:el.querySelector('.i-med4').value
+  }));
+
+  const payload={
+    cabecalho:{
+      contrato:document.getElementById('m_contrato').value,
+      regiao:(document.getElementById('m_regiao')||{value:''}).value,
+      comarca:document.getElementById('m_comarca').value,
+      edificacao:document.getElementById('m_edificacao').value,
+      obs:document.getElementById('m_obs').value
+    },
+    itens
+  };
+
+  const arquivosRti=rows.map(el=>{const i=el.querySelector('.rti-file-input');return(i&&i.files&&i.files[0])?i.files[0]:null;});
+
+  google.script.run
+    .withSuccessHandler(async res=>{
+      const ids=res.ids||[];
+      btn.innerHTML='<i class="fas fa-spinner fa-spin me-2"></i>ENVIANDO RTIs...';
+      const uploads=[];
+      for(let i=0;i<rows.length;i++){
+        const _f=arquivosRti[i],_rid=ids[i],_rti=itens[i].rti;
+        if(_f&&_rid&&_rti){
+          const _m=_f.type||'application/octet-stream',_n=_f.name;
+          uploads.push(fileToBase64(_f).then(_b=>new Promise((_ok,_err)=>{
+            google.script.run.withSuccessHandler(r=>{if(r&&r.success===false)_err(new Error(r.error||'Falha'));else _ok(r);}).withFailureHandler(_err).pci_salvarArquivoRTI(_rid,_b,_m,_n);
+          })));
+        }
+      }
+      try{await Promise.all(uploads);}catch(e){console.warn('RTI parcial:',e);}
+      await new Promise(r=>setTimeout(r,900));
+      _rtiCarregado=false;
+
+      // Fecha o modal
+      const modalInst=bootstrap.Modal.getInstance(document.getElementById('modalEdicao'));
+      if(modalInst) modalInst.hide();
+
+      Swal.fire({title:'Sucesso!',text:res.message,icon:'success',timer:1800,showConfirmButton:false});
+      atualizarBaseDados(true,renderTabela);
+      btn.disabled=false;
+      btn.innerHTML='<i class="fas fa-save me-2"></i>SALVAR ALTERAÇÕES';
+    })
+    .withFailureHandler(e=>{
+      Swal.fire('Erro ao salvar',e.message,'error');
+      btn.disabled=false;
+      btn.innerHTML='<i class="fas fa-save me-2"></i>SALVAR ALTERAÇÕES';
+    })
+    .pci_salvarDados(payload, (window.__COMAP_SESSAO__ ? {regiao:window.__COMAP_SESSAO__.regiao, global:window.__COMAP_SESSAO__.global} : {}));
+}
+
+/* ═══ FUNÇÕES COMPARTILHADAS ENTRE FORM E MODAL ═══ */
+function toggleRtiUpload(cb){const z=cb.closest('.pci-item-row').querySelector('.rti-zone');z.style.display=cb.checked?'block':'none';if(cb.checked)z.classList.add('rti-active');else z.classList.remove('rti-active','has-file');}
+function mostrarInputArquivo(btn){const z=btn.closest('.rti-upload-zone'),er=z.querySelector('.rti-existing-row');if(er)er.style.display='none';z.querySelector('.rti-input-wrap').style.display='';}
+function aoSelecionarArquivo(input){const z=input.closest('.rti-upload-zone');z.querySelector('.rti-filename').textContent=input.files[0]?input.files[0].name:'Nenhum arquivo selecionado';if(input.files[0]){z.classList.add('has-file');z.classList.remove('rti-active');}}
+function toggleMed(el){const g=el.nextElementSibling,s=g.style.display==='none';g.style.display=s?'grid':'none';const m=[...g.querySelectorAll('input')].filter(i=>i.value).length;const badge=m?' <span class="badge bg-success" style="font-size:.6rem;">'+m+'</span>':'';el.innerHTML=(s?'<i class="fas fa-calendar-check me-1 text-success"></i>\u25b2':'<i class="fas fa-calendar-plus me-1"></i>\u25bc')+' Datas de Medição Anual'+badge;}
+function atualizarMedToggle(input){const row=input.closest('.pci-item-row'),tg=row.querySelector('.med-toggle');const m=[...row.querySelectorAll('.med-grid input')].filter(i=>i.value).length;const s=row.querySelector('.med-grid').style.display!=='none';const badge=m?' <span class="badge bg-success" style="font-size:.6rem;">'+m+'</span>':'';tg.innerHTML=(s?'<i class="fas fa-calendar-check me-1 text-success"></i>\u25b2':'<i class="fas fa-calendar-plus me-1"></i>\u25bc')+' Datas de Medição Anual'+badge;}
+function autoValidade(el){const v=el.value;if(!v)return;const d=new Date(v+'T00:00:00');d.setFullYear(d.getFullYear()+1);el.closest('.pci-item-row').querySelector('.i-validade').value=d.toISOString().split('T')[0];}
+function autoRecarga(el){const v=el.value;if(!v)return;const d=new Date(v+'T00:00:00');d.setFullYear(d.getFullYear()-1);el.closest('.pci-item-row').querySelector('.i-recarga').value=d.toISOString().split('T')[0];}
+function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result.split(',')[1]);r.onerror=()=>rej(new Error('Erro ao ler arquivo'));r.readAsDataURL(file);});}
+
+/* ═══ SALVAR FORM PRINCIPAL (novo lançamento) ═══ */
+async function salvarFormulario(){
+  const rows=[...document.querySelectorAll('#container_itens .pci-item-row')];
+  if(!rows.length){Swal.fire('Atenção','Adicione ao menos um equipamento.','warning');return;}
+  if(rows.some(el=>!el.querySelector('.i-validade').value)){Swal.fire('Atenção','Preencha a data de validade.','warning');return;}
+  const btn=document.getElementById('btnSalvar');btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-2"></i>SALVANDO...';
+  const itens=rows.map(el=>({id:null,tipoPci:el.querySelector('.s-pci').value,qtd:el.querySelector('.i-qtd').value,recarga:el.querySelector('.i-recarga').value,validade:el.querySelector('.i-validade').value,rti:el.querySelector('.c-rti').checked,condenado:el.querySelector('.c-cond').checked,suspenso:el.querySelector('.c-susp').checked,med1:el.querySelector('.i-med1').value,med2:el.querySelector('.i-med2').value,med3:el.querySelector('.i-med3').value,med4:el.querySelector('.i-med4').value}));
+  const payload={cabecalho:{contrato:document.getElementById('f_contrato').value,regiao:document.getElementById('f_regiao').value,comarca:document.getElementById('f_comarca').value,edificacao:document.getElementById('f_edificacao').value,obs:document.getElementById('f_obs').value},itens};
+  const arquivosRti=rows.map(el=>{const i=el.querySelector('.rti-file-input');return(i&&i.files&&i.files[0])?i.files[0]:null;});
+  google.script.run
+    .withSuccessHandler(async res=>{
+      const ids=res.ids||[];btn.innerHTML='<i class="fas fa-spinner fa-spin me-2"></i>ENVIANDO RTIs...';
+      const uploads=[];
+      for(let i=0;i<rows.length;i++){const _f=arquivosRti[i],_rid=ids[i],_rti=itens[i].rti;if(_f&&_rid&&_rti){const _m=_f.type||'application/octet-stream',_n=_f.name;uploads.push(fileToBase64(_f).then(_b=>new Promise((_ok,_err)=>{google.script.run.withSuccessHandler(r=>{if(r&&r.success===false)_err(new Error(r.error||'Falha'));else _ok(r);}).withFailureHandler(_err).pci_salvarArquivoRTI(_rid,_b,_m,_n);})));}}
+      try{await Promise.all(uploads);}catch(e){console.warn('RTI parcial:',e);}
+      await new Promise(r=>setTimeout(r,900));
+      _rtiCarregado=false;
+      Swal.fire({title:'Sucesso!',text:res.message,icon:'success',timer:1800,showConfirmButton:false});
+      atualizarBaseDados(true,limparForm);
+      btn.disabled=false;btn.innerHTML='<i class="fas fa-save me-2"></i>FINALIZAR E GRAVAR';
+    })
+    .withFailureHandler(e=>{Swal.fire('Erro ao salvar',e.message,'error');btn.disabled=false;btn.innerHTML='<i class="fas fa-save me-2"></i>FINALIZAR E GRAVAR';})
+    .pci_salvarDados(payload, (window.__COMAP_SESSAO__ ? {regiao:window.__COMAP_SESSAO__.regiao, global:window.__COMAP_SESSAO__.global} : {}));
+}
+
+function getHoje(){const p=dataRefGlobal.split('-');return new Date(p[0],p[1]-1,p[2]);}
+function calcStatus(val){if(!val)return{txt:'—',cls:'badge-vigente',diff:9999};const d=new Date(val+'T00:00:00'),diff=Math.ceil((d-getHoje())/86400000);if(diff<=0)return{txt:'VENCIDO',cls:'badge-vencido',diff};if(diff<=30)return{txt:'VENCE EM 30d',cls:'badge-30d',diff};if(diff<=60)return{txt:'VENCE EM 60d',cls:'badge-60d',diff};if(diff<=90)return{txt:'VENCE EM 90d',cls:'badge-90d',diff};return{txt:'VIGENTE',cls:'badge-vigente',diff};}
+
+/* ═══ TABELA CONSULTAR ═══ */
+function renderTabela(){
+  if(!db||db.length<=1)return;
+  const busca=document.getElementById('busca').value.toLowerCase(),fC=document.getElementById('filt_contrato').value,fCo=document.getElementById('filt_comarca').value,fE=document.getElementById('filt_edif').value,fSt=document.getElementById('filt_status').value;
+  dadosFiltrados=db.slice(1).filter(r=>{
+    if(fC&&String(r[2]||'').trim().toLowerCase()!==fC.trim().toLowerCase())return false;
+    if(fCo&&String(r[3]||'').trim().toLowerCase()!==fCo.trim().toLowerCase())return false;
+    if(fE&&String(r[4]||'').trim().toLowerCase()!==fE.trim().toLowerCase())return false;
+    if(busca&&![r[3],r[4],r[5],r[2]].some(v=>String(v).toLowerCase().includes(busca)))return false;
+    if(fSt){const susp=String(r[18]||'').trim().toUpperCase()==='SIM';const{diff}=calcStatus(r[8]);if(fSt==='SUSPENSO')return susp;if(susp)return false;if(fSt==='VENCIDO'&&diff>0)return false;if(fSt==='30'&&!(diff>0&&diff<=30))return false;if(fSt==='60'&&!(diff>30&&diff<=60))return false;if(fSt==='90'&&!(diff>60&&diff<=90))return false;if(fSt==='VIGENTE'&&diff<=90)return false;}
+    return true;
+  }).sort((a,b)=>{const ca=String(a[3]||'').trim().toUpperCase(),cb=String(b[3]||'').trim().toUpperCase(),ea=String(a[4]||'').trim().toUpperCase(),eb=String(b[4]||'').trim().toUpperCase();return ca.localeCompare(cb,'pt-BR')||ea.localeCompare(eb,'pt-BR');});
+  paginaAtual=1;renderPagina();
+}
+
+function renderPagina(){
+  const total=dadosFiltrados.length,inicio=(paginaAtual-1)*ITEMS_PG,fatia=dadosFiltrados.slice(inicio,inicio+ITEMS_PG);
+  const tbody=document.getElementById('corpo_tabela');tbody.innerHTML='';
+  if(!total){tbody.innerHTML='<tr><td colspan="11" class="text-center py-4 text-muted">Nenhum registro encontrado.</td></tr>';}
+  else{fatia.forEach(r=>{
+    const susp=String(r[18]||'').trim().toUpperCase()==='SIM',st=susp?{txt:'SUSPENSO',cls:'badge-suspenso'}:calcStatus(r[8]);
+    const meds=[r[14],r[15],r[16],r[17]].filter(Boolean).map((d,i)=>`<span class="badge bg-light text-success border me-1" style="font-size:.6rem;">${i+1}º:${String(d).split('-').reverse().join('/')}</span>`).join('')||'<span class="text-muted" style="font-size:.72rem;">—</span>';
+    const ultMed=[r[14],r[15],r[16],r[17]].filter(Boolean).sort().reverse()[0];
+    const ultMedFmt=ultMed?`<span class="badge" style="background:#e0f2fe;color:#0369a1;font-size:.7rem;font-weight:700;padding:4px 8px;border-radius:20px;"><i class="fas fa-calendar-check me-1"></i>${String(ultMed).split('-').reverse().join('/')}</span>`:'<span class="text-muted" style="font-size:.72rem;">—</span>';
+    const rtiFileId=String(r[19]||'').trim();
+    const rtiBtn=rtiFileId?`<a href="${rtiFileUrl(rtiFileId)}" target="_blank" class="btn-rti-open"><i class="fas fa-paperclip"></i> Abrir RTI</a>`:'<span class="btn-rti-none">—</span>';
+    tbody.innerHTML+=`<tr${susp?' style="opacity:.55;background:#f8fafc;"':''}><td><small class="text-muted">#${r[0]}</small></td><td><span class="${st.cls}">${st.txt}</span></td><td><span class="badge" style="background:#eef2ff;color:#3730a3;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:6px;">${r[20]||'—'}</span></td><td><div class="fw-bold" style="font-size:.8rem;">${r[3]}</div><small class="text-muted">${r[4]}</small></td><td style="font-size:.8rem;">${r[5]}</td><td class="text-center fw-bold">${r[6]}</td><td class="text-center" style="font-size:.8rem;">${String(r[8]).split('-').reverse().join('/')}</td><td>${meds}</td><td class="text-center">${ultMedFmt}</td><td class="text-center">${rtiBtn}</td><td class="text-center"><button class="btn btn-action btn-outline-warning me-1" onclick="prepararEdicao('${r[0]}')" title="Editar"><i class="fas fa-edit"></i></button><button class="btn btn-action btn-outline-danger" onclick="confirmarDelecao('${r[0]}')" title="Excluir"><i class="fas fa-trash"></i></button></td></tr>`;
+  });}
+  const totalPags=Math.ceil(total/ITEMS_PG),pg=document.getElementById('paginacao');
+  pg.innerHTML=`<span>${total} registro(s)</span>`;
+  if(totalPags>1)pg.innerHTML+=`<div class="d-flex gap-1 align-items-center"><button class="btn btn-sm btn-outline-secondary" ${paginaAtual<=1?'disabled':''} onclick="mudaPag(${paginaAtual-1})">‹</button><span>${paginaAtual}/${totalPags}</span><button class="btn btn-sm btn-outline-secondary" ${paginaAtual>=totalPags?'disabled':''} onclick="mudaPag(${paginaAtual+1})">›</button></div>`;
+}
+function mudaPag(n){paginaAtual=n;renderPagina();}
+
+function confirmarDelecao(id){
+  Swal.fire({title:'Excluir?',text:'Ação permanente! O RTI também será removido do Drive.',icon:'warning',showCancelButton:true,confirmButtonText:'Sim, excluir',cancelButtonText:'Cancelar',confirmButtonColor:'#dc2626'})
+    .then(r=>{if(!r.isConfirmed)return;google.script.run.withSuccessHandler(msg=>{Swal.fire({title:'Removido!',text:msg,icon:'success',timer:1200,showConfirmButton:false});_rtiCarregado=false;atualizarBaseDados(true,renderTabela);}).withFailureHandler(e=>Swal.fire('Erro',e.message,'error')).pci_deletarRegistro(id, (window.__COMAP_SESSAO__ ? {regiao:window.__COMAP_SESSAO__.regiao, global:window.__COMAP_SESSAO__.global} : {}));});
+}
+
+function setSelectVal(id,val){
+  const sel=document.getElementById(id);if(!sel||val===undefined||val===null)return;
+  const norm=v=>String(v||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+  const target=norm(val);
+  if(Array.from(sel.options).some(o=>{if(o.value===val){sel.value=val;return true;}return false;}))return;
+  for(const o of sel.options){if(norm(o.value)===target||norm(o.text)===target){sel.value=o.value;return;}}
+  sel.value=val;
+}
+
+/* ═══ DASHBOARD ═══ */
+function renderDash(){
+  if(!db||db.length<=1)return;
+  const filtroC=document.getElementById('dash_contrato').value;
+  let v=0,d30=0,d60=0,d90=0,ok=0,tot=0,cond=0;
+  const eMap={},tipoDetalhe={};
+  GRUPOS_EQUIP.forEach(g=>{eMap[g.key]={label:g.label,icon:g.icon,cor:g.cor,vencido:0,alerta:0,ok:0,total:0};});
+  db.slice(1).forEach(r=>{
+    if(filtroC&&String(r[2]||'').trim().toLowerCase()!==filtroC.trim().toLowerCase())return;
+    if(String(r[18]||'').trim().toUpperCase()==='SIM')return;
+    const{diff}=calcStatus(r[8]),qtd=parseInt(r[6])||0;
+    tot++;if(r[10]==='SIM')cond++;
+    if(diff<=0)v++;else if(diff<=30)d30++;else if(diff<=60)d60++;else if(diff<=90)d90++;else ok++;
+    const t=String(r[5]||'').trim().toUpperCase();
+    for(const g of GRUPOS_EQUIP){if(g.prefixos.some(p=>t.startsWith(p.toUpperCase()))){const em=eMap[g.key];em.total+=qtd;if(diff<=0)em.vencido+=qtd;else if(diff<=30)em.alerta+=qtd;else em.ok+=qtd;break;}}
+    if(t){if(!tipoDetalhe[t]){let grupoKey=null;for(const g of GRUPOS_EQUIP){if(g.prefixos.some(p=>t.startsWith(p.toUpperCase()))){grupoKey=g.key;break;}}tipoDetalhe[t]={label:t,grupoKey,vencido:0,alerta:0,ok:0,total:0};}tipoDetalhe[t].total+=qtd;if(diff<=0)tipoDetalhe[t].vencido+=qtd;else if(diff<=30)tipoDetalhe[t].alerta+=qtd;else tipoDetalhe[t].ok+=qtd;}
+  });
+  const pct=n=>tot?Math.round(n/tot*100)+'% do total':'—';
+  document.getElementById('kpi_v').innerText=v;document.getElementById('kpi_30').innerText=d30;document.getElementById('kpi_ok').innerText=ok;document.getElementById('kpi_tot').innerText=tot;
+  document.getElementById('kpi_v_pct').innerText=pct(v);document.getElementById('kpi_30_pct').innerText=pct(d30);document.getElementById('kpi_ok_pct').innerText=pct(ok);document.getElementById('kpi_cond').innerText=`${cond} condenado(s)`;
+  _renderCardsEquip(eMap,tipoDetalhe);_renderHistograma();_renderAlertas();
+}
+
+function _renderCardsEquip(eMap,tipoDetalhe){
+  function buildGroupCard(g){const d=eMap[g.key];if(!d||!d.total)return'';const pct=d.total?Math.round((d.vencido+d.alerta)/d.total*100):0;const barCor=d.vencido>0?'#dc2626':d.alerta>0?'#f59e0b':'#16a34a';return`<div class="col-6 col-md-3 col-lg-2"><div class="card-equip" style="border-top:3px solid ${g.cor};"><div class="d-flex align-items-center justify-content-between mb-2"><div class="equip-nome">${g.label} <small style="font-weight:600;color:#aaa;font-size:.58rem;">TOTAL</small></div><i class="fas ${g.icon} equip-icon" style="color:${g.cor};"></i></div><div class="equip-total">${d.total}<small>unidades totais</small></div><div class="d-flex gap-1 flex-wrap">${d.vencido>0?`<span class="equip-pill pill-v"><i class="fas fa-times-circle"></i>${d.vencido} venc.</span>`:''}${d.alerta>0?`<span class="equip-pill pill-a"><i class="fas fa-exclamation-triangle"></i>${d.alerta} alerta</span>`:''}${d.ok>0?`<span class="equip-pill pill-ok"><i class="fas fa-check-circle"></i>${d.ok} ok</span>`:''}</div><div style="margin-top:9px;height:4px;border-radius:10px;background:#f0f4f8;overflow:hidden;"><div class="equip-bar-fill" style="width:${pct}%;background:${barCor};"></div></div></div></div>`;}
+  function buildTipoCard(info){if(!info||!info.total)return'';const pct=info.total?Math.round((info.vencido+info.alerta)/info.total*100):0;const barCor=info.vencido>0?'#dc2626':info.alerta>0?'#f59e0b':'#16a34a';const labelCurto=info.label.replace(/^EXTINTOR\s+/i,'').replace(/^MANGUEIRA\s+/i,'');return`<div class="col-6 col-md-3 col-lg-2"><div class="card-equip" style="border-left:3px solid ${barCor};background:#fafcff;"><div class="equip-nome mb-2" style="font-size:.67rem;color:#555;">${labelCurto}</div><div class="equip-total" style="font-size:1.55rem;">${info.total}<small>unidades</small></div><div class="d-flex gap-1 flex-wrap">${info.vencido>0?`<span class="equip-pill pill-v"><i class="fas fa-times-circle"></i>${info.vencido} venc.</span>`:''}${info.alerta>0?`<span class="equip-pill pill-a"><i class="fas fa-exclamation-triangle"></i>${info.alerta} alerta</span>`:''}${info.ok>0?`<span class="equip-pill pill-ok"><i class="fas fa-check-circle"></i>${info.ok} ok</span>`:''}</div><div style="margin-top:8px;height:3px;border-radius:10px;background:#f0f4f8;overflow:hidden;"><div class="equip-bar-fill" style="width:${pct}%;background:${barCor};"></div></div></div></div>`;}
+  const porGrupo={};GRUPOS_EQUIP.forEach(g=>{porGrupo[g.key]=[];});
+  Object.values(tipoDetalhe).forEach(info=>{if(info.grupoKey&&porGrupo[info.grupoKey]!==undefined)porGrupo[info.grupoKey].push(info);});
+  Object.keys(porGrupo).forEach(k=>{porGrupo[k].sort((a,b)=>a.label.localeCompare(b.label,'pt-BR'));});
+  const extKeys=['ap','co2','pqs','abc'];let htmlExt='';
+  extKeys.forEach(k=>{const g=GRUPOS_EQUIP.find(x=>x.key===k);if(!eMap[k]||!eMap[k].total)return;const tipos=porGrupo[k];htmlExt+=`<div class="col-12 mt-3 mb-1"><span class="subgrupo-sep" style="background:${g.cor};"><i class="fas ${g.icon}"></i>${g.label} — ${eMap[k].total} un.</span></div>`;if(tipos.length>1){htmlExt+=buildGroupCard(g);tipos.forEach(info=>{htmlExt+=buildTipoCard(info);});}else{htmlExt+=buildGroupCard(g);}});
+  document.getElementById('cards_extintores').innerHTML='<div class="row g-2">'+htmlExt+'</div>';
+  const mangKeys=['mang15','mang20'];let htmlMang='';
+  mangKeys.forEach(k=>{const g=GRUPOS_EQUIP.find(x=>x.key===k);if(!eMap[k]||!eMap[k].total)return;const tipos=porGrupo[k];htmlMang+=`<div class="col-12 mt-3 mb-1"><span class="subgrupo-sep" style="background:${g.cor};"><i class="fas ${g.icon}"></i>${g.label} — ${eMap[k].total} un.</span></div>`;if(tipos.length>1){htmlMang+=buildGroupCard(g);tipos.forEach(info=>{htmlMang+=buildTipoCard(info);});}else{htmlMang+=buildGroupCard(g);}});
+  document.getElementById('cards_mangueiras').innerHTML='<div class="row g-2">'+htmlMang+'</div>';
+}
+
+function _renderHistograma(){
+  if(!db||db.length<=1||!dataRefGlobal)return;
+  const hoje=getHoje(),filtroC=document.getElementById('dash_contrato')?.value||'',meses=mesesSel,mesArr=[],dt=new Date(hoje);
+  for(let i=0;i<meses;i++){mesArr.push({key:dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'),label:dt.toLocaleString('pt-BR',{month:'short'}).replace('.','')+'/'+ String(dt.getFullYear()).slice(2)});dt.setMonth(dt.getMonth()+1);}
+  const limite=new Date(hoje);limite.setMonth(limite.getMonth()+meses);const map={};let totalPer=0;
+  db.slice(1).forEach(r=>{if(filtroC&&String(r[2]||'').trim().toLowerCase()!==filtroC.trim().toLowerCase())return;if(String(r[18]||'').trim().toUpperCase()==='SIM')return;const val=new Date(String(r[8])+'T00:00:00'),diff=Math.ceil((val-hoje)/86400000),qtd=parseInt(r[6])||0;if(diff<=0){const k=mesArr[0]?.key;if(k){map[k]=(map[k]||0)+qtd;totalPer+=qtd;}}else if(val<limite){const k=val.getFullYear()+'-'+String(val.getMonth()+1).padStart(2,'0');map[k]=(map[k]||0)+qtd;totalPer+=qtd;}});
+  _mesArrGlobal=mesArr;
+  if(chartHist)chartHist.destroy();
+  chartHist=new Chart(document.getElementById('chartHist'),{type:'bar',data:{labels:mesArr.map(m=>m.label),datasets:[{label:'Unidades',data:mesArr.map(m=>map[m.key]||0),backgroundColor:mesArr.map((m,i)=>_filtroMesKey===m.key?'#002244':i===0?'#d63031':i<=2?'#f59e0b':i<=4?'#f39c12':'#3b82f6'),borderRadius:6,borderSkipped:false}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.y+' un. vencendo'}}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{ticks:{stepSize:1,font:{size:10}},grid:{color:'#f0f4f8'}}},onClick(evt){const pts=chartHist.getElementsAtEventForMode(evt,'nearest',{intersect:true},false);if(!pts.length){limparFiltroMes();return;}const idx=pts[0].index,mes=_mesArrGlobal[idx];if(!mes)return;if(_filtroMesKey===mes.key){limparFiltroMes();return;}_filtroMesKey=mes.key;_renderHistograma();_renderAlertas();},onHover(evt,el){evt.native.target.style.cursor=el.length?'pointer':'default';}}});
+  document.getElementById('hist_badge').innerText=`${totalPer} un.`;
+  const av=document.getElementById('hist_aviso'),lbl=document.getElementById('hist_aviso_periodo');av.classList.toggle('hidden',meses>=12);if(lbl)lbl.innerText=meses+(meses===1?' mês':' meses');
+}
+function setMeses(n){mesesSel=n;[1,2,3,6,12].forEach(v=>{const b=document.getElementById('mb'+v);if(b)b.classList.toggle('active',v===n);});_renderHistograma();_renderAlertas();}
+function limparFiltroMes(){_filtroMesKey=null;_renderHistograma();_renderAlertas();}
+function _renderAlertas(){
+  if(!db||db.length<=1||!dataRefGlobal)return;
+  const hoje=getHoje(),filtroC=document.getElementById('dash_contrato')?.value||'',diasLim=mesesSel*30;
+  const badge=document.getElementById('alertas_filtro_badge'),badgeTxt=document.getElementById('alertas_filtro_txt');
+  if(_filtroMesKey){const mi=_mesArrGlobal.find(m=>m.key===_filtroMesKey);badge.classList.remove('hidden');badgeTxt.innerText=mi?mi.label:_filtroMesKey;}else badge.classList.add('hidden');
+  let alertas=db.slice(1).filter(r=>{if(filtroC&&String(r[2]||'').trim().toLowerCase()!==filtroC.trim().toLowerCase())return false;if(String(r[18]||'').trim().toUpperCase()==='SIM')return false;const{diff}=calcStatus(r[8]);if(diff>diasLim)return false;if(_filtroMesKey){const val=new Date(String(r[8])+'T00:00:00'),mesVal=val.getFullYear()+'-'+String(val.getMonth()+1).padStart(2,'0');if(diff<=0)return _filtroMesKey===(_mesArrGlobal[0]?.key||'');return mesVal===_filtroMesKey;}return true;}).map(r=>{const{diff,txt}=calcStatus(r[8]);return{diff,txt,comarca:String(r[3]||'').trim().toUpperCase(),edificacao:r[4],equip:r[5],validade:r[8],qtd:r[6],med1:r[14],med2:r[15],med3:r[16],med4:r[17]};}).sort((a,b)=>a.diff-b.diff);
+  const lp=_filtroMesKey?(_mesArrGlobal.find(m=>m.key===_filtroMesKey)?.label||_filtroMesKey):`Próximos ${mesesSel}m`;
+  document.getElementById('alertas_label').innerText=`${lp} · ${alertas.length} item(ns)`;
+  document.getElementById('lista_alertas').innerHTML=alertas.length===0?'<div class="text-center py-3" style="color:#16a34a;font-size:.85rem;">Tudo regular no período selecionado</div>':alertas.map(a=>{const cor=a.diff<=0?'#dc2626':a.diff<=30?'#f59e0b':a.diff<=60?'#f39c12':'#3b82f6';const meds=[a.med1,a.med2,a.med3,a.med4].filter(Boolean).map((d,i)=>`${i+1}º:${String(d).split('-').reverse().join('/')}`).join(' · ');return`<div class="alerta-item"><div class="alerta-dot" style="background:${cor};"></div><div style="flex:1;min-width:0;"><div style="font-size:.82rem;font-weight:700;">${a.comarca} — ${a.equip}</div><div style="font-size:.72rem;color:#94a3b8;">${a.edificacao} · ${a.qtd} un. · Val:${String(a.validade).split('-').reverse().join('/')}${meds?' · Meds:'+meds:''}</div></div><div style="font-size:.78rem;font-weight:800;color:${cor};flex-shrink:0;">${a.txt}</div></div>`;}).join('');
+}
+
+/* ═══ EXPORTAR / EMAIL ═══ */
+function exportarCSV(fonte){const dados=fonte||dadosFiltrados;if(!dados.length){Swal.fire('Atenção','Sem registros.','warning');return;}const h=['ID','DATA_CADASTRO','CONTRATO','COMARCA','EDIFICAÇÃO','TIPO_PCI','QTD','RECARGA','VALIDADE','RTI','CONDENADO','OBS','DATA_REF','STATUS','MED1','MED2','MED3','MED4','SUSPENSO','RTI_URL'];const csv=[h,...dados.map(r=>r.slice(0,20))].map(l=>l.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(';')).join('\n');const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='PCI_Norte.csv';a.click();URL.revokeObjectURL(a.href);}
+function exportarCSVDash(){const f=document.getElementById('dash_contrato').value;exportarCSV(db.slice(1).filter(r=>!f||r[2]===f));}
+function exportarPDF(){const f=document.getElementById('dash_contrato').value;const sfSel=_getSfSelected();const sfLabel=sfSel.length>0?sfSel.map(k=>SF_OPTS[k].label).join(', '):(mesesSel+(mesesSel===1?' mês':' meses'));Swal.fire({title:'Gerando PDF...',html:`Filtro: <strong>${sfLabel}</strong>`,allowOutsideClick:false,didOpen:()=>Swal.showLoading()});google.script.run.withSuccessHandler(url=>{Swal.close();window.open(url);}).withFailureHandler(e=>{Swal.close();Swal.fire('Erro',e.message,'error');}).pci_gerarRelatorioPDF(f,mesesSel,sfSel);}
+function enviarEmail(){const f=document.getElementById('dash_contrato').value;const sfSel=_getSfSelected();const sfLabel=sfSel.length>0?sfSel.map(k=>SF_OPTS[k].label).join(' + '):(mesesSel+(mesesSel===1?' mês':' meses'));Swal.fire({title:'Enviar e-mail?',html:`Filtro selecionado: <strong>${sfLabel}</strong><br>Contrato: <strong>${f||'Todos'}</strong>`,icon:'question',showCancelButton:true,confirmButtonText:'Enviar',cancelButtonText:'Cancelar'}).then(r=>{if(!r.isConfirmed)return;Swal.fire({title:'Enviando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});google.script.run.withSuccessHandler(msg=>{Swal.close();Swal.fire('Enviado!',msg,'success');}).withFailureHandler(e=>{Swal.close();Swal.fire('Erro',e.message,'error');}).pci_enviarEmailAlertas(f,mesesSel,sfSel);});}
+function recalcularStatus(){Swal.fire({title:'Recalculando...',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});google.script.run.withSuccessHandler(msg=>{Swal.fire('Pronto!',msg,'success');atualizarBaseDados(true);}).withFailureHandler(e=>Swal.fire('Erro',e.message,'error')).pci_recalcularTodosStatus();}
+function carregarDestinatarios(){google.script.run.withSuccessHandler(lista=>{document.getElementById('cfg_emails').value=lista.join('\n');}).withFailureHandler(()=>{}).pci_lerDestinatarios();}
+function salvarDestinatarios(){const lista=document.getElementById('cfg_emails').value.split('\n').map(e=>e.trim()).filter(e=>e.length>0);google.script.run.withSuccessHandler(msg=>Swal.fire({title:'Salvo!',text:msg,icon:'success',timer:1500,showConfirmButton:false})).withFailureHandler(e=>Swal.fire('Erro',e.message,'error')).pci_salvarDestinatarios(lista);}
+</script>
+
+<script>
+/* ⬇ Helper Dropdowns COMAP — Região > Comarca > Edificação */
+(function(){
+  if (window.ComapDropdowns) return;
+  var C={_d:null,_l:false,_p:[],
+    init:function(cb){var s=this;if(s._d){if(cb)cb(s._d);return;}if(s._l){if(cb)s._p.push(cb);return;}s._l=true;
+      google.script.run.withSuccessHandler(function(r){s._l=false;s._d=(r&&r.ok)?r:{data:{},totalRegistros:0};if(cb)cb(s._d);s._p.forEach(function(f){try{f(s._d);}catch(e){}});s._p=[];})
+      .withFailureHandler(function(){s._l=false;s._d={data:{},totalRegistros:0};if(cb)cb(s._d);}).util_carregarTodasComarcas();},
+    _n:function(r){if(!r)return'';return r.toString().toUpperCase().replace(/\s+/g,'_').replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I').replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C').trim();},
+    listarComarcasDaRegiao:function(r){if(!this._d)return[];var reg=this._n(r);var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca)s[d.comarca.toUpperCase()]=d.comarca;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarEdificacoesPorComarca:function(r,c){if(!this._d)return[];var reg=this._n(r);var co=(c||'').toString().trim().toUpperCase();if(!co)return[];var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca.toUpperCase()===co&&d.edificacao)s[d.edificacao.toUpperCase()]=d.edificacao;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarTodasComarcasGlobais:function(){if(!this._d)return[];var s={};var d=this._d.data||{};Object.keys(d).forEach(function(r){(d[r]||[]).forEach(function(x){if(x.comarca)s[x.comarca.toUpperCase()]=x.comarca;});});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    _popular:function(id,ops,ph){var el=document.getElementById(id);if(!el)return;var at=el.value;el.innerHTML='';var v=document.createElement('option');v.value='';v.textContent=ph||'Selecione...';el.appendChild(v);ops.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=o;el.appendChild(op);});if(at){var aU=at.toUpperCase();for(var i=0;i<el.options.length;i++){if(el.options[i].value.toUpperCase()===aU){el.selectedIndex=i;break;}}}},
+    onRegiao:function(r,iC,iE){var s=this;var f=function(){s._popular(iC,s.listarComarcasDaRegiao(r),'Selecione a comarca...');if(iE)s._popular(iE,[],'Selecione a comarca primeiro');};if(!s._d)s.init(f);else f();},
+    onComarca:function(r,c,iE){var s=this;var f=function(){s._popular(iE,s.listarEdificacoesPorComarca(r,c),'Selecione a edificação...');};if(!s._d)s.init(f);else f();}
+  };
+  window.ComapDropdowns=C;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){C.init();});else C.init();
+})();
+</script>
+</body>
+</html>

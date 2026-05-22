@@ -1,0 +1,14 @@
+# Dependências
+node_modules/
+.env
+.env.local
+
+# Dados sensíveis
+*.key
+secrets/
+
+# Temporários
+*.tmp
+*.log
+.DS_Store
+Thumbs.db

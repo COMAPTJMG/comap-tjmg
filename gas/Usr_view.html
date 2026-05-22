@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+/* Bootstrap COMAP — recupera sessão injetada pelo shell ou do localStorage */
+(function(){
+  try {
+    var s = window.__COMAP_SESSAO__ || {};
+    if (!s.email) {
+      var ls = localStorage.getItem('comap_unificado');
+      if (ls) s = JSON.parse(ls);
+    }
+    window.__COMAP_SESSAO__ = s;
+  } catch(e) {}
+})();
+</script>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --blue:#003366; --blue-mid:#004080; --gold:#c5a059; --gold-pale:#fdf6e8;
+  --success:#1b7a3e; --success-bg:#dcfce7;
+  --warning:#b45309; --warning-bg:#fef3c7;
+  --danger:#b91c1c;  --danger-bg:#fee2e2;
+  --purple:#5b21b6;  --purple-bg:#ede9fe;
+  --gray-50:#f8fafc; --gray-100:#f1f5f9; --gray-200:#e2e8f0;
+  --gray-300:#cbd5e1; --gray-400:#94a3b8; --gray-500:#64748b;
+  --gray-600:#475569; --gray-700:#334155; --gray-900:#0f172a;
+}
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+body {
+  font-family:'Inter', -apple-system, sans-serif;
+  background:var(--gray-100);
+  color:var(--gray-900);
+  font-size:14px;
+  line-height:1.5;
+  min-height:100vh;
+}
+
+/* HEADER */
+.usr-header {
+  background:var(--blue);
+  border-bottom:3px solid var(--gold);
+  color:#fff;
+  padding:18px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  flex-wrap:wrap;
+}
+.usr-header-title { display:flex; align-items:center; gap:12px; }
+.usr-header-title h1 { font-size:18px; font-weight:800; letter-spacing:.02em; }
+.usr-header-title .icone { font-size:24px; }
+.usr-header-sub { font-size:11px; opacity:.7; margin-top:2px; }
+.usr-header-actions { display:flex; gap:10px; }
+
+.btn {
+  padding:10px 18px; border:none; border-radius:6px; cursor:pointer;
+  font-family:inherit; font-size:13px; font-weight:600;
+  display:inline-flex; align-items:center; gap:6px;
+  transition:all .15s;
+}
+.btn-primary { background:var(--gold); color:var(--blue); }
+.btn-primary:hover:not(:disabled) { background:#d4b06a; transform:translateY(-1px); }
+.btn-secondary { background:var(--gray-200); color:var(--gray-700); }
+.btn-secondary:hover:not(:disabled) { background:var(--gray-300); }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-success { background:var(--success); color:#fff; }
+.btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+.usr-container { padding:20px 24px; max-width:1400px; margin:0 auto; }
+
+/* FILTROS */
+.usr-filtros {
+  background:#fff;
+  border:1px solid var(--gray-200);
+  border-radius:8px;
+  padding:14px 18px;
+  margin-bottom:16px;
+  display:grid;
+  grid-template-columns: 1fr 200px 200px auto;
+  gap:12px;
+  align-items:end;
+}
+.usr-filtros .grp { display:flex; flex-direction:column; gap:4px; }
+.usr-filtros label {
+  font-size:10px; font-weight:700; color:var(--gray-600);
+  text-transform:uppercase; letter-spacing:.05em;
+}
+.usr-filtros input,
+.usr-filtros select {
+  padding:9px 12px; border:1.5px solid var(--gray-200); border-radius:6px;
+  font-family:inherit; font-size:13px; color:var(--gray-900); background:#fff;
+}
+.usr-filtros input:focus, .usr-filtros select:focus {
+  border-color:var(--gold); outline:none;
+}
+.usr-filtros .total {
+  background:var(--blue); color:#fff;
+  padding:9px 14px; border-radius:6px;
+  font-size:12px; font-weight:700; white-space:nowrap;
+  text-align:center;
+}
+
+/* TABELA */
+.usr-tabela-wrap {
+  background:#fff;
+  border:1px solid var(--gray-200);
+  border-radius:8px;
+  overflow:hidden;
+}
+.usr-tabela {
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+.usr-tabela thead { background:var(--blue); color:#fff; }
+.usr-tabela th {
+  text-align:left;
+  padding:12px 14px;
+  font-weight:700;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  border-bottom:3px solid var(--gold);
+}
+.usr-tabela tbody tr {
+  border-bottom:1px solid var(--gray-100);
+  transition:background .12s;
+}
+.usr-tabela tbody tr:hover { background:var(--gold-pale); }
+.usr-tabela tbody tr.proprio { background:#e8f0fb; }
+.usr-tabela tbody tr.proprio:hover { background:#dbeafe; }
+.usr-tabela tbody tr.inativo { opacity:.55; background:var(--gray-50); }
+.usr-tabela td {
+  padding:12px 14px;
+  vertical-align:middle;
+}
+.usr-tabela td.nome {
+  font-weight:700;
+  color:var(--blue);
+}
+.usr-tabela td.email {
+  font-family:'JetBrains Mono', 'Courier New', monospace;
+  font-size:12px;
+  color:var(--gray-700);
+}
+.badge {
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:99px;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  white-space:nowrap;
+}
+.badge-master    { background:var(--purple-bg); color:var(--purple); border:1px solid #c4b5fd; }
+.badge-regional  { background:#e0f2fe; color:#075985; border:1px solid #7dd3fc; }
+.badge-ativo     { background:var(--success-bg); color:var(--success); border:1px solid #bbf7d0; }
+.badge-inativo   { background:var(--danger-bg); color:var(--danger); border:1px solid #fecaca; }
+.badge-proprio   { background:var(--gold-pale); color:var(--warning); border:1px solid #fde68a; margin-left:6px; }
+
+.usr-acoes {
+  display:flex; gap:4px; justify-content:flex-end; flex-wrap:wrap;
+}
+.btn-acao {
+  padding:5px 10px; border:1px solid var(--gray-200); background:#fff;
+  border-radius:5px; cursor:pointer; font-family:inherit; font-size:11px;
+  font-weight:600; color:var(--gray-700); transition:all .12s;
+  display:inline-flex; align-items:center; gap:4px;
+}
+.btn-acao:hover:not(:disabled) { background:var(--gray-100); transform:translateY(-1px); }
+.btn-acao.editar:hover { border-color:var(--blue); color:var(--blue); }
+.btn-acao.senha:hover  { border-color:var(--gold); color:var(--warning); background:var(--gold-pale); }
+.btn-acao.toggle-ativo:hover { border-color:var(--success); color:var(--success); background:var(--success-bg); }
+.btn-acao.toggle-inativo:hover { border-color:var(--warning); color:var(--warning); background:var(--warning-bg); }
+.btn-acao.excluir:hover { border-color:var(--danger); color:var(--danger); background:var(--danger-bg); }
+.btn-acao:disabled { opacity:.4; cursor:not-allowed; }
+
+.usr-empty {
+  padding:60px 20px;
+  text-align:center;
+  color:var(--gray-400);
+  font-size:13px;
+  font-style:italic;
+}
+
+/* MODAL */
+.modal-bg {
+  display:none; position:fixed; inset:0;
+  background:rgba(10,25,41,.6); z-index:1000;
+  align-items:center; justify-content:center;
+  padding:20px;
+}
+.modal-bg.open { display:flex; }
+.modal-card {
+  background:#fff;
+  border-radius:10px;
+  width:100%; max-width:520px;
+  max-height:90vh; overflow:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+}
+.modal-head {
+  background:var(--blue);
+  color:#fff;
+  padding:16px 22px;
+  border-bottom:3px solid var(--gold);
+  border-radius:10px 10px 0 0;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.modal-head h2 { font-size:15px; font-weight:800; letter-spacing:.02em; }
+.modal-close {
+  background:transparent; border:none; color:#fff; font-size:22px;
+  cursor:pointer; padding:0 6px; opacity:.7;
+}
+.modal-close:hover { opacity:1; }
+.modal-body { padding:22px; }
+.modal-foot {
+  padding:14px 22px; background:var(--gray-50); border-top:1px solid var(--gray-200);
+  display:flex; gap:10px; justify-content:flex-end;
+  border-radius:0 0 10px 10px;
+}
+.modal-erro {
+  background:var(--danger-bg); color:#7f1d1d;
+  padding:10px 14px; border-radius:6px;
+  font-size:12px;
+  border-left:3px solid var(--danger);
+  margin-bottom:14px; display:none;
+}
+.modal-erro.aberto { display:block; }
+
+.form-grp { margin-bottom:14px; }
+.form-grp label {
+  display:block; font-size:10px; font-weight:700;
+  color:var(--gray-600); text-transform:uppercase;
+  letter-spacing:.05em; margin-bottom:4px;
+}
+.form-grp input,
+.form-grp select {
+  width:100%;
+  padding:10px 12px;
+  border:1.5px solid var(--gray-200);
+  border-radius:6px;
+  font-family:inherit;
+  font-size:13px;
+  color:var(--gray-900);
+  background:#fff;
+}
+.form-grp input:focus,
+.form-grp select:focus {
+  border-color:var(--gold);
+  outline:none;
+  box-shadow:0 0 0 3px var(--gold-pale);
+}
+.form-grp input:disabled { background:var(--gray-50); cursor:not-allowed; color:var(--gray-500); }
+.form-grp .hint { font-size:11px; color:var(--gray-500); margin-top:4px; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+.spinner {
+  display:inline-block;
+  width:14px; height:14px;
+  border:2px solid var(--gray-300);
+  border-top-color:var(--blue);
+  border-radius:50%;
+  animation:sp 0.6s linear infinite;
+  vertical-align:middle;
+}
+@keyframes sp { to { transform:rotate(360deg); } }
+
+.loading-overlay {
+  position:fixed; inset:0;
+  background:rgba(255,255,255,.7);
+  z-index:2000;
+  display:none;
+  align-items:center; justify-content:center;
+}
+.loading-overlay.aberto { display:flex; }
+.loading-overlay .sp-grande {
+  width:42px; height:42px;
+  border:4px solid var(--gold-pale);
+  border-top-color:var(--gold);
+  border-radius:50%;
+  animation:sp 0.7s linear infinite;
+}
+
+.toast {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+  background:var(--blue); color:#fff;
+  padding:12px 22px; border-radius:8px;
+  font-size:13px; font-weight:600;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+  z-index:3000;
+  transition:transform .3s ease;
+  max-width:90%;
+}
+.toast.aberto { transform:translateX(-50%) translateY(0); }
+.toast.sucesso { background:var(--success); }
+.toast.erro    { background:var(--danger); }
+.toast.aviso   { background:var(--warning); }
+
+@media (max-width:768px) {
+  .usr-filtros { grid-template-columns:1fr; }
+  .usr-tabela td.email { font-size:11px; }
+  .usr-acoes { justify-content:flex-start; }
+  .form-row { grid-template-columns:1fr; }
+}
+
+.acesso-negado {
+  background:#fff;
+  margin:60px auto;
+  padding:40px;
+  max-width:480px;
+  border-radius:10px;
+  text-align:center;
+  border-top:6px solid var(--danger);
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+.acesso-negado .icone { font-size:48px; margin-bottom:12px; }
+.acesso-negado h2 { color:var(--blue); margin-bottom:8px; font-size:18px; }
+.acesso-negado p { color:var(--gray-600); font-size:13px; line-height:1.6; }
+</style>
+</head>
+
+<body>
+
+<!-- Acesso negado para não-MASTER -->
+<div id="acesso-negado-wrap" style="display:none;">
+  <div class="acesso-negado">
+    <div class="icone">🔒</div>
+    <h2>Acesso restrito</h2>
+    <p>
+      Esta área é exclusiva de usuários com perfil <strong>MASTER</strong>.<br>
+      Para gerir cadastros, peça acesso ao coordenador da COMAP.
+    </p>
+  </div>
+</div>
+
+<!-- App principal -->
+<div id="app-wrap" style="display:none;">
+
+  <header class="usr-header">
+    <div class="usr-header-title">
+      <span class="icone">👥</span>
+      <div>
+        <h1>Gestão de Usuários</h1>
+        <div class="usr-header-sub" id="hdr-sub">Cadastro, edição e controle de acesso ao sistema COMAP</div>
+      </div>
+    </div>
+    <div class="usr-header-actions">
+      <button class="btn btn-primary" onclick="abrirModalCriar()">＋ Novo Usuário</button>
+      <button class="btn btn-secondary" onclick="carregar()" title="Recarregar lista">↻</button>
+    </div>
+  </header>
+
+  <div class="usr-container">
+
+    <div class="usr-filtros">
+      <div class="grp">
+        <label>Buscar (nome ou email)</label>
+        <input type="text" id="filtro-texto" placeholder="ex: edenias ou comap.norte" oninput="renderTabela()">
+      </div>
+      <div class="grp">
+        <label>Região</label>
+        <select id="filtro-regiao" onchange="renderTabela()">
+          <option value="">TODAS</option>
+        </select>
+      </div>
+      <div class="grp">
+        <label>Status</label>
+        <select id="filtro-status" onchange="renderTabela()">
+          <option value="">TODOS</option>
+          <option value="ATIVO">Apenas ATIVOS</option>
+          <option value="INATIVO">Apenas INATIVOS</option>
+        </select>
+      </div>
+      <div class="total" id="cont-total">0 usuário(s)</div>
+    </div>
+
+    <div class="usr-tabela-wrap">
+      <table class="usr-tabela">
+        <thead>
+          <tr>
+            <th style="width:30%;">Nome</th>
+            <th style="width:30%;">Email</th>
+            <th style="width:14%;">Região</th>
+            <th style="width:10%;">Status</th>
+            <th style="width:16%; text-align:right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-usuarios">
+          <tr><td colspan="5" class="usr-empty">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Criar / Editar usuário -->
+<div class="modal-bg" id="modal-edit">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h2 id="modal-edit-titulo">Novo Usuário</h2>
+      <button class="modal-close" onclick="fecharModal('modal-edit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-erro" id="modal-edit-erro"></div>
+
+      <input type="hidden" id="me-email-original">
+
+      <div class="form-grp">
+        <label>Nome completo *</label>
+        <input type="text" id="me-nome" placeholder="ex: João da Silva" oninput="this.value=this.value.toUpperCase()">
+      </div>
+
+      <div class="form-grp">
+        <label>E-mail *</label>
+        <input type="email" id="me-email" placeholder="ex: joao.silva@tjmg.jus.br">
+        <div class="hint" id="me-email-hint"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-grp">
+          <label>Região *</label>
+          <select id="me-regiao">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="form-grp">
+          <label>Status *</label>
+          <select id="me-status">
+            <option value="ATIVO">ATIVO</option>
+            <option value="INATIVO">INATIVO</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grp">
+        <label id="me-senha-label">Senha *</label>
+        <input type="text" id="me-senha" placeholder="mínimo 4 caracteres">
+        <div class="hint" id="me-senha-hint">Mínimo 4 caracteres.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="fecharModal('modal-edit')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar" onclick="salvarUsuario()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Alterar Senha -->
+<div class="modal-bg" id="modal-senha">
+  <div class="modal-card" style="max-width:420px;">
+    <div class="modal-head">
+      <h2>Alterar Senha</h2>
+      <button class="modal-close" onclick="fecharModal('modal-senha')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-erro" id="modal-senha-erro"></div>
+      <div class="form-grp">
+        <label>Usuário</label>
+        <input type="text" id="ms-email" disabled>
+      </div>
+      <div class="form-grp">
+        <label>Nova senha *</label>
+        <input type="text" id="ms-senha" placeholder="mínimo 4 caracteres">
+      </div>
+      <div class="form-grp">
+        <label>Confirmar nova senha *</label>
+        <input type="text" id="ms-senha2" placeholder="repita a nova senha">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="fecharModal('modal-senha')">Cancelar</button>
+      <button class="btn btn-primary" id="btn-salvar-senha" onclick="salvarSenha()">Salvar senha</button>
+    </div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading"><div class="sp-grande"></div></div>
+<div class="toast" id="toast"></div>
+
+
+<script>
+'use strict';
+
+/* ════════════════════════════════════════════════════════════════
+   GESTÃO DE USUÁRIOS — escopo global simples (sem IIFE)
+   Todas as funções são acessíveis pelos onclick inline do HTML.
+═══════════════════════════════════════════════════════════════ */
+
+var _usuarios = [];
+
+/* ─── Helpers ─── */
+function $id(id) { return document.getElementById(id); }
+function sessao() { return window.__COMAP_SESSAO__ || {}; }
+function ehMaster() { return !!sessao().global; }
+function meuEmail() { return String(sessao().email || '').toLowerCase(); }
+
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+function escAttr(s) {
+  return String(s == null ? '' : s).replace(/'/g, "\\'");
+}
+
+function setLoading(on) {
+  $id('loading').classList.toggle('aberto', on);
+}
+
+function toast(msg, tipo) {
+  var t = $id('toast');
+  t.textContent = msg;
+  t.className = 'toast aberto ' + (tipo || '');
+  setTimeout(function(){ t.classList.remove('aberto'); }, 3800);
+}
+
+function fecharModal(id) {
+  $id(id).classList.remove('open');
+}
+
+/* ─── Carregar listas de regiões ─── */
+function carregarRegioes() {
+  var regioes = ['NORTE','CENTRAL','LESTE','SUL','SUDOESTE','TRIANGULO','ZONA_DA_MATA','MASTER'];
+  var selF = $id('filtro-regiao');
+  var selM = $id('me-regiao');
+  regioes.forEach(function(r) {
+    var o1 = document.createElement('option'); o1.value = r; o1.textContent = r;
+    selF.appendChild(o1);
+    var o2 = document.createElement('option'); o2.value = r; o2.textContent = r;
+    selM.appendChild(o2);
+  });
+}
+
+/* ─── Carregar lista do servidor ─── */
+function carregar() {
+  setLoading(true);
+  $id('tbody-usuarios').innerHTML = '<tr><td colspan="5" class="usr-empty">Carregando...</td></tr>';
+
+  google.script.run
+    .withSuccessHandler(function(r) {
+      setLoading(false);
+      if (!r || !r.ok) {
+        $id('tbody-usuarios').innerHTML = '<tr><td colspan="5" class="usr-empty">Erro: ' + escHtml(r && r.erro || 'desconhecido') + '</td></tr>';
+        return;
+      }
+      _usuarios = r.usuarios || [];
+      $id('hdr-sub').textContent = _usuarios.length + ' usuário(s) cadastrado(s) — visão MASTER';
+      renderTabela();
+    })
+    .withFailureHandler(function(e) {
+      setLoading(false);
+      $id('tbody-usuarios').innerHTML = '<tr><td colspan="5" class="usr-empty">Falha de conexão: ' + escHtml(e.message) + '</td></tr>';
+    })
+    .usr_listar(sessao());
+}
+
+/* ─── Renderizar tabela com filtros ─── */
+function renderTabela() {
+  var txt = ($id('filtro-texto').value || '').trim().toLowerCase();
+  var reg = $id('filtro-regiao').value;
+  var st  = $id('filtro-status').value;
+
+  var filtrados = _usuarios.filter(function(u) {
+    if (txt && !((u.nome || '').toLowerCase().indexOf(txt) >= 0
+                 || (u.email || '').toLowerCase().indexOf(txt) >= 0)) return false;
+    if (reg && u.regiao !== reg) return false;
+    if (st && u.status !== st) return false;
+    return true;
+  });
+
+  $id('cont-total').textContent = filtrados.length + ' usuário(s)';
+
+  var tbody = $id('tbody-usuarios');
+  if (!filtrados.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="usr-empty">Nenhum usuário corresponde aos filtros.</td></tr>';
+    return;
+  }
+  var html = '';
+  filtrados.forEach(function(u) {
+    var cls = (u.eProprio ? 'proprio' : '') + (u.status === 'INATIVO' ? ' inativo' : '');
+    var badgeReg = u.eMaster
+      ? '<span class="badge badge-master">👑 MASTER</span>'
+      : '<span class="badge badge-regional">📍 ' + escHtml(u.regiao) + '</span>';
+    var badgeSt = u.status === 'ATIVO'
+      ? '<span class="badge badge-ativo">✓ ATIVO</span>'
+      : '<span class="badge badge-inativo">✕ INATIVO</span>';
+    var badgeEu = u.eProprio ? '<span class="badge badge-proprio">VOCÊ</span>' : '';
+
+    var podeInativar = !u.eProprio && u.status === 'ATIVO';
+    var podeReativar = u.status === 'INATIVO';
+    var podeExcluir  = !u.eProprio;
+    var emailEsc = escAttr(u.email);
+
+    var acoes =
+      '<button class="btn-acao editar" onclick="abrirEditar(\'' + emailEsc + '\')" title="Editar dados">✎</button>' +
+      '<button class="btn-acao senha"  onclick="abrirSenha(\''  + emailEsc + '\')" title="Alterar senha">🔑</button>' +
+      (podeReativar
+        ? '<button class="btn-acao toggle-ativo" onclick="reativar(\'' + emailEsc + '\')" title="Reativar usuário">✓</button>'
+        : (podeInativar
+          ? '<button class="btn-acao toggle-inativo" onclick="inativar(\'' + emailEsc + '\')" title="Inativar usuário">⊘</button>'
+          : '<button class="btn-acao toggle-inativo" disabled title="Você não pode inativar a si mesmo">⊘</button>')) +
+      (podeExcluir
+        ? '<button class="btn-acao excluir" onclick="excluir(\'' + emailEsc + '\')" title="Excluir permanentemente">🗑</button>'
+        : '<button class="btn-acao excluir" disabled title="Você não pode excluir a si mesmo">🗑</button>');
+
+    html += '<tr class="' + cls + '">' +
+              '<td class="nome">' + escHtml(u.nome) + badgeEu + '</td>' +
+              '<td class="email">' + escHtml(u.email) + '</td>' +
+              '<td>' + badgeReg + '</td>' +
+              '<td>' + badgeSt + '</td>' +
+              '<td><div class="usr-acoes">' + acoes + '</div></td>' +
+            '</tr>';
+  });
+  tbody.innerHTML = html;
+}
+
+/* ─── Modal Criar ─── */
+function abrirModalCriar() {
+  $id('modal-edit-titulo').textContent = 'Novo Usuário';
+  $id('me-email-original').value = '';
+  $id('me-nome').value = '';
+  $id('me-email').value = '';
+  $id('me-email').disabled = false;
+  $id('me-email-hint').textContent = 'O email será o login do usuário.';
+  $id('me-regiao').value = '';
+  $id('me-status').value = 'ATIVO';
+  $id('me-senha').value = '';
+  $id('me-senha-label').textContent = 'Senha *';
+  $id('me-senha-hint').textContent = 'Mínimo 4 caracteres.';
+  $id('modal-edit-erro').classList.remove('aberto');
+  $id('modal-edit').classList.add('open');
+  setTimeout(function(){ $id('me-nome').focus(); }, 100);
+}
+
+/* ─── Modal Editar ─── */
+function abrirEditar(email) {
+  var u = _usuarios.find(function(x){ return x.email === email; });
+  if (!u) { toast('Usuário não encontrado.', 'erro'); return; }
+
+  $id('modal-edit-titulo').textContent = 'Editar Usuário' + (u.eProprio ? ' (você)' : '');
+  $id('me-email-original').value = u.email;
+  $id('me-nome').value = u.nome;
+  $id('me-email').value = u.email;
+  $id('me-email').disabled = !!u.eProprio;
+  $id('me-email-hint').textContent = u.eProprio
+    ? 'Você não pode mudar seu próprio email. Para alterá-lo, peça a outro MASTER.'
+    : 'Atenção: alterar o email muda o login deste usuário.';
+  $id('me-regiao').value = u.regiao;
+  $id('me-status').value = u.status;
+  $id('me-senha').value = '';
+  $id('me-senha-label').textContent = 'Nova senha (opcional)';
+  $id('me-senha-hint').textContent = 'Deixe vazio para manter a senha atual. Para mudar só a senha, use o botão 🔑.';
+  $id('modal-edit-erro').classList.remove('aberto');
+  $id('modal-edit').classList.add('open');
+  setTimeout(function(){ $id('me-nome').focus(); }, 100);
+}
+
+/* ─── Salvar (criar ou atualizar) ─── */
+function salvarUsuario() {
+  var emailOriginal = $id('me-email-original').value;
+  var dados = {
+    nome:   $id('me-nome').value.trim(),
+    email:  $id('me-email').value.trim().toLowerCase(),
+    senha:  $id('me-senha').value,
+    regiao: $id('me-regiao').value,
+    status: $id('me-status').value
+  };
+  var erroEl = $id('modal-edit-erro');
+  erroEl.classList.remove('aberto');
+
+  if (!dados.nome || !dados.email || !dados.regiao) {
+    erroEl.textContent = 'Preencha nome, email e região.';
+    erroEl.classList.add('aberto');
+    return;
+  }
+  if (!emailOriginal && !dados.senha) {
+    erroEl.textContent = 'Senha é obrigatória para novos cadastros.';
+    erroEl.classList.add('aberto');
+    return;
+  }
+
+  var btn = $id('btn-salvar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando...';
+
+  var handlerOK = function(r) {
+    btn.disabled = false;
+    btn.innerHTML = 'Salvar';
+    if (!r || !r.ok) {
+      erroEl.textContent = (r && r.erro) || 'Erro desconhecido.';
+      erroEl.classList.add('aberto');
+      return;
+    }
+    fecharModal('modal-edit');
+    toast(r.msg || 'Usuário salvo.', 'sucesso');
+    carregar();
+  };
+  var handlerERR = function(e) {
+    btn.disabled = false;
+    btn.innerHTML = 'Salvar';
+    erroEl.textContent = 'Falha: ' + e.message;
+    erroEl.classList.add('aberto');
+  };
+
+  if (emailOriginal) {
+    google.script.run
+      .withSuccessHandler(handlerOK)
+      .withFailureHandler(handlerERR)
+      .usr_atualizar(emailOriginal, dados, sessao());
+  } else {
+    google.script.run
+      .withSuccessHandler(handlerOK)
+      .withFailureHandler(handlerERR)
+      .usr_criar(dados, sessao());
+  }
+}
+
+/* ─── Modal Senha ─── */
+function abrirSenha(email) {
+  $id('ms-email').value = email;
+  $id('ms-senha').value = '';
+  $id('ms-senha2').value = '';
+  $id('modal-senha-erro').classList.remove('aberto');
+  $id('modal-senha').classList.add('open');
+  setTimeout(function(){ $id('ms-senha').focus(); }, 100);
+}
+
+function salvarSenha() {
+  var email = $id('ms-email').value;
+  var s1 = $id('ms-senha').value;
+  var s2 = $id('ms-senha2').value;
+  var erroEl = $id('modal-senha-erro');
+  erroEl.classList.remove('aberto');
+
+  if (!s1 || s1.length < 4) {
+    erroEl.textContent = 'Senha deve ter pelo menos 4 caracteres.';
+    erroEl.classList.add('aberto'); return;
+  }
+  if (s1 !== s2) {
+    erroEl.textContent = 'As senhas não coincidem.';
+    erroEl.classList.add('aberto'); return;
+  }
+
+  var btn = $id('btn-salvar-senha');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Salvando...';
+
+  google.script.run
+    .withSuccessHandler(function(r) {
+      btn.disabled = false;
+      btn.innerHTML = 'Salvar senha';
+      if (!r || !r.ok) {
+        erroEl.textContent = (r && r.erro) || 'Erro.';
+        erroEl.classList.add('aberto');
+        return;
+      }
+      fecharModal('modal-senha');
+      toast(r.msg || 'Senha alterada.', 'sucesso');
+    })
+    .withFailureHandler(function(e) {
+      btn.disabled = false;
+      btn.innerHTML = 'Salvar senha';
+      erroEl.textContent = 'Falha: ' + e.message;
+      erroEl.classList.add('aberto');
+    })
+    .usr_alterarSenha(email, s1, sessao());
+}
+
+/* ─── Inativar / Reativar / Excluir ─── */
+function inativar(email) {
+  if (!confirm('Inativar o usuário "' + email + '"?\n\nEle não conseguirá mais fazer login. Pode ser reativado depois.')) return;
+  setLoading(true);
+  google.script.run
+    .withSuccessHandler(function(r) {
+      setLoading(false);
+      if (!r || !r.ok) { toast((r && r.erro) || 'Erro.', 'erro'); return; }
+      toast(r.msg || 'Inativado.', 'aviso');
+      carregar();
+    })
+    .withFailureHandler(function(e) {
+      setLoading(false);
+      toast('Falha: ' + e.message, 'erro');
+    })
+    .usr_inativar(email, sessao());
+}
+
+function reativar(email) {
+  setLoading(true);
+  google.script.run
+    .withSuccessHandler(function(r) {
+      setLoading(false);
+      if (!r || !r.ok) { toast((r && r.erro) || 'Erro.', 'erro'); return; }
+      toast(r.msg || 'Reativado.', 'sucesso');
+      carregar();
+    })
+    .withFailureHandler(function(e) {
+      setLoading(false);
+      toast('Falha: ' + e.message, 'erro');
+    })
+    .usr_reativar(email, sessao());
+}
+
+function excluir(email) {
+  if (!confirm('⚠ EXCLUIR PERMANENTEMENTE o usuário "' + email + '"?\n\nEsta ação não pode ser desfeita.\nO histórico de logs continua, mas o cadastro será apagado.\n\nTem certeza?')) return;
+  if (!confirm('Confirma DEFINITIVAMENTE a exclusão de "' + email + '"?')) return;
+  setLoading(true);
+  google.script.run
+    .withSuccessHandler(function(r) {
+      setLoading(false);
+      if (!r || !r.ok) { toast((r && r.erro) || 'Erro.', 'erro'); return; }
+      toast(r.msg || 'Excluído.', 'sucesso');
+      carregar();
+    })
+    .withFailureHandler(function(e) {
+      setLoading(false);
+      toast('Falha: ' + e.message, 'erro');
+    })
+    .usr_excluir(email, sessao());
+}
+
+/* ─── INIT ─── */
+window.addEventListener('DOMContentLoaded', function() {
+  if (!ehMaster()) {
+    $id('acesso-negado-wrap').style.display = 'block';
+    $id('app-wrap').style.display = 'none';
+    return;
+  }
+  $id('acesso-negado-wrap').style.display = 'none';
+  $id('app-wrap').style.display = 'block';
+
+  carregarRegioes();
+  carregar();
+});
+</script>
+
+</body>
+</html>

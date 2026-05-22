@@ -1,0 +1,3940 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+<script>
+/* COMAP UNIFICADO — bootstrap de sessão v2 (servidor injetou via window.__COMAP_SESSAO__) */
+(function(){
+  try {
+    var s = window.__COMAP_SESSAO__ || {};
+    // Se servidor não injetou (acesso direto sem login), redireciona para shell
+    if (!s.email) {
+      // Tenta query string como fallback
+      var p = new URLSearchParams(window.location.search);
+      if (p.get('email')) {
+        s = {
+          nome: p.get('n') || '',
+          email: p.get('email') || '',
+          regiao: (p.get('r') || '').toUpperCase(),
+          global: p.get('g') === '1'
+        };
+      } else {
+        // Sem sessão de jeito nenhum — manda pro shell sem o ?modulo
+        window.location.href = window.location.pathname;
+        return;
+      }
+    }
+    // Garante que esteja no formato esperado pelos sistemas originais
+    var compat = {
+      nome: s.nome || '',
+      regiao: (s.regiao || '').toUpperCase(),
+      login: s.email || '',
+      email: s.email || '',
+      global: !!s.global,
+      timestamp: Date.now()
+    };
+    if (compat.global && compat.regiao !== 'MASTER') compat.regiao = 'MASTER';
+    try {
+      localStorage.setItem('comap_session', JSON.stringify(compat));
+      localStorage.setItem('comap_unificado', JSON.stringify(s));
+    } catch(e) {}
+    window.__COMAP_SESSAO__ = s;
+  } catch(e) { console.error('Bootstrap COMAP:', e); }
+})();
+</script>
+
+
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ===================================================
+       DESIGN TOKENS TJMG
+    =================================================== */
+    :root {
+      --blue:        #003366;
+      --blue-mid:    #004080;
+      --blue-light:  #0a4f8a;
+      --blue-pale:   #e8f0fb;
+      --gold:        #c5a059;
+      --gold-light:  #d4b06a;
+      --gold-pale:   #fdf6e8;
+      --success:     #1b7a3e;
+      --success-bg:  #e8f5ee;
+      --warning:     #b45309;
+      --warning-bg:  #fef3c7;
+      --danger:      #b91c1c;
+      --danger-bg:   #fee2e2;
+      --purple:      #5b21b6;
+      --purple-bg:   #ede9fe;
+      --gray-50:     #f8fafc;
+      --gray-100:    #f1f5f9;
+      --gray-200:    #e2e8f0;
+      --gray-300:    #cbd5e1;
+      --gray-400:    #94a3b8;
+      --gray-500:    #64748b;
+      --gray-600:    #475569;
+      --gray-700:    #334155;
+      --gray-900:    #0f172a;
+      --white:       #ffffff;
+      --radius-sm:   6px;
+      --radius:      10px;
+      --radius-lg:   14px;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.04);
+      --shadow:      0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+      --shadow-lg:   0 10px 28px rgba(0,0,0,.10);
+
+      /* Escala tipográfica fluida */
+      --text-xs:   clamp(10px, 1.1vw, 13px);
+      --text-sm:   clamp(11px, 1.3vw, 14px);
+      --text-base: clamp(13px, 1.5vw, 16px);
+      --text-lg:   clamp(15px, 1.8vw, 20px);
+      --text-xl:   clamp(18px, 2.5vw, 28px);
+
+      /* Espaçamentos fluidos */
+      --sp-xs:  clamp(4px,  0.5vw, 8px);
+      --sp-sm:  clamp(8px,  1vw,   14px);
+      --sp-md:  clamp(12px, 1.5vw, 22px);
+      --sp-lg:  clamp(16px, 2vw,   32px);
+      --sp-xl:  clamp(22px, 2.8vw, 48px);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-900);
+      font-size: var(--text-base);
+      line-height: 1.55;
+      -webkit-text-size-adjust: 100%;
+      min-width: 280px;
+    }
+
+    img { max-width: 100%; display: block; }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--gray-100); }
+    ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 99px; }
+
+    /* ===================================================
+       LOGIN
+    =================================================== */
+    #login_screen {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--blue);
+      background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(197,160,89,.2) 0%, transparent 60%);
+      padding: var(--sp-md);
+    }
+
+    .login-outer { width: 100%; max-width: 400px; }
+
+    .login-badge {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      margin-bottom: 28px;
+    }
+    .login-badge-icon {
+      width: clamp(36px,5vw,48px); height: clamp(36px,5vw,48px);
+      background: var(--gold); border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(16px,2.5vw,22px); font-weight: 800; color: var(--blue); flex-shrink: 0;
+    }
+    .login-badge-text { color: white; }
+    .login-badge-text strong { display: block; font-size: clamp(16px,2vw,20px); font-weight: 800; }
+    .login-badge-text span   { font-size: clamp(10px,1.2vw,12px); opacity: .6; letter-spacing: .04em; text-transform: uppercase; }
+
+    .login-card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius-lg);
+      padding: clamp(20px,4vw,36px) clamp(16px,3.5vw,32px);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+    }
+    .login-card h2 { font-size: clamp(15px,2vw,18px); font-weight: 700; color: white; margin-bottom: 4px; }
+    .login-card p  { font-size: clamp(11px,1.2vw,13px); color: rgba(255,255,255,.45); margin-bottom: 20px; }
+    .login-field   { margin-bottom: 14px; }
+    .login-field label {
+      display: block; font-size: clamp(10px,1.1vw,11px); font-weight: 600;
+      color: rgba(255,255,255,.55); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 7px;
+    }
+    .login-field input {
+      width: 100%; background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.14); border-radius: var(--radius);
+      padding: clamp(9px,1.2vw,12px) 14px; color: white;
+      font-family: 'Inter', sans-serif; font-size: clamp(13px,1.5vw,15px);
+      outline: none; transition: border-color .2s, background .2s;
+    }
+    .login-field input::placeholder { color: rgba(255,255,255,.25); }
+    .login-field input:focus { border-color: var(--gold); background: rgba(255,255,255,.12); }
+
+    .btn-login {
+      width: 100%; margin-top: 6px;
+      background: var(--gold); border: none;
+      border-radius: var(--radius); padding: clamp(11px,1.4vw,14px);
+      color: var(--blue); font-family: 'Inter', sans-serif;
+      font-weight: 700; font-size: clamp(12px,1.3vw,14px);
+      letter-spacing: .05em; text-transform: uppercase;
+      cursor: pointer; transition: all .2s;
+      box-shadow: 0 4px 14px rgba(197,160,89,.4);
+    }
+    .btn-login:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-login:disabled { opacity: .6; cursor: not-allowed; }
+    #login_msg { font-size: clamp(11px,1.2vw,13px); color: #fca5a5; margin-top: 12px; text-align: center; min-height: 18px; }
+
+    /* ===================================================
+       TOP BAR
+    =================================================== */
+    .top-bar {
+      position: sticky; top: 0; z-index: 200;
+      background: var(--blue);
+      border-bottom: 3px solid var(--gold);
+      padding: 0 clamp(12px,2vw,28px);
+      display: flex; justify-content: space-between; align-items: center;
+      min-height: clamp(52px,6vw,66px);
+      box-shadow: 0 2px 16px rgba(0,0,0,.25);
+      flex-wrap: wrap; gap: 8px;
+    }
+    .top-bar-brand { display: flex; align-items: center; gap: clamp(8px,1vw,14px); }
+    .top-bar-icon {
+      width: clamp(28px,3vw,36px); height: clamp(28px,3vw,36px);
+      background: var(--gold); border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(12px,1.5vw,16px); font-weight: 800; color: var(--blue); flex-shrink: 0;
+    }
+    .top-bar-title { font-size: clamp(13px,1.6vw,17px); font-weight: 800; color: white; }
+    .top-bar-sub   { font-size: clamp(10px,1.1vw,12px); color: rgba(255,255,255,.55); margin-top: 1px; }
+    .top-bar-right { display: flex; align-items: center; gap: clamp(6px,0.8vw,12px); flex-wrap: wrap; }
+
+    .top-bar-clock {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+      border-radius: var(--radius-sm); padding: 5px clamp(8px,1vw,14px);
+      font-size: clamp(11px,1.2vw,13px); font-weight: 600; color: rgba(255,255,255,.8);
+      font-variant-numeric: tabular-nums;
+    }
+    .btn-topbar {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+      color: white; padding: clamp(6px,0.8vw,9px) clamp(10px,1.2vw,16px);
+      border-radius: var(--radius-sm); cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: clamp(11px,1.2vw,13px); font-weight: 600;
+      transition: all .2s; white-space: nowrap;
+    }
+    .btn-topbar:hover { background: rgba(255,255,255,.18); }
+    .btn-topbar-gold { background: var(--gold); border-color: var(--gold); color: var(--blue); font-weight: 700; }
+    .btn-topbar-gold:hover { background: var(--gold-light); }
+
+    /* Ocultar rótulo em telas muito pequenas */
+    @media (max-width: 480px) {
+      .top-bar-sub     { display: none; }
+      #data_atual      { display: none; }
+    }
+
+    /* ===================================================
+       NAV TABS
+    =================================================== */
+    .nav-tabs-bar {
+      background: var(--blue-mid);
+      border-bottom: 1px solid rgba(255,255,255,.1);
+      padding: 0 clamp(12px,2vw,28px);
+      display: flex; gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-tabs-bar::-webkit-scrollbar { display: none; }
+
+    .nav-tab {
+      padding: clamp(10px,1.3vw,15px) clamp(14px,1.8vw,22px);
+      font-size: clamp(10px,1.1vw,12px); font-weight: 600;
+      color: rgba(255,255,255,.55);
+      cursor: pointer; border-bottom: 3px solid transparent;
+      transition: all .2s; white-space: nowrap;
+      letter-spacing: .03em; text-transform: uppercase;
+      user-select: none;
+    }
+    .nav-tab:hover { color: rgba(255,255,255,.85); background: rgba(255,255,255,.05); }
+    .nav-tab.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 700; }
+
+    /* ===================================================
+       CONTAINER
+    =================================================== */
+    .container { padding: clamp(10px,1.5vw,22px) clamp(10px,1.8vw,26px); max-width: 1800px; margin: auto; }
+
+    /* ===================================================
+       LOADER
+    =================================================== */
+    #loader {
+      text-align: center; padding: 80px 20px;
+      display: flex; flex-direction: column; align-items: center; gap: 16px;
+    }
+    .spinner {
+      width: clamp(32px,4vw,44px); height: clamp(32px,4vw,44px);
+      border-radius: 50%;
+      border: 3px solid var(--gray-200); border-top-color: var(--blue);
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loader p { color: var(--gray-500); font-size: clamp(12px,1.3vw,14px); font-weight: 500; }
+
+    /* ===================================================
+       PAGES
+    =================================================== */
+    .page { display: none; }
+    .page.active-page { display: block; }
+
+    /* ===================================================
+       KPI CARDS
+    =================================================== */
+    .kpi-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(clamp(120px,14vw,200px), 1fr));
+      gap: clamp(8px,1vw,14px);
+      margin-bottom: clamp(14px,1.8vw,22px);
+    }
+
+    .kpi-card {
+      background: white; padding: clamp(12px,1.5vw,20px) clamp(14px,1.8vw,22px);
+      border-radius: var(--radius-lg);
+      border-top: 4px solid var(--blue);
+      box-shadow: var(--shadow-sm);
+      transition: transform .2s, box-shadow .2s;
+      position: relative; overflow: hidden;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .kpi-card h3 {
+      font-size: clamp(9px,1vw,11px); font-weight: 700; color: var(--gray-400);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px;
+    }
+    .kpi-card .value {
+      font-size: clamp(22px,3vw,34px); font-weight: 800; color: var(--blue); line-height: 1;
+    }
+    .kpi-card .kpi-sub { font-size: clamp(10px,1.1vw,12px); color: var(--gray-400); margin-top: 4px; }
+    .kpi-danger  .value { color: var(--danger); animation: pulse-num 2s ease infinite; }
+    .kpi-danger  { border-top-color: var(--danger); }
+    .kpi-success .value { color: var(--success); }
+    .kpi-success { border-top-color: var(--success); }
+    .kpi-warning .value { color: var(--warning); }
+    .kpi-warning { border-top-color: #d97706; }
+    @keyframes pulse-num { 0%,100%{opacity:1} 50%{opacity:.65} }
+
+    /* ===================================================
+       CARD GENÉRICO
+    =================================================== */
+    .card {
+      background: white;
+      padding: clamp(14px,2vw,26px);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--gray-200);
+      margin-bottom: clamp(12px,1.5vw,20px);
+    }
+    .card-title {
+      font-size: clamp(10px,1.1vw,12px); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: clamp(12px,1.5vw,18px);
+      padding-bottom: clamp(8px,1vw,14px);
+      border-bottom: 2px solid var(--gray-100);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold); flex-shrink: 0; }
+
+    /* ===================================================
+       FORM
+    =================================================== */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1.8fr 1.2fr;
+      gap: clamp(12px,1.8vw,22px);
+    }
+    @media (max-width: 960px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .form-group { margin-bottom: clamp(10px,1.2vw,16px); }
+    .form-group label {
+      display: block; font-size: clamp(9px,1vw,11px); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%; padding: clamp(8px,1vw,11px) clamp(10px,1.2vw,14px);
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-size: clamp(12px,1.3vw,14px); color: var(--gray-700);
+      outline: none; background: white; transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus { border-color: var(--blue); }
+    .form-group input:disabled, .form-group select:disabled {
+      background: var(--gray-100); cursor: not-allowed; color: var(--gray-400); border-style: dashed;
+    }
+
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(8px,1vw,14px); }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(8px,1vw,14px); }
+    @media (max-width: 560px) {
+      .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    }
+
+    .block-cronograma {
+      background: var(--gold-pale); border: 1px solid #fde68a;
+      border-radius: var(--radius-sm); padding: clamp(10px,1.2vw,16px);
+      margin-bottom: clamp(10px,1.2vw,16px);
+    }
+    .block-cronograma label { color: var(--warning) !important; }
+
+    /* ===================================================
+       INNER TABS
+    =================================================== */
+    .inner-tabs { display: flex; gap: 0; margin-bottom: 0; overflow-x: auto; }
+    .inner-tab {
+      padding: clamp(8px,1vw,12px) clamp(14px,1.8vw,22px);
+      cursor: pointer; border: none;
+      font-family: 'Inter', sans-serif; font-weight: 700;
+      font-size: clamp(10px,1.1vw,12px);
+      text-transform: uppercase; letter-spacing: .05em; transition: all .2s;
+      border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+      white-space: nowrap;
+    }
+    .inner-tab-inactive { background: var(--gray-200); color: var(--gray-500); }
+    .inner-tab-active   { background: var(--blue); color: white; }
+
+    /* ===================================================
+       BTN PRIMARY
+    =================================================== */
+    .btn-primary {
+      width: 100%; padding: clamp(11px,1.4vw,15px); border: none;
+      border-radius: var(--radius-sm); background: var(--blue); color: white;
+      font-family: 'Inter', sans-serif; font-weight: 700;
+      font-size: clamp(12px,1.3vw,14px);
+      letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .2s;
+      margin-top: 6px;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--blue-light); transform: translateY(-1px); }
+    .btn-primary:disabled { background: var(--gray-300); cursor: not-allowed; }
+    .btn-primary-gold { background: var(--gold); color: var(--blue); }
+    .btn-primary-gold:hover:not(:disabled) { background: var(--gold-light); }
+
+    /* ===================================================
+       FILTER BAR
+    =================================================== */
+    .filter-bar {
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm); padding: clamp(10px,1.2vw,16px);
+      margin-bottom: clamp(12px,1.5vw,18px);
+    }
+
+    /* ===================================================
+       LISTA ITENS
+    =================================================== */
+    .list-container { max-height: clamp(300px,55vh,560px); overflow-y: auto; padding-right: 4px; }
+
+    .item-card {
+      background: white; border: 1px solid var(--gray-200);
+      border-left: 4px solid var(--blue);
+      padding: clamp(10px,1.2vw,16px); margin-bottom: 10px;
+      border-radius: var(--radius-sm); cursor: pointer; transition: all .2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .item-card:hover { border-left-color: var(--gold); box-shadow: var(--shadow); transform: translateX(2px); }
+    .item-card-header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 6px; gap: 8px; flex-wrap: wrap;
+    }
+    .item-card-title   { font-weight: 700; font-size: clamp(12px,1.3vw,14px); color: var(--blue); }
+    .item-card-meta    { font-size: clamp(10px,1.1vw,12px); color: var(--gray-500); line-height: 1.5; }
+    .item-card-service { font-size: clamp(10px,1.1vw,12px); font-weight: 600; color: var(--blue); margin-top: 4px; }
+
+    /* ===================================================
+       BADGES
+    =================================================== */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: clamp(2px,0.3vw,4px) clamp(7px,0.9vw,11px);
+      border-radius: 20px;
+      font-size: clamp(9px,1vw,11px); font-weight: 700; text-transform: uppercase;
+      letter-spacing: .04em; white-space: nowrap;
+    }
+    .badge::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .badge-agendado  { background: #dbeafe; color: #1d4ed8; }
+    .badge-andamento { background: var(--gold-pale); color: var(--warning); }
+    .badge-concluido { background: var(--success-bg); color: var(--success); }
+    .badge-atraso    { background: var(--danger-bg); color: var(--danger); animation: pulse-badge 1.4s ease infinite; }
+    @keyframes pulse-badge { 0%,100%{box-shadow:0 0 0 0 rgba(185,28,28,0)} 50%{box-shadow:0 0 0 4px rgba(185,28,28,.15)} }
+
+    /* ===================================================
+       CHARTS
+    =================================================== */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+      gap: clamp(12px,1.5vw,18px);
+    }
+    .chart-box {
+      background: white; padding: clamp(14px,1.8vw,22px);
+      border-radius: var(--radius-lg);
+      min-height: clamp(260px,30vw,380px);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+    }
+    .chart-box.full-width { grid-column: 1 / -1; }
+
+    /* ===================================================
+       DASHBOARD FILTER BAR
+    =================================================== */
+    .dash-filter-bar {
+      background: white; padding: clamp(12px,1.5vw,18px) clamp(14px,1.8vw,22px);
+      border-radius: var(--radius-lg); margin-bottom: clamp(14px,1.8vw,22px);
+      box-shadow: var(--shadow-sm); border: 1px solid var(--gray-200);
+      display: flex; gap: clamp(8px,1vw,14px); flex-wrap: wrap; align-items: flex-end;
+    }
+    .dash-filter-item { display: flex; flex-direction: column; gap: 5px; }
+    .dash-filter-item label {
+      font-size: clamp(9px,1vw,11px); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .07em;
+    }
+    .dash-filter-item select,
+    .dash-filter-item input[type="date"] {
+      padding: clamp(7px,0.9vw,10px) clamp(10px,1.2vw,14px);
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-size: clamp(12px,1.3vw,14px);
+      color: var(--gray-700); outline: none; background: white;
+      transition: border-color .2s; min-width: clamp(130px,14vw,180px);
+    }
+    .dash-filter-item select:focus,
+    .dash-filter-item input[type="date"]:focus { border-color: var(--blue); }
+
+    /* ===================================================
+       GAUGE PULSING
+    =================================================== */
+    @keyframes pulse-red {
+      0% { filter: drop-shadow(0 0 0 rgba(139,0,0,0)); }
+      50% { filter: drop-shadow(0 0 15px rgba(139,0,0,.6)); }
+      100% { filter: drop-shadow(0 0 0 rgba(139,0,0,0)); }
+    }
+    .pulsing { animation: pulse-red 1.5s infinite ease-in-out; }
+
+    /* ===================================================
+       ★ MODAL DE E-MAIL — REDESENHADO
+    =================================================== */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0, 20, 50, 0.72);
+      backdrop-filter: blur(4px);
+      align-items: flex-start;
+      justify-content: center;
+      padding: clamp(12px,2vw,28px);
+      overflow-y: auto;
+    }
+    .modal-overlay.open { display: flex; animation: fadeIn .2s ease; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .modal-email {
+      background: white; border-radius: var(--radius-lg);
+      width: 100%; max-width: clamp(320px, 94vw, 1100px);
+      box-shadow: 0 24px 80px rgba(0,0,0,.35);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      animation: slideUp .25s ease;
+      margin: auto;
+    }
+    @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Modal Header */
+    .modal-header {
+      background: var(--blue);
+      background-image: linear-gradient(135deg, var(--blue) 60%, var(--blue-light));
+      padding: clamp(14px,1.8vw,24px) clamp(16px,2vw,30px);
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 3px solid var(--gold);
+      flex-shrink: 0; gap: 12px; flex-wrap: wrap;
+    }
+    .modal-header-left { display: flex; align-items: center; gap: clamp(10px,1.2vw,16px); }
+    .modal-header-icon {
+      width: clamp(36px,4vw,44px); height: clamp(36px,4vw,44px); background: var(--gold);
+      border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
+      font-size: clamp(16px,2vw,22px); flex-shrink: 0;
+    }
+    .modal-header-text h2 { font-size: clamp(13px,1.6vw,17px); font-weight: 800; color: white; }
+    .modal-header-text p  { font-size: clamp(10px,1.1vw,12px); color: rgba(255,255,255,.5); margin-top: 2px; }
+    .modal-close {
+      background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+      color: white; width: clamp(30px,3.5vw,38px); height: clamp(30px,3.5vw,38px);
+      border-radius: var(--radius-sm); cursor: pointer; font-size: clamp(15px,1.8vw,19px);
+      display: flex; align-items: center; justify-content: center;
+      transition: all .2s; flex-shrink: 0;
+    }
+    .modal-close:hover { background: rgba(255,255,255,.22); }
+
+    /* Modal Body */
+    .modal-body {
+      display: flex; min-height: 0;
+      flex-direction: row;
+    }
+    @media (max-width: 680px) { .modal-body { flex-direction: column; } }
+
+    /* Painel de Filtros */
+    .modal-filters {
+      width: clamp(240px, 28vw, 320px);
+      flex-shrink: 0;
+      background: var(--gray-50);
+      border-right: 1px solid var(--gray-200);
+      padding: clamp(14px,1.8vw,24px) clamp(14px,1.8vw,22px);
+      display: flex; flex-direction: column; gap: 0;
+      overflow-y: auto;
+    }
+    @media (max-width: 680px) {
+      .modal-filters { width: 100%; border-right: none; border-bottom: 1px solid var(--gray-200); }
+    }
+
+    .modal-filters-title {
+      font-size: clamp(9px,1vw,11px); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .1em;
+      margin-bottom: clamp(12px,1.5vw,18px); padding-bottom: 10px;
+      border-bottom: 2px solid var(--gray-200);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    .mf-group { margin-bottom: clamp(10px,1.2vw,16px); }
+    .mf-group label {
+      display: block; font-size: clamp(9px,1vw,11px); font-weight: 700; color: var(--gray-600);
+      text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px;
+    }
+    .mf-group select,
+    .mf-group input[type="date"],
+    .mf-group input[type="email"],
+    .mf-group input[type="text"] {
+      width: 100%; padding: clamp(8px,1vw,10px) clamp(10px,1.2vw,13px);
+      border: 1.5px solid var(--gray-200); border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-size: clamp(12px,1.3vw,13px); color: var(--gray-700);
+      outline: none; background: white; transition: border-color .2s;
+    }
+    .mf-group select:focus, .mf-group input:focus { border-color: var(--blue); }
+
+    /* ── CHECKBOXES DE ORIGEM ── */
+    .origem-checks {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .check-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: clamp(10px,1.2vw,14px) clamp(12px,1.4vw,16px);
+      border-radius: var(--radius-sm);
+      border: 2px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      transition: all .18s;
+      user-select: none;
+    }
+    .check-item:hover { border-color: var(--gray-300); background: var(--gray-50); }
+
+    /* Caixa visual do checkbox */
+    .check-box {
+      width: clamp(18px,2vw,22px); height: clamp(18px,2vw,22px);
+      border-radius: 5px; border: 2px solid var(--gray-300);
+      background: white; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: all .18s;
+      position: relative;
+    }
+    .check-box svg {
+      width: 12px; height: 12px; opacity: 0; transition: opacity .15s;
+    }
+
+    .check-item input[type="checkbox"] { display: none; }
+
+    /* Periódicas checked */
+    .check-item.per-active {
+      border-color: var(--blue);
+      background: var(--blue-pale);
+    }
+    .check-item.per-active .check-box {
+      border-color: var(--blue); background: var(--blue);
+    }
+    .check-item.per-active .check-box svg { opacity: 1; }
+    .check-item.per-active .check-label { color: var(--blue); }
+
+    /* OSP checked */
+    .check-item.osp-active {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+    }
+    .check-item.osp-active .check-box {
+      border-color: var(--gold); background: var(--gold);
+    }
+    .check-item.osp-active .check-box svg { opacity: 1; }
+    .check-item.osp-active .check-label { color: var(--warning); }
+
+    .check-label-wrap { flex: 1; }
+    .check-label {
+      font-size: clamp(12px,1.3vw,14px); font-weight: 700;
+      color: var(--gray-500); display: block; transition: color .18s;
+    }
+    .check-label-sub {
+      font-size: clamp(10px,1.1vw,11px); color: var(--gray-400);
+      margin-top: 1px; display: block;
+    }
+
+    /* Separador */
+    .mf-separator { border: none; border-top: 1px solid var(--gray-200); margin: clamp(10px,1.2vw,16px) 0; }
+
+    /* Email input */
+    .email-input-wrap { position: relative; }
+    .email-input-wrap input { padding-left: 34px !important; }
+    .email-input-wrap::before {
+      content: '✉'; position: absolute; left: 10px; top: 50%;
+      transform: translateY(-50%); font-size: 14px; color: var(--gray-400); pointer-events: none;
+    }
+
+    /* Botões do modal */
+    .modal-btn-row {
+      display: flex; gap: 8px; margin-top: auto; padding-top: clamp(12px,1.5vw,18px);
+      border-top: 1px solid var(--gray-200);
+    }
+    .modal-btn {
+      flex: 1; padding: clamp(10px,1.2vw,13px); border: none; border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif; font-weight: 700;
+      font-size: clamp(11px,1.2vw,12px);
+      letter-spacing: .04em; text-transform: uppercase; cursor: pointer; transition: all .2s;
+    }
+    .modal-btn-preview {
+      background: var(--blue-pale); color: var(--blue); border: 1.5px solid #b8d0f0;
+    }
+    .modal-btn-preview:hover:not(:disabled) { background: #d1e4f8; }
+    .modal-btn-send { background: var(--gold); color: var(--blue); }
+    .modal-btn-send:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-1px); }
+    .modal-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Preview */
+    .modal-preview {
+      flex: 1; padding: clamp(14px,1.8vw,24px);
+      display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+    }
+
+    .preview-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: clamp(10px,1.2vw,16px); flex-shrink: 0; flex-wrap: wrap; gap: 8px;
+    }
+    .preview-title {
+      font-size: clamp(10px,1.1vw,12px); font-weight: 700; color: var(--blue);
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+    .preview-count {
+      font-size: clamp(10px,1.1vw,12px); font-weight: 700;
+      background: var(--blue-pale); color: var(--blue);
+      padding: 4px 10px; border-radius: 20px;
+    }
+
+    /* KPI badges do preview */
+    .preview-kpis { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; flex-shrink: 0; }
+    .pkpi {
+      display: flex; align-items: center; gap: 6px;
+      padding: clamp(5px,0.6vw,8px) clamp(10px,1.2vw,14px);
+      border-radius: var(--radius-sm);
+      font-size: clamp(10px,1.1vw,12px); font-weight: 700; border: 1.5px solid transparent;
+    }
+    .pkpi-val { font-size: clamp(16px,1.8vw,20px); font-weight: 800; }
+    .pkpi-blue  { background: var(--blue-pale); color: var(--blue); border-color: #b8d0f0; }
+    .pkpi-green { background: var(--success-bg); color: var(--success); border-color: #a7d7bb; }
+    .pkpi-red   { background: var(--danger-bg); color: var(--danger); border-color: #f5b4b4; }
+    .pkpi-gold  { background: var(--gold-pale); color: var(--warning); border-color: #f0d59a; }
+
+    /* Tabela de preview */
+    .preview-table-wrap {
+      overflow: auto; flex: 1;
+      border: 1px solid var(--gray-200); border-radius: var(--radius-sm);
+    }
+    .preview-table {
+      width: 100%; border-collapse: collapse; font-size: clamp(10px,1.1vw,12px); white-space: nowrap;
+    }
+    .preview-table thead th {
+      position: sticky; top: 0; z-index: 2;
+      background: var(--blue); color: white;
+      padding: clamp(7px,0.9vw,11px) clamp(10px,1.2vw,14px); text-align: left;
+      font-size: clamp(9px,1vw,11px); font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+      border-right: 1px solid rgba(255,255,255,.1);
+    }
+    .preview-table tbody tr { transition: background .12s; }
+    .preview-table tbody tr:nth-child(even) { background: var(--gray-50); }
+    .preview-table tbody tr:hover { background: var(--blue-pale); }
+    .preview-table td {
+      padding: clamp(6px,0.8vw,10px) clamp(10px,1.2vw,14px);
+      border-bottom: 1px solid var(--gray-100); color: var(--gray-700);
+      border-right: 1px solid var(--gray-100);
+    }
+    .preview-table td:last-child, .preview-table th:last-child { border-right: none; }
+
+    .tbl-badge {
+      padding: 2px 8px; border-radius: 20px;
+      font-size: clamp(9px,1vw,10px); font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      white-space: nowrap; display: inline-block;
+    }
+    .tbl-badge-per { background: var(--blue-pale); color: var(--blue); }
+    .tbl-badge-osp { background: var(--gold-pale); color: var(--warning); }
+
+    .preview-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: clamp(200px,28vw,300px); color: var(--gray-300); gap: 10px;
+    }
+    .preview-empty-icon { font-size: clamp(30px,4vw,44px); opacity: .4; }
+    .preview-empty p { font-size: clamp(11px,1.2vw,13px); font-weight: 500; color: var(--gray-400); text-align: center; }
+
+    .preview-loading {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: clamp(200px,28vw,300px); gap: 12px;
+    }
+    .preview-loading p { font-size: clamp(11px,1.2vw,13px); color: var(--gray-400); font-weight: 500; }
+
+    /* ===================================================
+       TOAST
+    =================================================== */
+    .toast {
+      position: fixed; bottom: clamp(16px,2vw,28px); right: clamp(16px,2vw,28px); z-index: 9999;
+      padding: clamp(12px,1.5vw,16px) clamp(16px,2vw,22px);
+      border-radius: var(--radius); font-size: clamp(12px,1.3vw,14px); font-weight: 600; color: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      transform: translateY(80px); opacity: 0;
+      transition: all .3s cubic-bezier(.34,1.56,.64,1);
+      max-width: clamp(260px, 80vw, 360px);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast-success { background: var(--success); }
+    .toast-error   { background: var(--danger); }
+
+    /* ===================================================
+       RESPONSIVE EXTRA
+    =================================================== */
+
+    /* Smartphone pequeno (≤ 360px) */
+    @media (max-width: 360px) {
+      .modal-filters { padding: 12px; }
+      .modal-preview { padding: 12px; }
+      .kpi-container { grid-template-columns: repeat(2, 1fr); }
+      .dash-filter-bar { flex-direction: column; }
+      .dash-filter-item select,
+      .dash-filter-item input[type="date"] { min-width: 0; width: 100%; }
+    }
+
+    /* Smartphone (≤ 480px) */
+    @media (max-width: 480px) {
+      .kpi-container { grid-template-columns: repeat(2, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+      .chart-box.full-width { grid-column: auto; }
+      .preview-kpis { flex-wrap: wrap; }
+    }
+
+    /* Tablet portrait (481–768px) */
+    @media (min-width: 481px) and (max-width: 768px) {
+      .kpi-container { grid-template-columns: repeat(3, 1fr); }
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Tablet landscape / Small laptop (769–1024px) */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .kpi-container { grid-template-columns: repeat(3, 1fr); }
+      .charts-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* Desktop padrão (1025–1440px) */
+    @media (min-width: 1025px) and (max-width: 1440px) {
+      .kpi-container { grid-template-columns: repeat(6, 1fr); }
+    }
+
+    /* Monitor grande / TV pequena (1441–1920px) */
+    @media (min-width: 1441px) and (max-width: 1920px) {
+      .kpi-container { grid-template-columns: repeat(6, 1fr); }
+      .kpi-card .value { font-size: 36px; }
+      .preview-table { font-size: 13px; }
+      .preview-table thead th { padding: 12px 18px; font-size: 12px; }
+      .preview-table td { padding: 10px 18px; }
+    }
+
+    /* TV grande / Projetor (> 1920px) */
+    @media (min-width: 1921px) {
+      body { font-size: 18px; }
+      .container { max-width: 2200px; }
+      .kpi-container { grid-template-columns: repeat(6, 1fr); }
+      .kpi-card .value { font-size: 44px; }
+      .kpi-card h3, .kpi-card .kpi-sub { font-size: 14px; }
+      .preview-table { font-size: 15px; }
+      .preview-table thead th { padding: 14px 22px; font-size: 13px; }
+      .preview-table td { padding: 12px 22px; }
+      .badge { font-size: 13px; padding: 4px 14px; }
+      .modal-email { max-width: 1400px; }
+      .modal-filters { width: 380px; }
+    }
+
+    /* Print */
+    @media print {
+      body { background: white; }
+      .top-bar, .nav-tabs-bar { position: static; }
+      .kpi-card { break-inside: avoid; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style id="tjmg-design-system">
+/* ─── TOKENS GLOBAIS ─────────────────────────────────────── */
+:root {
+  --tjmg-blue:        #003366 !important;
+  --tjmg-blue-dark:   #00234d !important;
+  --tjmg-blue-mid:    #004080 !important;
+  --tjmg-blue-light:  #0a4f8a !important;
+  --tjmg-blue-pale:   #e8f0fb !important;
+  --tjmg-gold:        #c5a059 !important;
+  --tjmg-gold-light:  #d4b06a !important;
+  --tjmg-gold-pale:   #fdf6e8 !important;
+  --tjmg-success:     #1b7a3e !important;
+  --tjmg-success-bg:  #e8f5ee !important;
+  --tjmg-warning:     #b45309 !important;
+  --tjmg-warning-bg:  #fef3c7 !important;
+  --tjmg-danger:      #b91c1c !important;
+  --tjmg-danger-bg:   #fee2e2 !important;
+  --tjmg-gray-50:     #f8fafc !important;
+  --tjmg-gray-100:    #f1f5f9 !important;
+  --tjmg-gray-200:    #e2e8f0 !important;
+  --tjmg-gray-300:    #cbd5e1 !important;
+  --tjmg-gray-400:    #94a3b8 !important;
+  --tjmg-gray-500:    #64748b !important;
+  --tjmg-gray-600:    #475569 !important;
+  --tjmg-gray-700:    #334155 !important;
+  --tjmg-gray-900:    #0f172a !important;
+  --tjmg-radius-sm:   6px !important;
+  --tjmg-radius:      10px !important;
+  --tjmg-radius-lg:   14px !important;
+  --tjmg-shadow-sm:   0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04) !important;
+  --tjmg-shadow:      0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04) !important;
+  --tjmg-shadow-lg:   0 10px 28px rgba(0,0,0,.10) !important;
+  --tjmg-topbar-h:    62px !important;
+  --tjmg-font:        'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif !important;
+}
+
+/* ─── RESET TIPOGRÁFICO ──────────────────────────────────── */
+html, body, button, input, select, textarea, table, td, th,
+.top-bar, .navbar-tjmg, .header-pci, .topo,
+.kpi-card, .card-kpi, .card-surface, .card-pci, .card,
+.btn, .btn-topbar, .nav-tab-btn, .nav-link,
+.modal-header, .modal-body, .modal-footer, .modal-content,
+.form-control, .form-select, .form-label,
+h1, h2, h3, h4, h5, h6, p, span, div, label, small, strong, b {
+  font-family: var(--tjmg-font);
+}
+body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; font-size: 14px !important; line-height: 1.55 !important; }
+
+/* Desativa cores de tema escuro (Emergencial) — fallback se sobrar algo */
+html[data-theme="dark"], html[data-theme="dark"] body { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-900) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TOPBAR — altura 62px, azul TJMG + borda dourada
+═══════════════════════════════════════════════════════════ */
+.top-bar, .navbar-tjmg, .header-pci, .topo, header.top-bar, header.header-pci, nav.navbar-tjmg {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-shadow: 0 2px 16px rgba(0,0,0,.18) !important;
+  position: sticky !important;
+  top: 34px !important;
+  z-index: 200 !important;
+  color: #fff !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+.top-bar *, .navbar-tjmg *, .header-pci *, .topo * { color: inherit; }
+.top-bar h2, .navbar-tjmg h2, .header-pci h2, .topo h2,
+.top-bar-title, .brand,
+.header-pci .brand, .navbar-tjmg .brand {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  letter-spacing: .02em !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+.top-bar-sub, .header-pci .sub, .navbar-tjmg .sub, .topo .sub,
+.top-bar small, .header-pci small {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.55) !important;
+  font-weight: 500 !important;
+  letter-spacing: .02em !important;
+  text-transform: none !important;
+  display: block !important;
+  margin-top: 1px !important;
+}
+/* Ícone "C" do topbar */
+.top-bar-icon, .login-badge-icon {
+  width: 34px !important; height: 34px !important;
+  background: var(--tjmg-gold) !important;
+  border-radius: 8px !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  font-size: 15px !important; font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  flex-shrink: 0 !important;
+}
+.top-bar-brand, .header-pci > div:first-child { display: flex !important; align-items: center !important; gap: 14px !important; }
+.top-bar-right, .header-pci > div:last-child { display: flex !important; align-items: center !important; gap: 8px !important; flex-wrap: wrap !important; }
+
+/* Chips do topbar (relógio, data, região) */
+.top-bar-clock, .last-update-chip, .header-badge, #dataRefBadge, #chip_regiao {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 6px 12px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.85) !important;
+  font-variant-numeric: tabular-nums !important;
+  line-height: 1 !important;
+  height: 32px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+}
+
+/* Botões do topbar */
+.btn-topbar {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  padding: 7px 14px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  cursor: pointer !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .03em !important;
+  height: 32px !important;
+  line-height: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  white-space: nowrap !important;
+  transition: background .15s !important;
+}
+.btn-topbar:hover { background: rgba(255,255,255,.20) !important; }
+.btn-topbar-gold {
+  background: var(--tjmg-gold) !important;
+  border-color: var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-topbar-gold:hover { background: var(--tjmg-gold-light) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PCI: navbar Bootstrap → topbar TJMG (overrides estruturais)
+═══════════════════════════════════════════════════════════ */
+.navbar-tjmg .container-fluid { padding: 0 !important; width: 100% !important; max-width: none !important; }
+.navbar-tjmg .brand { display: flex !important; align-items: center !important; gap: 10px !important; font-size: 15px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.navbar-tjmg .brand::before { content: "C"; display:flex; align-items:center; justify-content:center; width:32px; height:32px; background: var(--tjmg-gold); color: var(--tjmg-blue); border-radius:8px; font-weight:800; font-size:14px; }
+.navbar-tjmg .brand .fa-fire-extinguisher,
+.navbar-tjmg .brand i.fas { display: none !important; }
+.navbar-tjmg .sub { font-size: 10px !important; color: rgba(255,255,255,.55) !important; letter-spacing: .04em !important; margin-top: 1px !important; text-transform: uppercase !important; }
+.navbar-tjmg .text-end small { color: rgba(255,255,255,.70) !important; font-size: 11px !important; font-weight: 500 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LAUDOS: header-pci gradient → solid TJMG
+═══════════════════════════════════════════════════════════ */
+.header-pci h2 { font-size: 16px !important; font-weight: 800 !important; letter-spacing: .02em !important; margin: 0 !important; color: #fff !important; }
+.header-pci h2 i.bi { color: var(--tjmg-gold) !important; font-size: 18px !important; margin-right: 6px !important; }
+.header-pci small { font-size: 11px !important; opacity: .55 !important; letter-spacing: .04em !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABS DE NAVEGAÇÃO
+═══════════════════════════════════════════════════════════ */
+.nav-tabs-bar {
+  background: var(--tjmg-blue-mid) !important;
+  border-bottom: 1px solid rgba(255,255,255,.1) !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  gap: 0 !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+  position: sticky !important;
+  top: calc(34px + var(--tjmg-topbar-h)) !important;
+  z-index: 190 !important;
+}
+.nav-tabs-bar::-webkit-scrollbar { display: none; }
+.nav-tab {
+  padding: 12px 22px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  color: rgba(255,255,255,.55) !important;
+  cursor: pointer !important;
+  border: none !important;
+  border-bottom: 3px solid transparent !important;
+  background: transparent !important;
+  transition: all .15s !important;
+  white-space: nowrap !important;
+  letter-spacing: .03em !important;
+  text-transform: uppercase !important;
+  user-select: none !important;
+  line-height: 1.2 !important;
+}
+.nav-tab:hover { color: rgba(255,255,255,.9) !important; background: rgba(255,255,255,.05) !important; }
+.nav-tab.active { color: var(--tjmg-gold) !important; border-bottom-color: var(--tjmg-gold) !important; font-weight: 700 !important; background: transparent !important; }
+
+/* Bootstrap nav-tabs (PCI) e tabs-wrapper (Laudos) */
+.nav.nav-tabs, .tabs-wrapper {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  padding: 4px !important;
+  display: flex !important;
+  gap: 2px !important;
+  margin-bottom: 18px !important;
+}
+.nav.nav-tabs .nav-link, .tabs-wrapper .nav-tab-btn {
+  color: var(--tjmg-gray-500) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  cursor: pointer !important;
+  letter-spacing: .02em !important;
+  white-space: nowrap !important;
+  text-transform: uppercase !important;
+  transition: all .15s !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.nav.nav-tabs .nav-link:hover, .tabs-wrapper .nav-tab-btn:hover { color: var(--tjmg-blue) !important; background: var(--tjmg-gray-100) !important; }
+.nav.nav-tabs .nav-link.active, .tabs-wrapper .nav-tab-btn.active {
+  background: var(--tjmg-blue) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(0,51,102,.25) !important;
+}
+
+/* Inner tabs (Periódica: cadastro/atualização) */
+.inner-tab {
+  padding: 10px 18px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  cursor: pointer !important;
+  border-radius: 8px 8px 0 0 !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  transition: all .15s !important;
+}
+.inner-tab-inactive { background: var(--tjmg-gray-200) !important; color: var(--tjmg-gray-500) !important; }
+.inner-tab-active   { background: var(--tjmg-blue) !important; color: #fff !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   CARDS / SURFACES
+═══════════════════════════════════════════════════════════ */
+.kpi-card, .card-kpi, .card-pci, .card-surface, .form-section, .chart-box, .search-container, .dash-filter-bar, .filter-bar {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card, .card-kpi {
+  padding: 16px 18px !important;
+  border-top: 4px solid var(--tjmg-blue) !important;
+  transition: transform .15s, box-shadow .15s !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+.kpi-card:hover, .card-kpi:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.kpi-card h3, .card-kpi h3, .kpi-label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-gray-400) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.kpi-card .value, .card-kpi h2, .kpi-value {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1 !important;
+  letter-spacing: -.02em !important;
+  font-family: var(--tjmg-font) !important;
+  margin: 0 !important;
+}
+.kpi-card .kpi-sub, .card-kpi small, .kpi-sub {
+  font-size: 10px !important;
+  color: var(--tjmg-gray-400) !important;
+  margin-top: 4px !important;
+  font-weight: 500 !important;
+  font-family: var(--tjmg-font) !important;
+  display: block !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+/* Variantes de cor KPI */
+.kpi-aberto, .kpi-success { border-top-color: var(--tjmg-success) !important; }
+.kpi-aberto .value, .kpi-success .kpi-value { color: var(--tjmg-success) !important; }
+.kpi-concluidas { border-top-color: #0369a1 !important; }
+.kpi-concluidas .value { color: #0369a1 !important; }
+.kpi-repro, .kpi-warning { border-top-color: #d97706 !important; }
+.kpi-repro .value, .kpi-warning .kpi-value { color: #d97706 !important; }
+.kpi-atraso, .kpi-danger { border-top-color: var(--tjmg-danger) !important; }
+.kpi-atraso .value, .kpi-danger .kpi-value { color: var(--tjmg-danger) !important; }
+.kpi-canceladas { border-top-color: var(--tjmg-gray-400) !important; }
+.kpi-canceladas .value { color: var(--tjmg-gray-500) !important; }
+.kpi-info { border-top-color: var(--tjmg-blue) !important; }
+.kpi-info .kpi-value { color: var(--tjmg-blue) !important; }
+.kpi-gold { border-top-color: var(--tjmg-gold) !important; }
+.kpi-gold .kpi-value { color: #8a6a00 !important; }
+
+/* PCI: card-kpi com background colorido — manter, mas com radius/sombra padronizados */
+.card-kpi[style*="background"] { border: none !important; border-top: none !important; }
+.card-kpi[style*="background"] h2 { color: inherit !important; }
+
+/* Form sections */
+.form-section, .card-surface, .chart-box {
+  padding: 22px !important;
+  margin-bottom: 18px !important;
+}
+.form-section-title, .section-title, .card-title, .chart-box-title {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 14px !important;
+  padding-bottom: 10px !important;
+  border-bottom: 2px solid var(--tjmg-gray-100) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.form-section-title::after, .section-title::after { content: none !important; }
+.chart-box-title .dot, .card-title .dot { width: 8px !important; height: 8px !important; border-radius: 50% !important; background: var(--tjmg-gold) !important; flex-shrink: 0 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   FORM CONTROLS — Inputs, selects, textareas
+═══════════════════════════════════════════════════════════ */
+input[type="text"], input[type="email"], input[type="password"], input[type="date"],
+input[type="time"], input[type="number"], input[type="search"], textarea,
+select, .form-control, .form-select, .filtro-tabela-select, .search-box {
+  font-family: var(--tjmg-font) !important;
+  font-size: 13px !important;
+  color: var(--tjmg-gray-700) !important;
+  background: #fff !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 9px 12px !important;
+  outline: none !important;
+  transition: border-color .15s, box-shadow .15s !important;
+  line-height: 1.4 !important;
+}
+input:focus, textarea:focus, select:focus, .form-control:focus, .form-select:focus {
+  border-color: var(--tjmg-blue) !important;
+  box-shadow: 0 0 0 3px rgba(0,51,102,.10) !important;
+}
+input:disabled, select:disabled, textarea:disabled,
+.form-control:disabled, .form-select:disabled {
+  background: var(--tjmg-gray-100) !important;
+  color: var(--tjmg-gray-400) !important;
+  border-style: dashed !important;
+  cursor: not-allowed !important;
+}
+label, .form-label, .filter-item label, .form-group label, .label-tecnica, .dash-filter-item label, .mf-group label, .rel-filter-item label {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  color: var(--tjmg-blue) !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  margin-bottom: 5px !important;
+  display: block !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BOTÕES (Bootstrap + custom)
+═══════════════════════════════════════════════════════════ */
+.btn {
+  font-family: var(--tjmg-font) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  padding: 8px 16px !important;
+  letter-spacing: .02em !important;
+  transition: all .15s !important;
+  line-height: 1.3 !important;
+  cursor: pointer !important;
+}
+.btn-primary, .btn-tjmg, .btn-save, .btn-login {
+  background: var(--tjmg-blue) !important;
+  border: 1px solid var(--tjmg-blue) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+}
+.btn-primary:hover, .btn-tjmg:hover, .btn-save:hover, .btn-login:hover {
+  background: var(--tjmg-blue-light) !important;
+  border-color: var(--tjmg-blue-light) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,51,102,.25) !important;
+}
+.btn-tjmg-gold, .btn-primary-gold, .btn-repro {
+  background: var(--tjmg-gold) !important;
+  border: 1px solid var(--tjmg-gold) !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 700 !important;
+}
+.btn-tjmg-gold:hover, .btn-primary-gold:hover, .btn-repro:hover {
+  background: var(--tjmg-gold-light) !important;
+  border-color: var(--tjmg-gold-light) !important;
+}
+.btn-danger { background: var(--tjmg-danger) !important; border-color: var(--tjmg-danger) !important; color: #fff !important; }
+.btn-success { background: var(--tjmg-success) !important; border-color: var(--tjmg-success) !important; color: #fff !important; }
+.btn-warning { background: #d97706 !important; border-color: #d97706 !important; color: #fff !important; }
+.btn-secondary { background: var(--tjmg-gray-500) !important; border-color: var(--tjmg-gray-500) !important; color: #fff !important; }
+.btn-outline-primary { background: transparent !important; border: 1.5px solid var(--tjmg-blue) !important; color: var(--tjmg-blue) !important; }
+.btn-outline-primary:hover { background: var(--tjmg-blue-pale) !important; }
+.btn-outline-secondary { background: #fff !important; border: 1.5px solid var(--tjmg-gray-200) !important; color: var(--tjmg-gray-600) !important; }
+.btn-outline-secondary:hover { background: var(--tjmg-gray-100) !important; }
+.btn-outline-warning { background: transparent !important; border: 1.5px solid #d97706 !important; color: #d97706 !important; }
+.btn-outline-warning:hover { background: #fef3c7 !important; }
+.btn-outline-danger { background: transparent !important; border: 1.5px solid var(--tjmg-danger) !important; color: var(--tjmg-danger) !important; }
+.btn-outline-danger:hover { background: var(--tjmg-danger-bg) !important; }
+.btn-outline-success { background: transparent !important; border: 1.5px solid var(--tjmg-success) !important; color: var(--tjmg-success) !important; }
+.btn-sm { padding: 6px 12px !important; font-size: 11px !important; }
+.btn-lg { padding: 11px 20px !important; font-size: 13px !important; }
+
+.btn-limpar-filtro, .btn-rel-limpar {
+  background: var(--tjmg-gray-100) !important;
+  border: 1.5px solid var(--tjmg-gray-200) !important;
+  color: var(--tjmg-gray-600) !important;
+  padding: 9px 16px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  font-family: var(--tjmg-font) !important;
+}
+.btn-limpar-filtro:hover, .btn-rel-limpar:hover { background: var(--tjmg-gray-200) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   TABELAS
+═══════════════════════════════════════════════════════════ */
+table, .table, .table-tjmg, .rel-table, .preview-table {
+  font-family: var(--tjmg-font) !important;
+  border-collapse: collapse !important;
+  width: 100% !important;
+}
+table thead tr, .table thead tr, .table-tjmg thead tr {
+  background: var(--tjmg-blue) !important;
+}
+table thead th, .table thead th, .table-tjmg thead th, .rel-table thead th, .preview-table thead th {
+  background: var(--tjmg-blue) !important;
+  color: rgba(255,255,255,.92) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  padding: 10px 14px !important;
+  text-align: left !important;
+  border-bottom: 2px solid var(--tjmg-gold) !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody td, .table tbody td, .table-tjmg tbody td {
+  padding: 9px 14px !important;
+  font-size: 12.5px !important;
+  color: var(--tjmg-gray-700) !important;
+  border-bottom: 1px solid var(--tjmg-gray-100) !important;
+  vertical-align: middle !important;
+  font-family: var(--tjmg-font) !important;
+}
+table tbody tr:hover, .table tbody tr:hover { background: var(--tjmg-blue-pale) !important; }
+.table-tjmg tbody tr:hover { background: var(--tjmg-gray-50) !important; }
+tbody tr.row-atraso, tbody tr.row-vencido { background: #fff5f5 !important; }
+tbody tr.row-atraso:hover, tbody tr.row-vencido:hover { background: var(--tjmg-danger-bg) !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   BADGES / STATUS
+═══════════════════════════════════════════════════════════ */
+.badge, .badge-status, .badge-item, .rel-badge, .section-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 3px 10px !important;
+  border-radius: 20px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .05em !important;
+  white-space: nowrap !important;
+  font-family: var(--tjmg-font) !important;
+  line-height: 1.4 !important;
+}
+.section-badge { background: var(--tjmg-blue) !important; color: #fff !important; }
+.section-badge-danger { background: var(--tjmg-danger) !important; }
+.status-aberto, .badge-agendado { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.status-aberto::before, .badge-agendado::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-reprogramado, .badge-30d, .badge-andamento {
+  background: var(--tjmg-warning-bg) !important;
+  color: var(--tjmg-warning) !important;
+}
+.status-reprogramado::before, .badge-andamento::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.status-alert, .badge-vencido, .badge-atraso {
+  background: var(--tjmg-danger-bg) !important;
+  color: var(--tjmg-danger) !important;
+}
+.status-alert::before, .badge-atraso::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.badge-ok, .badge-vigente { background: var(--tjmg-success-bg) !important; color: var(--tjmg-success) !important; }
+.badge-60d { background: #fef9c3 !important; color: #854d0e !important; }
+.badge-90d { background: #dbeafe !important; color: #1e40af !important; }
+.badge-suspenso { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-500) !important; border: 1.5px dashed var(--tjmg-gray-300) !important; }
+.badge-na { background: var(--tjmg-gray-100) !important; color: var(--tjmg-gray-400) !important; }
+
+/* Tempo-chip (prazo) — preserva cores semânticas */
+.tempo-chip { font-family: var(--tjmg-font) !important; padding: 4px 10px !important; border-radius: 20px !important; font-size: 11px !important; font-weight: 600 !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   MODAIS
+═══════════════════════════════════════════════════════════ */
+.modal-content, .modal-relatorio-content, .modal-email {
+  background: #fff !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  border: none !important;
+  box-shadow: var(--tjmg-shadow-lg) !important;
+  overflow: hidden !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header, .rel-header, .modal-edicao-header {
+  background: var(--tjmg-blue) !important;
+  background-image: none !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 16px 22px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+.modal-header h2, .modal-header h5, .rel-header h2 {
+  font-size: 15px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  margin: 0 !important;
+  letter-spacing: .02em !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-header p, .rel-header p {
+  font-size: 11px !important;
+  color: rgba(255,255,255,.6) !important;
+  margin: 2px 0 0 !important;
+  font-family: var(--tjmg-font) !important;
+}
+.modal-close, .btn-close {
+  background: rgba(255,255,255,.15) !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  color: #fff !important;
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important;
+  cursor: pointer !important;
+  opacity: 1 !important;
+}
+.modal-close:hover, .btn-close:hover { background: rgba(255,255,255,.28) !important; opacity: 1 !important; }
+.modal-body, .rel-body { padding: 22px !important; background: #fff !important; font-family: var(--tjmg-font) !important; }
+.modal-footer, .modal-edicao-footer { background: var(--tjmg-gray-50) !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding: 14px 22px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   PAGE / CONTAINER
+═══════════════════════════════════════════════════════════ */
+.container, .container-fluid, main.container {
+  max-width: 1800px !important;
+  margin: 0 auto !important;
+  padding: 22px 24px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.welcome h2 { font-size: 22px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; }
+.welcome .sub { color: var(--tjmg-gray-500) !important; font-size: 13px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOGIN
+═══════════════════════════════════════════════════════════ */
+#login_screen, #tela-login {
+  background: var(--tjmg-blue) !important;
+  background-image: radial-gradient(ellipse 70% 50% at 50% -10%, rgba(197,160,89,.20) 0%, transparent 60%) !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card {
+  background: rgba(255,255,255,.07) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  backdrop-filter: blur(10px) !important;
+  padding: 32px 28px !important;
+  box-shadow: 0 20px 50px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.08) !important;
+  border-top: 4px solid var(--tjmg-gold) !important;
+  color: #fff !important;
+}
+.login-card h1, .login-card h2 { color: #fff !important; font-weight: 800 !important; font-size: 18px !important; }
+.login-card .login-sub, .login-card > p { color: rgba(255,255,255,.55) !important; font-size: 12px !important; }
+.login-field label, .login-card label, .login-card label span {
+  color: rgba(255,255,255,.65) !important;
+  font-size: 10px !important;
+  text-transform: uppercase !important;
+  letter-spacing: .07em !important;
+  font-weight: 700 !important;
+}
+.login-card input, .login-field input, #form-login input {
+  background: rgba(255,255,255,.10) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  color: #fff !important;
+  padding: 12px 14px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 14px !important;
+  font-family: var(--tjmg-font) !important;
+}
+.login-card input::placeholder { color: rgba(255,255,255,.30) !important; }
+.login-card input:focus { border-color: var(--tjmg-gold) !important; background: rgba(255,255,255,.14) !important; box-shadow: none !important; }
+.btn-login, #btn_acessar, #btn-login {
+  background: var(--tjmg-gold) !important;
+  border: none !important;
+  color: var(--tjmg-blue) !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  letter-spacing: .06em !important;
+  text-transform: uppercase !important;
+  padding: 13px !important;
+  border-radius: var(--tjmg-radius) !important;
+  box-shadow: 0 4px 14px rgba(197,160,89,.4) !important;
+  width: 100% !important;
+  margin-top: 6px !important;
+  cursor: pointer !important;
+}
+.btn-login:hover, #btn_acessar:hover, #btn-login:hover { background: var(--tjmg-gold-light) !important; transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════════════════════
+   SHELL HOME (index.html — cards de módulos)
+═══════════════════════════════════════════════════════════ */
+.topo {
+  background: var(--tjmg-blue) !important;
+  border-bottom: 3px solid var(--tjmg-gold) !important;
+  padding: 0 24px !important;
+  min-height: var(--tjmg-topbar-h) !important;
+  height: var(--tjmg-topbar-h) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+.topo .marca { font-size: 16px !important; font-weight: 800 !important; color: #fff !important; letter-spacing: .02em !important; }
+.topo .versao { font-size: 11px !important; color: rgba(255,255,255,.5) !important; }
+.topo .info-user { font-size: 12px !important; color: rgba(255,255,255,.85) !important; font-weight: 500 !important; }
+.topo .btn-icon {
+  background: rgba(255,255,255,.10) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+  padding: 7px 14px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  border-radius: var(--tjmg-radius-sm) !important;
+  height: 32px !important;
+}
+.cards .card {
+  background: #fff !important;
+  border: 1px solid var(--tjmg-gray-200) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  border-radius: var(--tjmg-radius-lg) !important;
+  padding: 22px !important;
+  box-shadow: var(--tjmg-shadow-sm) !important;
+  transition: transform .15s, box-shadow .15s !important;
+}
+.cards .card:hover { transform: translateY(-2px) !important; box-shadow: var(--tjmg-shadow) !important; }
+.card-titulo { font-weight: 700 !important; font-size: 15px !important; color: var(--tjmg-blue) !important; font-family: var(--tjmg-font) !important; }
+.card-total { font-size: 32px !important; font-weight: 800 !important; color: var(--tjmg-blue) !important; line-height: 1 !important; font-family: var(--tjmg-font) !important; }
+.card-rotulo { font-size: 10px !important; color: var(--tjmg-gray-400) !important; text-transform: uppercase !important; letter-spacing: .07em !important; font-weight: 600 !important; }
+.card-acessar { color: var(--tjmg-blue) !important; font-size: 12px !important; font-weight: 700 !important; border-top: 1px solid var(--tjmg-gray-200) !important; padding-top: 12px !important; margin-top: 12px !important; }
+
+/* Welcome */
+.welcome { margin-bottom: 24px !important; }
+.welcome h2 { color: var(--tjmg-blue) !important; }
+
+.info-box {
+  background: var(--tjmg-blue-pale) !important;
+  border-left: 4px solid var(--tjmg-blue) !important;
+  padding: 14px 18px !important;
+  border-radius: var(--tjmg-radius) !important;
+  font-size: 12px !important;
+  color: var(--tjmg-blue) !important;
+  line-height: 1.6 !important;
+  font-family: var(--tjmg-font) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ELEMENTOS QUE NÃO DEVEM SER ALTERADOS
+═══════════════════════════════════════════════════════════ */
+/* Gráficos preservam visual original — Google Charts / Chart.js renderizam canvas próprio */
+#chartHist, #chartLaudos, #chartPizza,
+#chart_concluidos, #chart_comarcas_total, #chart_pendentes, #chart_sis, #chart_ele,
+#grafico_gauge, #grafico_barras, #grafico_pizza_tipo {
+  font-family: var(--tjmg-font) !important;
+}
+
+/* Login do PCI/Laudos: o body com gradient azul precisa de margem para a navbar superior */
+body { padding-top: 34px !important; }
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVO
+═══════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+  .top-bar, .navbar-tjmg, .header-pci, .topo {
+    height: auto !important;
+    min-height: var(--tjmg-topbar-h) !important;
+    padding: 10px 14px !important;
+    flex-wrap: wrap !important;
+  }
+  .top-bar-sub, .header-pci small, .navbar-tjmg .sub, #data_atual, .last-update-chip { display: none !important; }
+  .btn-topbar { padding: 6px 10px !important; font-size: 10px !important; height: 30px !important; }
+  table thead th { padding: 8px 10px !important; font-size: 9px !important; }
+  table tbody td { padding: 7px 10px !important; font-size: 11.5px !important; }
+  .kpi-card .value, .card-kpi h2, .kpi-value { font-size: 22px !important; }
+  .container, .container-fluid { padding: 14px 12px !important; }
+}
+
+/* ═══════ CALENDÁRIO PERIÓDICA + MODAIS EM MASSA ═══════ */
+.cal-bar {
+  background: #fff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  padding: 16px 20px;
+  margin: 0 24px 14px;
+  font-family: 'Inter', sans-serif;
+}
+.cal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 12px; gap: 12px; flex-wrap: wrap;
+}
+.cal-title { display:flex; align-items:center; gap:10px; }
+.cal-title h3 { font-size:14px; font-weight:800; color:#003366; margin:0; letter-spacing:.02em; }
+.cal-nav { display:flex; align-items:center; gap:6px; }
+.cal-nav button {
+  background:#f1f5f9; border:1px solid #e2e8f0; color:#003366;
+  width:28px; height:28px; border-radius:6px; cursor:pointer;
+  font-size:14px; font-weight:700; display:flex; align-items:center; justify-content:center;
+}
+.cal-nav button:hover { background:#e2e8f0; }
+.cal-nav .cal-mes { font-size:13px; font-weight:700; color:#003366; min-width:130px; text-align:center; text-transform:capitalize; }
+.cal-stats { display:flex; gap:6px; flex-wrap:wrap; }
+.cal-stat {
+  padding:4px 12px; border-radius:20px; font-size:10px; font-weight:700;
+  letter-spacing:.05em; text-transform:uppercase; display:inline-flex; gap:5px; align-items:center;
+}
+.cal-stat::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; }
+.cal-stat.ok    { background:#e8f5ee; color:#1b7a3e; }
+.cal-stat.pend  { background:#fef3c7; color:#b45309; }
+.cal-stat.atr   { background:#fee2e2; color:#b91c1c; }
+.cal-stat.total { background:#e8f0fb; color:#003366; }
+.cal-grid {
+  display:grid; grid-template-columns:repeat(7,1fr); gap:4px;
+}
+.cal-dow {
+  font-size:9px; color:#94a3b8; text-align:center; font-weight:700;
+  padding:4px 0; text-transform:uppercase; letter-spacing:.05em;
+}
+.cal-day {
+  background:#fff; border:1px solid #e2e8f0; border-radius:8px;
+  padding:6px 8px; min-height:52px; font-size:11px; font-weight:700;
+  color:#0f172a; cursor:pointer; position:relative; transition:all .12s;
+  user-select:none;
+}
+.cal-day:hover { background:#f8fafc; border-color:#cbd5e1; }
+.cal-day.outside { background:#f8fafc; color:#cbd5e1; cursor:default; }
+.cal-day.outside:hover { background:#f8fafc; border-color:#e2e8f0; }
+.cal-day.today { box-shadow: inset 0 0 0 2px #c5a059; }
+.cal-day.today::after { content:'HOJE'; position:absolute; top:3px; right:5px; background:#c5a059; color:#003366; padding:1px 5px; border-radius:8px; font-size:7px; font-weight:800; letter-spacing:.05em; }
+.cal-day.selected { background:#003366 !important; color:#fff !important; border-color:#003366 !important; box-shadow:0 0 0 3px rgba(0,51,102,.20); }
+.cal-day .cal-badges { position:absolute; bottom:4px; left:5px; right:5px; display:flex; gap:3px; flex-wrap:wrap; }
+.cal-day .cal-badge {
+  font-size:9px; padding:1px 5px; border-radius:9px; font-weight:700; line-height:1.4;
+}
+.cal-badge.ok   { background:#e8f5ee; color:#1b7a3e; }
+.cal-badge.pend { background:#fef3c7; color:#b45309; }
+.cal-badge.atr  { background:#fee2e2; color:#b91c1c; }
+.cal-day.selected .cal-badge { background:rgba(255,255,255,.18); color:#fff; }
+.cal-foot {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:12px; padding-top:12px; border-top:1px solid #e2e8f0;
+  flex-wrap:wrap; gap:10px;
+}
+.cal-foot-info { font-size:11px; color:#475569; }
+.cal-foot-info strong { color:#003366; }
+.btn-cal-concluir {
+  background:#c5a059; color:#003366; border:none;
+  padding:9px 18px; border-radius:8px; font-size:11px; font-weight:800;
+  cursor:pointer; font-family:inherit; text-transform:uppercase; letter-spacing:.04em;
+}
+.btn-cal-concluir:disabled { opacity:.4; cursor:not-allowed; }
+.btn-cal-concluir:hover:not(:disabled) { background:#d4b06a; }
+
+/* Modais em massa */
+.modal-massa {
+  display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,.55); z-index:9999;
+  align-items:center; justify-content:center; padding:20px;
+}
+.modal-massa.show { display:flex; }
+.modal-massa-inner {
+  background:#fff; border-radius:14px; max-width:780px; width:100%;
+  max-height:90vh; display:flex; flex-direction:column;
+  box-shadow:0 20px 60px rgba(0,0,0,.30); overflow:hidden;
+  font-family:'Inter',sans-serif;
+}
+.modal-massa-head {
+  background:#003366; border-bottom:3px solid #c5a059;
+  padding:14px 20px; display:flex; justify-content:space-between; align-items:center; color:#fff;
+}
+.modal-massa-head h3 { font-size:14px; font-weight:800; margin:0; color:#fff; }
+.modal-massa-head .sub { font-size:11px; opacity:.65; margin-top:2px; }
+.modal-massa-close {
+  background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.2);
+  color:#fff; width:28px; height:28px; border-radius:6px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.modal-massa-body { padding:18px 20px; overflow-y:auto; flex:1; }
+.modal-massa-foot {
+  background:#f8fafc; border-top:1px solid #e2e8f0;
+  padding:12px 20px; display:flex; justify-content:flex-end; gap:8px;
+}
+/* ═══ MODAL EM MASSA — Layout 2026 ═══ */
+.mf-grid    { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+.mf-grid-2  { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
+.mf-group label   { display:block; font-size:10px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:.05em; margin-bottom:4px; }
+.mf-group input,
+.mf-group select,
+.mf-group textarea {
+  width:100%; padding:9px 12px; border:1.5px solid #e2e8f0; border-radius:6px;
+  font-size:13px; font-family:inherit; color:#334155; background:#fff;
+}
+.mf-group textarea { min-height:60px; resize:vertical; }
+
+.mm-info-box {
+  background:#fdf6e8; border-left:4px solid #c5a059; padding:10px 14px;
+  border-radius:6px; font-size:12px; color:#78350f; margin-bottom:14px; line-height:1.5;
+}
+
+.mm-empty {
+  text-align:center; padding:32px 16px; color:#94a3b8; font-size:13px; font-style:italic;
+}
+
+/* ═══ BLOCO "Datas que serão registradas" ═══ */
+.mm-datas-resumo {
+  display:flex; align-items:center; gap:14px;
+  background:linear-gradient(135deg, #e8f0fb 0%, #f1f8e9 100%);
+  border:1.5px solid #c5d8f0;
+  border-radius:8px;
+  padding:12px 16px;
+  margin-bottom:14px;
+}
+.mm-datas-resumo-icone { font-size:22px; }
+.mm-datas-resumo-info { flex:1; }
+.mm-datas-resumo-label {
+  font-size:10px; font-weight:700; color:#003366;
+  text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px;
+}
+.mm-datas-resumo-valor {
+  font-size:14px; font-weight:700; color:#0f172a;
+  font-variant-numeric:tabular-nums;
+}
+.mm-datas-resumo-valor .sep { color:#c5a059; margin:0 6px; font-weight:800; }
+
+/* ═══ BLOCO "Atividade Pendente?" SIM/NÃO ═══ */
+.mm-atvp-bloco {
+  background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px;
+  padding:14px 16px; margin-bottom:14px;
+}
+.mm-atvp-row {
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.mm-atvp-pergunta {
+  font-size:13px; font-weight:700; color:#003366;
+}
+.mm-atvp-opcoes {
+  display:flex; gap:18px;
+}
+.mm-atvp-opcao {
+  display:flex; align-items:center; gap:6px;
+  font-size:13px; font-weight:600; color:#475569;
+  cursor:pointer;
+}
+.mm-atvp-opcao input[type="radio"] {
+  width:16px; height:16px; cursor:pointer; accent-color:#c5a059;
+}
+.mm-atvp-desc {
+  margin-top:12px;
+  display:none;
+}
+.mm-atvp-desc.aberto { display:block; animation:fadeInAtvp .2s ease; }
+@keyframes fadeInAtvp { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+/* ═══ "Marcar todas" — header da lista ═══ */
+.mm-marcar-todas {
+  display:flex; align-items:center; justify-content:space-between;
+  background:#003366; color:#fff;
+  padding:10px 14px;
+  border-radius:8px 8px 0 0;
+  border-bottom:3px solid #c5a059;
+}
+.mm-marcar-todas-esq {
+  display:flex; align-items:center; gap:10px;
+}
+.mm-marcar-todas input[type="checkbox"] {
+  width:18px; height:18px; cursor:pointer; accent-color:#c5a059;
+}
+.mm-marcar-todas label {
+  font-size:12px; font-weight:700; color:#fff;
+  cursor:pointer; text-transform:uppercase; letter-spacing:.05em;
+}
+.mm-marcar-todas .mm-mt-contador {
+  font-size:11px; opacity:.7; font-weight:600;
+}
+
+/* ═══ LISTA — novo layout limpo ═══ */
+.mm-lista {
+  border:1px solid #e2e8f0;
+  border-top:none;
+  border-radius:0 0 8px 8px;
+  max-height:340px;
+  overflow-y:auto;
+  background:#fff;
+}
+.mm-item {
+  display:grid;
+  grid-template-columns: 40px 1fr auto;
+  gap:14px;
+  align-items:center;
+  padding:14px 16px;
+  border-bottom:1px solid #f1f5f9;
+  cursor:pointer;
+  transition:background .12s;
+}
+.mm-item:last-child { border-bottom:none; }
+.mm-item:nth-child(even) { background:#fafbfd; }
+.mm-item:hover {
+  background:#fdf6e8;
+}
+.mm-item.selecionado {
+  background:#e8f0fb !important;
+  border-left:4px solid #003366;
+  padding-left:12px;
+}
+.mm-item.disabled {
+  opacity:.55;
+  background:#f8fafc;
+  cursor:not-allowed;
+}
+.mm-item.disabled:hover { background:#f8fafc; }
+
+.mm-item-check {
+  display:flex; align-items:center; justify-content:center;
+}
+.mm-item-check input[type="checkbox"] {
+  width:20px; height:20px;
+  cursor:pointer;
+  accent-color:#003366;
+}
+.mm-item.disabled .mm-item-check input { cursor:not-allowed; }
+
+.mm-item-info { min-width:0; }
+.mm-item-titulo {
+  font-size:14px;
+  font-weight:700;
+  color:#003366;
+  line-height:1.3;
+  margin-bottom:4px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.mm-item-meta {
+  font-size:11px;
+  color:#64748b;
+  display:flex;
+  flex-wrap:wrap;
+  gap:4px 12px;
+  line-height:1.4;
+}
+.mm-item-meta strong { color:#334155; font-weight:600; }
+.mm-item-meta .meta-sep { color:#cbd5e1; }
+
+.mm-item-flag {
+  padding:5px 11px;
+  border-radius:99px;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.mm-flag-pend  { background:#fef3c7; color:#92400e; border:1px solid #fde68a; }
+.mm-flag-atr   { background:#fee2e2; color:#991b1b; border:1px solid #fecaca; }
+.mm-flag-ok    { background:#dcfce7; color:#166534; border:1px solid #bbf7d0; }
+
+.csv-textarea {
+  width:100%; min-height:160px; padding:10px 12px;
+  border:1.5px solid #e2e8f0; border-radius:6px; font-size:11px;
+  font-family:'Courier New', monospace; color:#334155;
+  resize:vertical;
+}
+.csv-hint { font-size:10px; color:#64748b; margin-top:6px; }
+.csv-result { padding:12px; border-radius:8px; font-size:12px; margin-top:12px; line-height:1.5; }
+.csv-result.ok   { background:#e8f5ee; color:#0f5132; border-left:4px solid #1b7a3e; }
+.csv-result.warn { background:#fef3c7; color:#664d03; border-left:4px solid #b45309; }
+.csv-result.err  { background:#fee2e2; color:#842029; border-left:4px solid #b91c1c; }
+
+.btn-secundario {
+  background:#f1f5f9; border:1.5px solid #e2e8f0; color:#475569;
+  padding:9px 16px; border-radius:6px; font-size:11px; font-weight:600;
+  cursor:pointer; font-family:inherit;
+}
+.btn-secundario:hover { background:#e2e8f0; }
+.btn-acao {
+  background:#003366; color:#fff; border:none;
+  padding:9px 18px; border-radius:6px; font-size:11px; font-weight:700;
+  cursor:pointer; font-family:inherit; text-transform:uppercase; letter-spacing:.04em;
+}
+.btn-acao:hover { background:#0a4f8a; }
+.btn-acao:disabled { opacity:.5; cursor:not-allowed; }
+
+.btn-massa-csv {
+  background:#fff; border:1.5px solid #003366; color:#003366;
+  padding:0 16px; border-radius:6px; font-size:11px; font-weight:700;
+  cursor:pointer; font-family:inherit; height:42px; margin-left:8px;
+  text-transform:uppercase; letter-spacing:.04em;
+}
+.btn-massa-csv:hover { background:#e8f0fb; }
+
+/* ═══ Filtro de Período no Modal de Conclusão em Massa ═══ */
+.mcm-filtro-bloco {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #003366;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.mcm-filtro-head {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size: 10px; font-weight: 800; color: #003366;
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: 8px;
+}
+.mcm-cadeado {
+  background: transparent; border: 1.5px solid #cbd5e1;
+  width: 28px; height: 28px; border-radius: 6px;
+  cursor: pointer; font-size: 12px;
+  display:flex; align-items:center; justify-content:center;
+  transition: all .15s;
+}
+.mcm-cadeado:hover { background: #fff; border-color: #003366; }
+.mcm-cadeado.locked {
+  background: #c5a059; border-color: #c5a059; color: #003366;
+}
+.mcm-filtro-grid {
+  display: grid; grid-template-columns: 1fr 1fr auto;
+  gap: 10px; align-items: end;
+}
+.mcm-btn-atualizar {
+  background: #003366; color: #fff; border: none;
+  height: 38px; padding: 0 14px; border-radius: 6px;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+  font-family: inherit; text-transform: uppercase; letter-spacing: .04em;
+  white-space: nowrap;
+}
+.mcm-btn-atualizar:hover { background: #0a4f8a; }
+.mcm-btn-atualizar:disabled { opacity:.5; cursor:not-allowed; }
+.mcm-filtro-info {
+  font-size: 10px; color: #475569; margin-top: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.mcm-filtro-info strong { color: #003366; }
+
+
+</style>
+</head>
+<body>
+
+<style>
+#comap-unif-nav {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  background: #0a1929 !important;
+  color: #fff !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center !important;
+  padding: 0 12px !important;
+  gap: 10px !important;
+  z-index: 99999 !important;
+  font: 600 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+  border-bottom: 1px solid #c5a059 !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+#comap-unif-nav * {
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+#comap-unif-nav a {
+  color: #fff !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+#comap-unif-nav .comap-sep {
+  opacity: .3 !important;
+  color: #fff !important;
+}
+#comap-unif-nav select {
+  background: rgba(255,255,255,.1) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  /* FIX: força largura fixa — sobrescreve width:100% do CSS do módulo */
+  width: 180px !important;
+  min-width: 140px !important;
+  max-width: 180px !important;
+  flex: 0 0 180px !important;
+  margin: 0 !important;
+  display: inline-block !important;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  appearance: auto !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+}
+#comap-unif-nav select option {
+  background: #0a1929 !important;
+  color: #fff !important;
+}
+#comap-unif-nav .comap-spacer {
+  flex: 1 1 auto !important;
+}
+#comap-unif-nav button.comap-sair {
+  background: rgba(220,38,38,.2) !important;
+  color: #fff !important;
+  border: 1px solid rgba(220,38,38,.5) !important;
+  padding: 3px 10px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  font-weight: 600 !important;
+  height: 24px !important;
+  line-height: 1 !important;
+  font-family: inherit !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+#comap-unif-nav .comap-mod-label {
+  opacity: .7 !important;
+  font-size: 11px !important;
+  margin-left: 6px !important;
+  color: #fff !important;
+}
+#comap-loading {
+  display: none;
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(10,25,41,.92) !important;
+  z-index: 100000 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-direction: column !important;
+  color: #fff !important;
+  font: 600 14px sans-serif !important;
+}
+#comap-loading.show {
+  display: flex !important;
+}
+#comap-loading .comap-spin {
+  width: 40px !important;
+  height: 40px !important;
+  border: 3px solid rgba(197,160,89,.3) !important;
+  border-top-color: #c5a059 !important;
+  border-radius: 50% !important;
+  animation: comap-spin 0.8s linear infinite !important;
+  margin-bottom: 14px !important;
+}
+@keyframes comap-spin { to { transform: rotate(360deg) } }
+body { padding-top: 34px !important; }
+</style>
+<div id="comap-unif-nav">
+  <a href="#" onclick="event.preventDefault();if(window.__COMAP_HOME__)window.__COMAP_HOME__();else{var a=document.createElement('a');a.href=window.__COMAP_URL__||'/';a.target='_top';document.body.appendChild(a);a.click();}return false;">🏠 <span>COMAP</span></a>
+  <span class="comap-sep">│</span>
+  <select id="comap-unif-sel" onchange="(function(sel){if(!sel.value)return;var ov=document.getElementById('comap-loading');if(ov)ov.classList.add('show');var s=window.__COMAP_SESSAO__||{};var p=new URLSearchParams({modulo:sel.value,n:s.nome||'',email:s.email||'',r:s.regiao||'',g:s.global?'1':'0'});var a=document.createElement('a');a.href=(window.__COMAP_URL__||window.location.pathname)+'?'+p.toString();a.target='_top';document.body.appendChild(a);a.click();})(this)">
+    <option value="">— Trocar módulo —</option>
+    <option value="emergencial" >🚨 Emergencial</option>
+    <option value="periodica"   selected>🔄 Periódica</option>
+    <option value="pci"         >🔥 PCI</option>
+    <option value="laudos"      >📋 Laudos</option>
+  </select>
+  <span class="comap-spacer"></span>
+  <button class="comap-sair" onclick="if(window.__COMAP_LOGOUT__)window.__COMAP_LOGOUT__();">⏻ SAIR</button>
+  <span class="comap-mod-label">PERIODICA</span>
+</div>
+<div id="comap-loading">
+  <div class="comap-spin"></div>
+  <div>Carregando módulo...</div>
+</div>
+
+
+
+
+
+<!-- ========== TELA DE LOGIN ========== -->
+<div id="login_screen">
+  <div class="login-outer">
+    <div class="login-badge">
+      <div class="login-badge-icon">C</div>
+      <div class="login-badge-text">
+        <strong>COMAP</strong>
+        <span>TJMG · Gestão de Periódicas</span>
+      </div>
+    </div>
+    <div class="login-card">
+      <h2>Acesso ao Sistema</h2>
+      <p>Insira suas credenciais para continuar</p>
+      <div class="login-field">
+        <label>E-mail</label>
+        <input type="text" id="user_email" placeholder="seu@tjmg.jus.br" autocomplete="username"
+               onkeydown="if(event.key==='Enter') realizarLogin()">
+      </div>
+      <div class="login-field">
+        <label>Senha</label>
+        <input type="password" id="user_pass" placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter') realizarLogin()">
+      </div>
+      <button class="btn-login" id="btn_acessar" onclick="realizarLogin()">Entrar no Sistema</button>
+      <p id="login_msg"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== SISTEMA PRINCIPAL ========== -->
+<div id="main_app" style="display:none;">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="top-bar-brand">
+      <div class="top-bar-icon">C</div>
+      <div>
+        <div class="top-bar-title">COMAP · Gestão de Periódicas</div>
+        <div class="top-bar-sub">TJMG — Coordenação de Manutenção Predial &nbsp;|&nbsp; Usuário: <span id="span_user"></span></div>
+      </div>
+    </div>
+    <div class="top-bar-right">
+      <div class="top-bar-clock" id="relogio_topbar">--:--:--</div>
+      <div class="top-bar-clock" id="data_atual" style="font-weight:500;"></div>
+      <button class="btn-topbar btn-topbar-gold" onclick="abrirModalEmail()">📧 Enviar Relatório</button>
+      <button class="btn-topbar" onclick="fazerLogout()">Sair</button>
+    </div>
+  </div>
+
+
+  <!-- ═══ CALENDÁRIO PERIÓDICA — sempre visível ═══ -->
+  <div class="cal-bar" id="cal-bar">
+    <div class="cal-head">
+      <div class="cal-title">
+        <h3>📅 Calendário de Periódicas</h3>
+        <div class="cal-nav">
+          <button onclick="calNav(-1)" title="Mês anterior">‹</button>
+          <span class="cal-mes" id="cal-mes-label">—</span>
+          <button onclick="calNav(1)" title="Próximo mês">›</button>
+          <button onclick="calIrHoje()" title="Voltar ao mês atual" style="margin-left:6px;background:#fdf6e8;border-color:#f5e4b8;color:#78350f;font-size:10px;font-weight:700;width:auto;padding:0 8px;">Hoje</button>
+        </div>
+      </div>
+      <div class="cal-stats" id="cal-stats">
+        <span class="cal-stat total">● <span id="cal-tot-total">0</span> total</span>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="cal-foot">
+      <div class="cal-foot-info" id="cal-foot-info">Clique nos dias para selecionar (use Ctrl/Shift para múltiplos).</div>
+      <button class="btn-cal-concluir" id="btn-cal-concluir" disabled onclick="abrirModalConclusaoMassa()">✓ Concluir Selecionadas</button>
+    </div>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs-bar">
+    <div class="nav-tab active" id="tab_cadastro" onclick="showPage('CADASTRO', this)">＋ Periódicas</div>
+    <div class="nav-tab" id="tab_os" onclick="showPage('ORDEM_SERVICO', this)">📋 Programadas (OSP)</div>
+    <div class="nav-tab" id="tab_dash" onclick="showPage('dashboard', this)">📊 Dashboard</div>
+  </div>
+
+  <!-- LOADER -->
+  <div id="loader" style="display:none;">
+    <div class="spinner"></div>
+    <p>Sincronizando dados com a planilha...</p>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="container">
+
+    <!-- PAGE: CADASTRO -->
+    <div id="CADASTRO" class="page active-page">
+      <div style="margin-bottom:0; display:flex; gap:4px; overflow-x:auto;">
+        <button id="btnTabLancamento" class="inner-tab inner-tab-active" onclick="mudarAbaInterna('L')">
+          1 - Cadastro de Cronograma
+        </button>
+        <button id="btnTabAtualizar" class="inner-tab inner-tab-inactive" onclick="mudarAbaInterna('A')">
+          2 - Atualizar Status
+        </button>
+      </div>
+
+      <div class="form-grid" style="margin-top:0;">
+        <div class="card" style="border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);">
+          <div class="card-title"><span class="dot"></span><span id="formTitulo">Cadastro de Cronograma</span></div>
+          <input type="hidden" id="id">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Região</label>
+              <select id="regiao" onchange="ComapDropdowns.onRegiao(this.value,'comarca','edificacao')">
+                <option value="">Selecione...</option>
+                <option value="CENTRAL">CENTRAL</option>
+                <option value="SUL">SUL</option>
+                <option value="NORTE">NORTE</option>
+                <option value="ZONA_DA_MATA">ZONA DA MATA</option>
+                <option value="SUDOESTE">SUDOESTE</option>
+                <option value="LESTE">LESTE</option>
+                <option value="TRIANGULO">TRIÂNGULO</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Comarca</label>
+              <select id="comarca" onchange="ComapDropdowns.onComarca(document.getElementById('regiao').value,this.value,'edificacao')">
+                <option value="">Selecione a região primeiro</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Edificação</label>
+              <select id="edificacao">
+                <option value="">Selecione a comarca primeiro</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Grupo</label>
+              <select id="grupo">
+                <option value="">Selecione...</option>
+                <option>A</option><option>B</option><option>C</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Tipo de Atendimento</label>
+            <select id="tipoAtendimento">
+              <option value="">Selecione...</option>
+              <option>MANUTENÇÃO PERIÓDICA TRIMESTRAL</option>
+              <option>ATENDIMENTO PERIÓDICO INTERMEDIÁRIA</option>
+              <option>MANUTENÇÃO PERIÓDICA SEMESTRAL</option>
+            </select>
+          </div>
+          <div class="block-cronograma">
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0">
+                <label>Data Inicial do Cronograma</label>
+                <input type="date" id="progInicial">
+              </div>
+              <div class="form-group" style="margin-bottom:0">
+                <label>Data Final do Cronograma</label>
+                <input type="date" id="progFinal">
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Data Início Efetivo</label>
+              <input type="date" id="dataInicio" onchange="atualizarTextoBotao()">
+            </div>
+            <div class="form-group">
+              <label>Data Conclusão Efetiva</label>
+              <input type="date" id="dataConclusao" onchange="atualizarTextoBotao()">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Contrato</label>
+            <select id="contrato">
+              <option value="">Selecione...</option>
+              <option value="017/2026">017/2026</option>
+              <option value="018/2026">018/2026</option>
+              <option value="019/2026">019/2026</option>
+              <option value="025/2026">025/2026</option>
+              <option value="194/2023">194/2023</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Medição</label>
+              <input type="text" id="medicao" placeholder="ex: MAIO/2026" oninput="this.value = this.value.toUpperCase()">
+            </div>
+            <div class="form-group">
+              <label>Tem Atividade Pendente?</label>
+              <div style="display:flex;gap:18px;align-items:center;height:38px;padding:0 4px;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#475569;cursor:pointer;text-transform:none;letter-spacing:0;">
+                  <input type="radio" name="atividadePendenteRadio" value="SIM" onchange="toggleAtivPendente(true)">
+                  SIM
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#475569;cursor:pointer;text-transform:none;letter-spacing:0;">
+                  <input type="radio" name="atividadePendenteRadio" value="NAO" checked onchange="toggleAtivPendente(false)">
+                  NÃO
+                </label>
+                <input type="hidden" id="atividadePendente" value="NAO">
+              </div>
+            </div>
+          </div>
+          <div class="form-group" id="grpAtividade" style="display:none;">
+            <label>Atividade (descrição)</label>
+            <textarea id="atividade" rows="2" placeholder="Descreva qual atividade está pendente (será gravada na coluna R)" style="width:100%;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;font-family:inherit;color:#475569;resize:vertical;"></textarea>
+          </div>
+          <div style="display:flex;gap:8px;align-items:stretch;">
+            <button id="btnSalvar" class="btn-primary" onclick="salvar()" style="flex:1;">CADASTRAR</button>
+            <button class="btn-massa-csv" onclick="abrirModalLancamentoCSV()" title="Importar várias periódicas via CSV">📋 Lançar em massa (CSV)</button>
+          </div>
+        </div>
+
+        <div class="card" style="border-top: 4px solid var(--gold);">
+          <div class="card-title"><span class="dot"></span>Periódicas Cadastradas</div>
+          <div class="filter-bar">
+            <div class="form-group">
+              <label>Região</label>
+              <select id="filtroRegiao" onchange="carregarLista()" style="font-size:clamp(11px,1.2vw,13px);">
+                <option value="TODAS">TODAS</option>
+                <option>CENTRAL</option><option>SUL</option><option>NORTE</option>
+                <option>ZONA DA MATA</option><option>SUDOESTE</option>
+                <option>LESTE</option><option>TRIÂNGULO</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="filtroStatusVisualizacao" onchange="carregarLista()" style="font-size:clamp(11px,1.2vw,13px);">
+                <option value="TODOS">TODOS</option>
+                <option value="AGENDADO">AGENDADO</option>
+                <option value="EM ANDAMENTO">EM ANDAMENTO</option>
+                <option value="CONCLUÍDO (NO PRAZO)">CONCLUÍDO (NO PRAZO)</option>
+                <option value="CONCLUÍDO (ATRASO)">CONCLUÍDO (ATRASO)</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Cronograma De</label>
+                <input type="date" id="filtroProgDe" onchange="carregarLista()">
+              </div>
+              <div class="form-group">
+                <label>Até</label>
+                <input type="date" id="filtroProgAte" onchange="carregarLista()">
+              </div>
+            </div>
+          </div>
+          <div id="lista" class="list-container">
+            <div style="text-align:center; padding:40px; color:var(--gray-400);">
+              <div class="spinner" style="margin: 0 auto 12px;"></div>
+              <p style="font-size:clamp(11px,1.2vw,13px);">Carregando...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: OSP -->
+    <div id="ORDEM_SERVICO" class="page">
+      <div class="card">
+        <div class="card-title"><span class="dot"></span>Abertura e Atualização de Programada (OSP)</div>
+        <?!= incluir('Per_view2'); ?>
+      </div>
+    </div>
+
+    <!-- PAGE: DASHBOARD -->
+    <div id="dashboard" class="page">
+      <div class="kpi-container">
+        <div class="kpi-card">
+          <h3>Agendados</h3>
+          <div class="value" id="kpiAgendado">-</div>
+          <div class="kpi-sub">aguardando início</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:#3b82f6">
+          <h3>Em Andamento</h3>
+          <div class="value" id="kpiAndamento" style="color:#3b82f6;">-</div>
+          <div class="kpi-sub">execução em curso</div>
+        </div>
+        <div class="kpi-card kpi-danger">
+          <h3>⚠ Atrasados</h3>
+          <div class="value" id="kpiAtrasadoCount">-</div>
+          <div class="kpi-sub">prazo vencido</div>
+        </div>
+        <div class="kpi-card kpi-warning">
+          <h3>% Atraso</h3>
+          <div class="value" id="kpiAtraso">-</div>
+          <div class="kpi-sub">do total</div>
+        </div>
+        <div class="kpi-card" style="border-top-color:var(--gold)">
+          <h3>Média de Dias</h3>
+          <div class="value" id="kpiMedia" style="color:var(--gold)">-</div>
+          <div class="kpi-sub">por atendimento</div>
+        </div>
+        <div class="kpi-card kpi-success">
+          <h3>Eficiência</h3>
+          <div class="value" id="kpiEficiencia">-</div>
+          <div class="kpi-sub">atendimentos no prazo</div>
+        </div>
+      </div>
+
+      <div class="dash-filter-bar">
+        <div class="dash-filter-item">
+          <label>Região</label>
+          <select id="dashRegiao" onchange="atualizarDash()">
+            <option value="TODAS">TODAS</option>
+            <option>CENTRAL</option><option>SUL</option><option>NORTE</option>
+            <option>ZONA DA MATA</option><option>SUDOESTE</option>
+            <option>LESTE</option><option>TRIÂNGULO</option>
+          </select>
+        </div>
+        <div class="dash-filter-item">
+          <label>Cronograma De</label>
+          <input type="date" id="dashDataDe" onchange="atualizarDash()">
+        </div>
+        <div class="dash-filter-item">
+          <label>Cronograma Até</label>
+          <input type="date" id="dashDataAte" onchange="atualizarDash()">
+        </div>
+        <div class="dash-filter-item">
+          <label>Visualização</label>
+          <select id="dashTipo" onchange="atualizarDash()">
+            <option value="todos">TUDO</option>
+            <option value="pendentes">PENDENTES</option>
+          </select>
+        </div>
+        <div class="dash-filter-item">
+          <label>Data de Referência</label>
+          <input type="date" id="dashDataRef" onchange="atualizarDash()" title="Sobrescreve a célula O1">
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <div class="chart-box">
+          <div class="card-title"><span class="dot"></span>Taxa de Atendimento (%)</div>
+          <div id="grafico_gauge" style="display:flex; justify-content:center; align-items:center; height:clamp(220px,28vw,300px);"></div>
+        </div>
+        <div class="chart-box">
+          <div class="card-title"><span class="dot"></span>Status por Região</div>
+          <div id="grafico_barras" style="height:clamp(220px,28vw,300px);"></div>
+        </div>
+        <div class="chart-box full-width">
+          <div class="card-title"><span class="dot"></span>Tipos de Atendimento</div>
+          <div id="grafico_pizza_tipo" style="height:clamp(280px,32vw,400px);"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</div><!-- /main_app -->
+
+<!-- ================================================================
+     MODAL DE ENVIO DE RELATÓRIO POR E-MAIL
+================================================================ -->
+<div id="modalEmail" class="modal-overlay" onclick="fecharModalEmailFora(event)">
+  <div class="modal-email" onclick="event.stopPropagation()">
+
+    <!-- Cabeçalho -->
+    <div class="modal-header">
+      <div class="modal-header-left">
+        <div class="modal-header-icon">📧</div>
+        <div class="modal-header-text">
+          <h2>Enviar Relatório por E-mail</h2>
+          <p>Configure os filtros, pré-visualize os dados e envie</p>
+        </div>
+      </div>
+      <button class="modal-close" onclick="fecharModalEmail()" title="Fechar">✕</button>
+    </div>
+
+    <!-- Corpo -->
+    <div class="modal-body">
+
+      <!-- ── PAINEL DE FILTROS ── -->
+      <div class="modal-filters">
+        <div class="modal-filters-title">
+          <span>⚙</span> Filtros do Relatório
+        </div>
+
+        <!-- ── CHECKBOXES DE ORIGEM (substituem pills) ── -->
+        <div class="mf-group">
+          <label>Origem dos Dados</label>
+          <div class="origem-checks">
+
+            <!-- Periódicas -->
+            <label class="check-item per-active" id="checkItemPer" onclick="toggleCheckbox('PER', event)">
+              <input type="checkbox" id="chkPer" checked>
+              <div class="check-box">
+                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="check-label-wrap">
+                <span class="check-label">Periódicas</span>
+                <span class="check-label-sub">Inspeções periódicas programadas</span>
+              </div>
+            </label>
+
+            <!-- Programadas (OSP) -->
+            <label class="check-item osp-active" id="checkItemOsp" onclick="toggleCheckbox('OSP', event)">
+              <input type="checkbox" id="chkOsp" checked>
+              <div class="check-box">
+                <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="check-label-wrap">
+                <span class="check-label">Programadas (OSP)</span>
+                <span class="check-label-sub">Ordens de serviço programadas</span>
+              </div>
+            </label>
+
+          </div>
+        </div>
+
+        <hr class="mf-separator">
+
+        <!-- Região -->
+        <div class="mf-group">
+          <label>Região</label>
+          <select id="mfRegiao">
+            <option value="TODAS">Todas as Regiões</option>
+            <option>CENTRAL</option><option>SUL</option><option>NORTE</option>
+            <option>ZONA DA MATA</option><option>SUDOESTE</option>
+            <option>LESTE</option><option>TRIÂNGULO</option>
+          </select>
+        </div>
+
+        <!-- Status -->
+        <div class="mf-group">
+          <label>Status</label>
+          <select id="mfStatus">
+            <option value="TODOS">Todos os Status</option>
+            <option value="AGENDADO">Agendado / Aberto</option>
+            <option value="EM ANDAMENTO">Em Andamento</option>
+            <option value="CONCLUIDO NO PRAZO">Concluído (No Prazo)</option>
+            <option value="CONCLUIDO ATRASO">Concluído (Atraso)</option>
+            <option value="ATRASO">Qualquer Atraso</option>
+            <option value="REAGENDADO">Reagendado</option>
+            <option value="CANCELADO">Cancelado</option>
+          </select>
+        </div>
+
+        <!-- Período -->
+        <div class="mf-group">
+          <label>Cronograma — De</label>
+          <input type="date" id="mfDataDe">
+        </div>
+        <div class="mf-group">
+          <label>Cronograma — Até</label>
+          <input type="date" id="mfDataAte">
+        </div>
+
+        <hr class="mf-separator">
+
+        <!-- E-mail -->
+        <div class="mf-group">
+          <label>Enviar para (e-mail)</label>
+          <div class="email-input-wrap">
+            <input type="email" id="mfEmail" placeholder="destino@tjmg.jus.br"
+                   onkeydown="if(event.key==='Enter') enviarEmailModal()">
+          </div>
+        </div>
+
+        <!-- Botões -->
+        <div class="modal-btn-row">
+          <button class="modal-btn modal-btn-preview" id="btnPreview" onclick="carregarPreviewEmail()">
+            🔍 Pré-visualizar
+          </button>
+          <button class="modal-btn modal-btn-send" id="btnEnviarEmail"
+                  onclick="enviarEmailModal()" disabled>
+            📤 Enviar
+          </button>
+        </div>
+
+      </div><!-- /modal-filters -->
+
+      <!-- ── ÁREA DE PREVIEW ── -->
+      <div class="modal-preview">
+
+        <div class="preview-header">
+          <span class="preview-title">Pré-visualização dos Dados</span>
+          <span class="preview-count" id="previewCount" style="display:none;"></span>
+        </div>
+
+        <div class="preview-kpis" id="previewKpis" style="display:none;">
+          <div class="pkpi pkpi-blue">
+            <span>Total</span><span class="pkpi-val" id="pkTotal">0</span>
+          </div>
+          <div class="pkpi pkpi-green">
+            <span>No Prazo</span><span class="pkpi-val" id="pkNoPrazo">0</span>
+          </div>
+          <div class="pkpi pkpi-red">
+            <span>Atraso</span><span class="pkpi-val" id="pkAtraso">0</span>
+          </div>
+          <div class="pkpi pkpi-gold">
+            <span>Andamento</span><span class="pkpi-val" id="pkAndamento">0</span>
+          </div>
+          <div class="pkpi pkpi-blue" style="margin-left:auto;">
+            <span>Eficiência</span><span class="pkpi-val" id="pkEficiencia">—%</span>
+          </div>
+        </div>
+
+        <div id="previewContent" class="preview-table-wrap">
+          <div class="preview-empty">
+            <div class="preview-empty-icon">📋</div>
+            <p>Configure os filtros e clique em <strong>Pré-visualizar</strong></p>
+          </div>
+        </div>
+
+      </div><!-- /modal-preview -->
+    </div><!-- /modal-body -->
+
+  </div><!-- /modal-email -->
+</div><!-- /modal-overlay -->
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- ================================================================
+     SCRIPTS
+================================================================ -->
+<script>
+  google.charts.load('current', { packages: ['corechart', 'gauge'], language: 'pt-br' });
+  let filtroTipoGlobal = 'todos';
+  const SESSAO_DURACAO_MS = 12 * 60 * 60 * 1000;
+
+  // ── RELÓGIO ──────────────────────────────────────────────────────────
+  function iniciarRelogio() {
+    function tick() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2,'0');
+      const el = document.getElementById('relogio_topbar');
+      if (el) el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+    tick(); setInterval(tick, 1000);
+  }
+
+  // ── SESSÃO ───────────────────────────────────────────────────────────
+  function renovarSessao(nome) {
+    const s = JSON.parse(localStorage.getItem('tjmg_periodicas_session'));
+    const n = nome || (s ? s.nome : null);
+    if (n) localStorage.setItem('tjmg_periodicas_session', JSON.stringify({ nome: n, timestamp: Date.now() }));
+  }
+
+  // ── INIT ─────────────────────────────────────────────────────────────
+  window.onload = function () {
+    iniciarRelogio();
+    const sessao = JSON.parse(localStorage.getItem('tjmg_periodicas_session'));
+    if (sessao && (Date.now() - sessao.timestamp < SESSAO_DURACAO_MS)) {
+      exibirDashboard(sessao.nome);
+    } else {
+      localStorage.removeItem('tjmg_periodicas_session');
+      document.getElementById('login_screen').style.display = 'flex';
+    }
+  };
+
+  // ── LOGIN ────────────────────────────────────────────────────────────
+  function realizarLogin() {
+    const email = document.getElementById('user_email').value.trim();
+    const senha = document.getElementById('user_pass').value;
+    const msg   = document.getElementById('login_msg');
+    if (!email || !senha) { msg.innerText = 'Preencha todos os campos.'; return; }
+    const btn = document.getElementById('btn_acessar');
+    btn.disabled = true; btn.textContent = 'Verificando...';
+    google.script.run.withSuccessHandler(res => {
+      if (res.sucesso) {
+        localStorage.setItem('tjmg_periodicas_session', JSON.stringify({ nome: res.nome, timestamp: Date.now() }));
+        exibirDashboard(res.nome);
+      } else {
+        msg.innerText = res.msg;
+        btn.disabled = false; btn.textContent = 'Entrar no Sistema';
+      }
+    }).per_validarLogin(email, senha);
+  }
+
+  function exibirDashboard(nome) {
+    document.getElementById('login_screen').style.display = 'none';
+    document.getElementById('main_app').style.display = 'block';
+    document.getElementById('span_user').innerText = nome;
+    document.getElementById('data_atual').innerText = new Date().toLocaleDateString('pt-BR', {
+      weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'
+    });
+    carregarLista();
+  }
+
+  function fazerLogout() {
+    localStorage.removeItem('tjmg_periodicas_session');
+    location.reload();
+  }
+
+  // ── NAVEGAÇÃO ────────────────────────────────────────────────────────
+  function showPage(pageName, elClicado) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(pageName).classList.add('active-page');
+    if (elClicado) elClicado.classList.add('active');
+    if (pageName === 'dashboard') atualizarDash();
+
+    // * Calendario so aparece em CADASTRO (+ Periodicas); some em Programadas e Dashboard
+    var calBar = document.getElementById('cal-bar');
+    if (calBar) {
+      calBar.style.display = (pageName === 'CADASTRO') ? '' : 'none';
+    }
+  }
+
+  // ── LISTA PERIÓDICAS ─────────────────────────────────────────────────
+  function carregarLista() {
+    const regiao  = document.getElementById('filtroRegiao').value;
+    const status  = document.getElementById('filtroStatusVisualizacao').value;
+    const de      = document.getElementById('filtroProgDe').value;
+    const ate     = document.getElementById('filtroProgAte').value;
+
+    google.script.run.withSuccessHandler(function(dados) {
+      const listaDiv = document.getElementById('lista');
+      if (!dados || !dados.length) {
+        listaDiv.innerHTML = `<div style="text-align:center;padding:40px;color:var(--gray-400);font-size:12px;">Nenhum registro encontrado.</div>`;
+        return;
+      }
+      listaDiv.innerHTML = '';
+      dados.forEach(row => {
+        const dIniBR = row[12] ? row[12].split('-').reverse().join('/') : '--/--/----';
+        const dFimBR = row[13] ? row[13].split('-').reverse().join('/') : '--/--/----';
+        const st = (row[8] || '').toString().toUpperCase();
+        let badgeCls = 'badge-agendado';
+        if      (st.includes('EM ANDAMENTO')) badgeCls = 'badge-andamento';
+        else if (st.includes('NO PRAZO'))     badgeCls = 'badge-concluido';
+        else if (st.includes('ATRASO'))       badgeCls = 'badge-atraso';
+        else if (st.includes('CONCLUÍDO'))    badgeCls = 'badge-concluido';
+
+        listaDiv.innerHTML += `
+          <div class="item-card" onclick='preencherForm(${JSON.stringify(row)})'>
+            <div class="item-card-header">
+              <span class="item-card-title">${row[2] || '—'} — ${row[3] || '—'}</span>
+              <span class="badge ${badgeCls}">${row[8] || 'AGENDADO'}</span>
+            </div>
+            <div class="item-card-meta">
+              <strong>Região:</strong> ${row[1] || '—'} &nbsp;·&nbsp;
+              <strong>Cronograma:</strong> ${dIniBR} → ${dFimBR}
+            </div>
+            <div class="item-card-service">${row[5] || '—'}</div>
+          </div>`;
+      });
+    }).per_buscarDadosFiltrados(filtroTipoGlobal, regiao, de, ate, status);
+  }
+
+// ══════════════════════════════════════════════════════════════════════
+//  SUBSTITUIR as funções preencherForm() e resetarForm() no Index.html
+//  pelo trecho abaixo.
+//
+//  MUDANÇAS:
+//  - preencherForm: comarca fica editável (com destaque visual dourado),
+//    igual ao comportamento já existente para Programadas (OSP).
+//    Apenas região, grupo, tipoAtendimento e contrato ficam bloqueados.
+//  - resetarForm: restaura estilo da comarca ao limpar o formulário.
+// ══════════════════════════════════════════════════════════════════════
+
+  function preencherForm(row) {
+    // Preenche todos os campos
+    document.getElementById('id').value              = row[0];
+    // Normaliza região para casar com value do select
+    var _rNorm = (row[1]||'').toString().toUpperCase().replace(/\s+/g,'_').replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I').replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C');
+    document.getElementById('regiao').value          = _rNorm;
+    // Cascata: carrega comarcas → seta comarca → carrega edifs → seta edif
+    if (typeof ComapDropdowns !== 'undefined') {
+      ComapDropdowns.init(function(){
+        ComapDropdowns.onRegiao(_rNorm,'comarca','edificacao');
+        setTimeout(function(){
+          var selC=document.getElementById('comarca'); var cv=(row[2]||'').toString().toUpperCase();
+          var ok=false; for(var i=0;i<selC.options.length;i++){if(selC.options[i].value.toUpperCase()===cv){selC.selectedIndex=i;ok=true;break;}}
+          if(!ok&&row[2]){var op=document.createElement('option');op.value=row[2];op.textContent=row[2]+' (não cadastrada)';selC.appendChild(op);selC.value=row[2];}
+          ComapDropdowns.onComarca(_rNorm,selC.value,'edificacao');
+          setTimeout(function(){
+            var selE=document.getElementById('edificacao'); var ev=(row[3]||'').toString().toUpperCase();
+            var okE=false; for(var i=0;i<selE.options.length;i++){if(selE.options[i].value.toUpperCase()===ev){selE.selectedIndex=i;okE=true;break;}}
+            if(!okE&&row[3]){var op=document.createElement('option');op.value=row[3];op.textContent=row[3]+' (não cadastrada)';selE.appendChild(op);selE.value=row[3];}
+          },60);
+        },60);
+      });
+    }
+    document.getElementById('grupo').value           = row[4];
+    document.getElementById('tipoAtendimento').value = row[5];
+    document.getElementById('dataInicio').value      = row[6] || '';
+    document.getElementById('dataConclusao').value   = row[7] || '';
+    document.getElementById('contrato').value        = row[11];
+    document.getElementById('progInicial').value     = row[12] || '';
+    document.getElementById('progFinal').value       = row[13] || '';
+
+    // Bloqueia somente região (chave estrutural que não deve ser alterada)
+    ['regiao'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
+
+    // Edificação fica editável (erros de cadastro podem precisar de correção)
+    document.getElementById('edificacao').disabled = false;
+
+    // Comarca: editável com destaque visual dourado
+    const campoComarca = document.getElementById('comarca');
+    campoComarca.disabled = false;
+    campoComarca.style.borderColor  = 'var(--gold)';
+    campoComarca.style.background   = '#fffde7';
+    campoComarca.title = 'Editável — alterações serão salvas na planilha';
+
+    // Datas de execução ficam sempre editáveis
+    document.getElementById('dataInicio').disabled    = false;
+    document.getElementById('dataConclusao').disabled = false;
+    document.getElementById('progInicial').disabled   = false;
+    document.getElementById('progFinal').disabled     = false;
+
+    document.getElementById('formTitulo').innerText = 'Atualizar Dados';
+    document.getElementById('btnTabLancamento').className = 'inner-tab inner-tab-inactive';
+    document.getElementById('btnTabAtualizar').className  = 'inner-tab inner-tab-active';
+    atualizarTextoBotao();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetarForm() {
+    // Limpa e habilita todos os campos
+    document.querySelectorAll('#CADASTRO input, #CADASTRO select').forEach(el => {
+      el.value    = '';
+      el.disabled = false;
+    });
+
+    // Restaura estilo da comarca
+    const campoComarca = document.getElementById('comarca');
+    campoComarca.style.borderColor = '';
+    campoComarca.style.background  = '';
+    campoComarca.title = '';
+
+    document.getElementById('formTitulo').innerText = 'Cadastro de Cronograma';
+    document.getElementById('btnTabLancamento').className = 'inner-tab inner-tab-active';
+    document.getElementById('btnTabAtualizar').className  = 'inner-tab inner-tab-inactive';
+    atualizarTextoBotao();
+  }
+
+  function atualizarTextoBotao() {
+    const btn = document.getElementById('btnSalvar');
+    const id  = document.getElementById('id').value;
+    if (!id) {
+      btn.innerText = 'CADASTRAR';
+      btn.classList.remove('btn-primary-gold');
+    } else {
+      btn.innerText = 'ATUALIZAR';
+      btn.classList.add('btn-primary-gold');
+    }
+  }
+
+  function salvar() {
+    const obj = {
+      id:              document.getElementById('id').value,
+      regiao:          document.getElementById('regiao').value,
+      comarca:         document.getElementById('comarca').value,
+      edificacao:      document.getElementById('edificacao').value,
+      grupo:           document.getElementById('grupo').value,
+      tipoAtendimento: document.getElementById('tipoAtendimento').value,
+      dataInicio:      document.getElementById('dataInicio').value,
+      dataConclusao:   document.getElementById('dataConclusao').value,
+      contrato:        document.getElementById('contrato').value,
+      progInicial:     document.getElementById('progInicial').value,
+      progFinal:       document.getElementById('progFinal').value,
+      // Campos novos (colunas P, Q, R da planilha)
+      medicao:           (document.getElementById('medicao')           || {}).value || '',
+      atividadePendente: (document.getElementById('atividadePendente') || {}).value || '',
+      atividade:         (document.getElementById('atividade')         || {}).value || ''
+    };
+    if (!obj.regiao || !obj.comarca) { alert('Campos obrigatórios: Região e Comarca.'); return; }
+    const btn = document.getElementById('btnSalvar');
+    btn.disabled = true; btn.textContent = 'Salvando...';
+    google.script.run.withSuccessHandler(() => {
+      alert('Operação concluída!');
+      resetarForm(); carregarLista();
+      btn.disabled = false; atualizarTextoBotao();
+      // Atualiza o calendário também
+      try { calCarregar(); } catch(e) {}
+    }).per_salvarDados(obj);
+  }
+
+  function mudarAbaInterna(aba) {
+    if (aba === 'L') resetarForm();
+  }
+
+  // ── DASHBOARD ────────────────────────────────────────────────────────
+  function atualizarDash() {
+    const r   = document.getElementById('dashRegiao').value;
+    const t   = document.getElementById('dashTipo').value;
+    const de  = document.getElementById('dashDataDe').value;
+    const ate = document.getElementById('dashDataAte').value;
+    const ref = document.getElementById('dashDataRef').value;
+
+    google.script.run.withSuccessHandler(function(res) {
+      document.getElementById('kpiAgendado').innerText      = res.kpis.agendado;
+      document.getElementById('kpiAndamento').innerText     = res.kpis.andamento;
+      document.getElementById('kpiAtrasadoCount').innerText = res.kpis.atraso;
+      document.getElementById('kpiAtraso').innerText        = res.extra.pAtraso + '%';
+      document.getElementById('kpiMedia').innerText         = res.extra.media;
+      document.getElementById('kpiEficiencia').innerText    = res.extra.eficiencia + '%';
+
+      google.charts.setOnLoadCallback(function() {
+        const val = parseFloat(res.extra.eficiencia) || 0;
+        const dtG = google.visualization.arrayToDataTable([['Label','Value'],['Eficiência', val]]);
+        const gaugeEl = document.getElementById('grafico_gauge');
+        const optG = {
+          width: 400, height: 280, minorTicks: 5, max: 100,
+          redFrom: 0, redTo: 85, yellowFrom: 85, yellowTo: 90, greenFrom: 90, greenTo: 100
+        };
+        if (val <= 80) { optG.redColor = '#8B0000'; gaugeEl.classList.add('pulsing'); }
+        else { gaugeEl.classList.remove('pulsing'); }
+        new google.visualization.Gauge(gaugeEl).draw(dtG, optG);
+
+        new google.visualization.ColumnChart(document.getElementById('grafico_barras')).draw(
+          google.visualization.arrayToDataTable(res.chartData),
+          { isStacked: true, colors: ['#1b7a3e','#b91c1c','#f59e0b','#003366'],
+            fontName: 'Inter', legend: { position: 'bottom', textStyle: { fontSize: 10 } },
+            chartArea: { width: '88%', height: '62%', top: 10, bottom: 64 },
+            vAxis: { textStyle: { fontSize: 10 }, gridlines: { color: '#f1f5f9' } },
+            hAxis: { textStyle: { fontSize: 10 }, slantedText: true, slantedTextAngle: 35 }
+          }
+        );
+
+        new google.visualization.PieChart(document.getElementById('grafico_pizza_tipo')).draw(
+          google.visualization.arrayToDataTable(res.chartDataTipos),
+          { pieHole: 0.45, fontName: 'Inter',
+            legend: { position: 'right', textStyle: { fontSize: 11 } },
+            chartArea: { width: '90%', height: '85%' }
+          }
+        );
+      });
+    }).per_getDadosDashboard(t, r, de, ate, ref);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  MODAL DE E-MAIL
+  // ══════════════════════════════════════════════════════════════════════
+
+  function abrirModalEmail() {
+    document.getElementById('modalEmail').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function fecharModalEmail() {
+    document.getElementById('modalEmail').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function fecharModalEmailFora(e) {
+    if (e.target === document.getElementById('modalEmail')) fecharModalEmail();
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') fecharModalEmail();
+  });
+
+  // ── Checkboxes de Origem (nova lógica) ───────────────────────────────
+  function toggleCheckbox(tipo, event) {
+    event.preventDefault(); // evita duplo disparo do label
+
+    const chkPer = document.getElementById('chkPer');
+    const chkOsp = document.getElementById('chkOsp');
+    const itemPer = document.getElementById('checkItemPer');
+    const itemOsp = document.getElementById('checkItemOsp');
+
+    if (tipo === 'PER') {
+      // Não deixa desmarcar se OSP também estiver desmarcado
+      if (chkPer.checked && !chkOsp.checked) return;
+      chkPer.checked = !chkPer.checked;
+    } else {
+      if (chkOsp.checked && !chkPer.checked) return;
+      chkOsp.checked = !chkOsp.checked;
+    }
+
+    // Atualiza visual
+    if (chkPer.checked) itemPer.classList.add('per-active');
+    else                itemPer.classList.remove('per-active');
+
+    if (chkOsp.checked) itemOsp.classList.add('osp-active');
+    else                itemOsp.classList.remove('osp-active');
+
+    resetarPreview();
+  }
+
+  function resetarPreview() {
+    document.getElementById('previewContent').innerHTML = `
+      <div class="preview-empty">
+        <div class="preview-empty-icon">📋</div>
+        <p>Configure os filtros e clique em <strong>Pré-visualizar</strong></p>
+      </div>`;
+    document.getElementById('previewCount').style.display = 'none';
+    document.getElementById('previewKpis').style.display  = 'none';
+    document.getElementById('btnEnviarEmail').disabled    = true;
+  }
+
+  // ── Pré-visualizar ────────────────────────────────────────────────────
+  function carregarPreviewEmail() {
+    const origens = [];
+    if (document.getElementById('chkPer').checked) origens.push('PER');
+    if (document.getElementById('chkOsp').checked) origens.push('OSP');
+
+    if (origens.length === 0) {
+      mostrarToast('Selecione ao menos uma origem (Periódicas ou OSP).', 'error');
+      return;
+    }
+
+    const filtros = {
+      origens: origens,
+      regiao:  document.getElementById('mfRegiao').value,
+      status:  document.getElementById('mfStatus').value,
+      dataDe:  document.getElementById('mfDataDe').value,
+      dataAte: document.getElementById('mfDataAte').value
+    };
+
+    document.getElementById('previewContent').innerHTML = `
+      <div class="preview-loading">
+        <div class="spinner"></div>
+        <p>Buscando dados na planilha...</p>
+      </div>`;
+    document.getElementById('previewCount').style.display = 'none';
+    document.getElementById('previewKpis').style.display  = 'none';
+    document.getElementById('btnPreview').disabled = true;
+    document.getElementById('btnEnviarEmail').disabled = true;
+
+    google.script.run
+      .withSuccessHandler(function(dados) {
+        document.getElementById('btnPreview').disabled = false;
+        renderizarPreviewTabela(dados);
+      })
+      .withFailureHandler(function(err) {
+        document.getElementById('btnPreview').disabled = false;
+        document.getElementById('previewContent').innerHTML = `
+          <div class="preview-empty">
+            <div class="preview-empty-icon"⚠️</div>
+            <p style="color:var(--danger)">Erro ao buscar dados: ${err}</p>
+          </div>`;
+      })
+      .per_buscarDadosParaEmail(filtros);
+  }
+
+  function renderizarPreviewTabela(dados) {
+    const countEl = document.getElementById('previewCount');
+    const kpisEl  = document.getElementById('previewKpis');
+
+    if (!dados || dados.length === 0) {
+      document.getElementById('previewContent').innerHTML = `
+        <div class="preview-empty">
+          <div class="preview-empty-icon">🔍</div>
+          <p>Nenhum registro encontrado para os filtros selecionados.</p>
+        </div>`;
+      countEl.style.display = 'none';
+      kpisEl.style.display  = 'none';
+      document.getElementById('btnEnviarEmail').disabled = true;
+      return;
+    }
+
+    const kpis = dados.reduce((a, r) => {
+      a.total++;
+      const s = (r.status || '').toUpperCase();
+      if (s.includes('NO PRAZO'))    a.noPrazo++;
+      else if (s.includes('ATRASO')) a.atraso++;
+      else if (s.includes('ANDAMENTO')) a.andamento++;
+      else a.agendado++;
+      return a;
+    }, { total: 0, noPrazo: 0, atraso: 0, andamento: 0, agendado: 0 });
+
+    const efic = kpis.total > 0 ? Math.round((kpis.noPrazo / kpis.total) * 100) : 0;
+
+    countEl.textContent   = kpis.total + ' registro' + (kpis.total !== 1 ? 's' : '');
+    countEl.style.display = '';
+    document.getElementById('pkTotal').textContent      = kpis.total;
+    document.getElementById('pkNoPrazo').textContent    = kpis.noPrazo;
+    document.getElementById('pkAtraso').textContent     = kpis.atraso;
+    document.getElementById('pkAndamento').textContent  = kpis.andamento;
+    document.getElementById('pkEficiencia').textContent = efic + '%';
+    kpisEl.style.display = 'flex';
+
+    const rows = dados.map(r => {
+      const s = (r.status || '').toUpperCase();
+      let badgeCls = 'badge-agendado';
+      if      (s.includes('EM ANDAMENTO')) badgeCls = 'badge-andamento';
+      else if (s.includes('NO PRAZO'))     badgeCls = 'badge-concluido';
+      else if (s.includes('ATRASO'))       badgeCls = 'badge-atraso';
+      else if (s.includes('CONCLUÍDO'))    badgeCls = 'badge-concluido';
+
+      const origemBadge = (r.origem === 'OSP' || r.origem === 'PROGRAMADA')
+        ? `<span class="tbl-badge tbl-badge-osp">OSP</span>`
+        : `<span class="tbl-badge tbl-badge-per">PER</span>`;
+
+      return `<tr>
+        <td>${origemBadge}</td>
+        <td style="font-weight:700; color:var(--blue)">#${r.id}</td>
+        <td>${r.regiao}</td>
+        <td style="white-space:normal; min-width:110px">${r.comarca}</td>
+        <td style="white-space:normal; min-width:100px">${r.edificacao}</td>
+        <td>${r.grupo}</td>
+        <td style="white-space:normal; min-width:150px; max-width:200px; overflow:hidden; text-overflow:ellipsis" title="${r.servico}">${r.servico}</td>
+        <td>${r.dataInicio}</td>
+        <td>${r.dataFim}</td>
+        <td><span class="badge ${badgeCls}" style="font-size:9px;">${r.status}</span></td>
+        <td>${r.progInicial}</td>
+        <td>${r.progFinal}</td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('previewContent').innerHTML = `
+      <table class="preview-table">
+        <thead>
+          <tr>
+            <th>Tipo</th><th>ID</th><th>Região</th><th>Comarca</th><th>Edificação</th>
+            <th>Grupo</th><th>Serviço</th><th>Início Real</th><th>Fim Real</th>
+            <th>Status</th><th>Prog. Início</th><th>Prog. Fim</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+
+    document.getElementById('btnEnviarEmail').disabled = false;
+  }
+
+  // ── Enviar ────────────────────────────────────────────────────────────
+  function enviarEmailModal() {
+    const email = document.getElementById('mfEmail').value.trim();
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      mostrarToast('Informe um e-mail válido no campo "Enviar para".', 'error');
+      document.getElementById('mfEmail').focus();
+      return;
+    }
+
+    const origens = [];
+    if (document.getElementById('chkPer').checked) origens.push('PER');
+    if (document.getElementById('chkOsp').checked) origens.push('OSP');
+
+    const filtros = {
+      origens: origens,
+      regiao:  document.getElementById('mfRegiao').value,
+      status:  document.getElementById('mfStatus').value,
+      dataDe:  document.getElementById('mfDataDe').value,
+      dataAte: document.getElementById('mfDataAte').value
+    };
+
+    const btnEnviar  = document.getElementById('btnEnviarEmail');
+    const btnPreview = document.getElementById('btnPreview');
+    btnEnviar.disabled  = true;
+    btnPreview.disabled = true;
+    btnEnviar.textContent = '⏳ Enviando...';
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btnEnviar.disabled    = false;
+        btnPreview.disabled   = false;
+        btnEnviar.textContent = '📤 Enviar';
+        mostrarToast(res, 'success');
+        fecharModalEmail();
+      })
+      .withFailureHandler(function(err) {
+        btnEnviar.disabled    = false;
+        btnPreview.disabled   = false;
+        btnEnviar.textContent = '📤 Enviar';
+        mostrarToast('Erro ao enviar: ' + err, 'error');
+      })
+      .per_enviarRelatorioPorEmail(filtros, email);
+  }
+
+  // ── Toast ─────────────────────────────────────────────────────────────
+  function mostrarToast(msg, tipo) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast toast-' + (tipo || 'success');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 4500);
+  }
+
+
+/* ═══════════════════════════════════════════════════════
+   CALENDÁRIO + MODAIS EM MASSA — Per_View
+   ═══════════════════════════════════════════════════════ */
+window.__cal = { ano: 0, mes: 0, dados: {}, selecionados: new Set() };
+
+function calInit() {
+  var hoje = new Date();
+  window.__cal.ano = hoje.getFullYear();
+  window.__cal.mes = hoje.getMonth() + 1;
+  calCarregar();
+}
+function calNav(delta) {
+  var c = window.__cal;
+  c.mes += delta;
+  if (c.mes < 1) { c.mes = 12; c.ano--; }
+  if (c.mes > 12) { c.mes = 1; c.ano++; }
+  c.selecionados.clear();
+  calCarregar();
+}
+function calIrHoje() {
+  var hoje = new Date();
+  window.__cal.ano = hoje.getFullYear();
+  window.__cal.mes = hoje.getMonth() + 1;
+  window.__cal.selecionados.clear();
+  calCarregar();
+}
+function calCarregar() {
+  var c = window.__cal;
+  var label = document.getElementById('cal-mes-label');
+  if (label) {
+    var nomes = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    label.textContent = nomes[c.mes-1] + ' / ' + c.ano;
+  }
+  // Spinner discreto
+  var grid = document.getElementById('cal-grid');
+  if (grid) grid.innerHTML = '<div style="grid-column:span 7;text-align:center;padding:30px;color:#94a3b8;font-size:12px;">Carregando...</div>';
+  google.script.run
+    .withSuccessHandler(function(res){
+      if (!res || !res.ok) { calRenderErro(res && res.erro || 'Erro'); return; }
+      window.__cal.dados = res;
+      calRender();
+    })
+    .withFailureHandler(function(e){ calRenderErro(e.message || e); })
+    .per_listarCalendarioMes(c.ano, c.mes, window.__COMAP_SESSAO__ || {});
+}
+function calRenderErro(msg) {
+  var grid = document.getElementById('cal-grid');
+  if (grid) grid.innerHTML = '<div style="grid-column:span 7;text-align:center;padding:20px;color:#b91c1c;font-size:12px;">Erro: '+msg+'</div>';
+}
+function calRender() {
+  var c = window.__cal;
+  var dados = c.dados;
+  var grid = document.getElementById('cal-grid');
+  if (!grid) return;
+
+  // Atualizar contadores
+  var st = document.getElementById('cal-stats');
+  if (st && dados.totais) {
+    st.innerHTML =
+      '<span class="cal-stat total">● <span>'+dados.totais.total+'</span> total</span>' +
+      (dados.totais.concluidas ? '<span class="cal-stat ok">● '+dados.totais.concluidas+' concluídas</span>' : '') +
+      (dados.totais.pendentes  ? '<span class="cal-stat pend">● '+dados.totais.pendentes+' pendentes</span>' : '') +
+      (dados.totais.atraso     ? '<span class="cal-stat atr">● '+dados.totais.atraso+' em atraso</span>' : '');
+  }
+
+  // Cabeçalho dos dias da semana
+  var html = '';
+  ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].forEach(function(d){
+    html += '<div class="cal-dow">'+d+'</div>';
+  });
+
+  // Dias do mês
+  var ano = c.ano, mes = c.mes;
+  var primeiroDia = new Date(ano, mes-1, 1).getDay(); // 0=Dom
+  var ultimoDia = new Date(ano, mes, 0).getDate();
+  var hojeStr = dados.hoje;
+
+  // Espaços antes do dia 1
+  for (var i = 0; i < primeiroDia; i++) html += '<div class="cal-day outside"></div>';
+
+  for (var d = 1; d <= ultimoDia; d++) {
+    var dStr = ano + '-' + ('0'+mes).slice(-2) + '-' + ('0'+d).slice(-2);
+    var dia = dados.dias[dStr] || { total:0, concluidas:0, pendentes:0, atraso:0 };
+    var clsHoje = (dStr === hojeStr) ? ' today' : '';
+    var clsSel  = c.selecionados.has(dStr) ? ' selected' : '';
+    var badges = '';
+    if (dia.pendentes)  badges += '<span class="cal-badge pend">'+dia.pendentes+'</span>';
+    if (dia.atraso)     badges += '<span class="cal-badge atr">'+dia.atraso+'</span>';
+    if (dia.concluidas) badges += '<span class="cal-badge ok">'+dia.concluidas+'</span>';
+    html += '<div class="cal-day'+clsHoje+clsSel+'" data-d="'+dStr+'" onclick="calSelDia(event,\''+dStr+'\')">' +
+            d +
+            (badges ? '<div class="cal-badges">'+badges+'</div>' : '') +
+            '</div>';
+  }
+  grid.innerHTML = html;
+  calAtualizarRodape();
+}
+function calSelDia(evt, dStr) {
+  var c = window.__cal;
+  if (evt && (evt.ctrlKey || evt.shiftKey || evt.metaKey)) {
+    if (c.selecionados.has(dStr)) c.selecionados.delete(dStr);
+    else c.selecionados.add(dStr);
+  } else {
+    if (c.selecionados.size === 1 && c.selecionados.has(dStr)) {
+      c.selecionados.clear();
+    } else {
+      c.selecionados.clear();
+      c.selecionados.add(dStr);
+    }
+  }
+  calRender();
+}
+function calAtualizarRodape() {
+  var c = window.__cal;
+  var info = document.getElementById('cal-foot-info');
+  var btn = document.getElementById('btn-cal-concluir');
+  var n = c.selecionados.size;
+  if (info) {
+    if (!n) info.innerHTML = 'Clique nos dias para selecionar (use Ctrl/Shift para múltiplos).';
+    else info.innerHTML = '<strong>'+n+' dia(s) selecionado(s)</strong> · clique em Concluir Selecionadas';
+  }
+  if (btn) btn.disabled = (n === 0);
+}
+
+/* ──── MODAL CONCLUSÃO EM MASSA ──── */
+window.__mcm = { itens: [], cadeadoTravado: false };
+
+function _mcmChavePref() {
+  var s = window.__COMAP_SESSAO__ || {};
+  var email = (s.email || s.usuario || 'default').toLowerCase();
+  return 'per_medicao_pref_' + email;
+}
+function mcmCarregarPreferencia() {
+  try {
+    var k = _mcmChavePref();
+    var raw = localStorage.getItem(k);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+function mcmSalvarPreferencia(pref) {
+  try {
+    var k = _mcmChavePref();
+    if (!pref) localStorage.removeItem(k);
+    else localStorage.setItem(k, JSON.stringify(pref));
+  } catch(e) {}
+}
+function mcmAtualizarCadeadoUI() {
+  var btn = document.getElementById('mcm-cadeado');
+  if (!btn) return;
+  if (window.__mcm.cadeadoTravado) {
+    btn.classList.add('locked');
+    btn.textContent = '🔒';
+    btn.title = 'Período travado como preferência — clique para destravar';
+  } else {
+    btn.classList.remove('locked');
+    btn.textContent = '🔓';
+    btn.title = 'Clique para travar este período como sua preferência';
+  }
+}
+function mcmToggleCadeado() {
+  var de = document.getElementById('mcm-progDe').value;
+  var ate = document.getElementById('mcm-progAte').value;
+  if (window.__mcm.cadeadoTravado) {
+    // Destravar
+    window.__mcm.cadeadoTravado = false;
+    mcmSalvarPreferencia(null);
+  } else {
+    // Travar
+    if (!de || !ate) { alert('Preencha DE e ATÉ antes de travar.'); return; }
+    window.__mcm.cadeadoTravado = true;
+    mcmSalvarPreferencia({ progDe: de, progAte: ate, travado: true });
+  }
+  mcmAtualizarCadeadoUI();
+}
+
+function abrirModalConclusaoMassa() {
+  var datas = Array.from(window.__cal.selecionados);
+  datas.sort();
+  var sub = document.getElementById('mcm-sub');
+
+  // Período planejado (busca no servidor)
+  var pref = mcmCarregarPreferencia();
+  var progDe, progAte;
+  if (pref && pref.travado) {
+    progDe = pref.progDe;
+    progAte = pref.progAte;
+    window.__mcm.cadeadoTravado = true;
+  } else if (datas.length) {
+    progDe = datas[0];
+    progAte = datas[datas.length - 1];
+    window.__mcm.cadeadoTravado = false;
+  } else {
+    var h = new Date();
+    progDe  = new Date(h.getFullYear(), h.getMonth(), 1).toISOString().substring(0,10);
+    progAte = new Date(h.getFullYear(), h.getMonth()+1, 0).toISOString().substring(0,10);
+    window.__mcm.cadeadoTravado = false;
+  }
+  document.getElementById('mcm-progDe').value  = progDe;
+  document.getElementById('mcm-progAte').value = progAte;
+  mcmAtualizarCadeadoUI();
+
+  if (sub) {
+    if (datas.length) {
+      sub.textContent = datas.length + ' dia(s) — ' + datas.map(function(d){
+        var p = d.split('-'); return p[2]+'/'+p[1];
+      }).join(', ');
+    } else {
+      sub.textContent = 'período ' + progDe.split('-').reverse().join('/') + ' → ' + progAte.split('-').reverse().join('/');
+    }
+  }
+
+  // ★ Datas efetivas: primeiro dia marcado → último dia marcado
+  //   Fallback (sem dias marcados): usa o intervalo PROG_DE → PROG_ATE
+  var dIni, dFim;
+  if (datas.length) {
+    dIni = datas[0];
+    dFim = datas[datas.length - 1];
+  } else {
+    dIni = progDe;
+    dFim = progAte;
+  }
+  document.getElementById('mcm-dataInicio').value    = dIni;
+  document.getElementById('mcm-dataConclusao').value = dFim;
+  document.getElementById('mcm-data-ini-fmt').textContent = dIni.split('-').reverse().join('/');
+  document.getElementById('mcm-data-fim-fmt').textContent = dFim.split('-').reverse().join('/');
+
+  // Reset dos demais campos
+  document.getElementById('mcm-medicao').value = '';
+  document.getElementById('mcm-atividade').value = '';
+  document.getElementById('mcm-todas').checked = false;
+
+  // Atividade pendente: padrão NÃO, textarea fechado
+  var radios = document.getElementsByName('mcm-atvp');
+  for (var i=0; i<radios.length; i++) radios[i].checked = (radios[i].value === 'NAO');
+  document.getElementById('mcm-atvp-desc').classList.remove('aberto');
+
+  document.getElementById('modal-conclusao-massa').classList.add('show');
+  mcmAtualizarLista();
+}
+
+function mcmToggleAtvp(temPendente) {
+  var bloco = document.getElementById('mcm-atvp-desc');
+  if (temPendente) {
+    bloco.classList.add('aberto');
+    setTimeout(function(){ document.getElementById('mcm-atividade').focus(); }, 200);
+  } else {
+    bloco.classList.remove('aberto');
+    document.getElementById('mcm-atividade').value = '';
+  }
+}
+
+function mcmAtualizarLista() {
+  var de = document.getElementById('mcm-progDe').value;
+  var ate = document.getElementById('mcm-progAte').value;
+  if (!de || !ate) {
+    alert('Preencha DE e ATÉ antes de atualizar.');
+    return;
+  }
+  if (de > ate) {
+    alert('Período inválido: DE > ATÉ.');
+    return;
+  }
+
+  var lista = document.getElementById('mcm-lista');
+  var info  = document.getElementById('mcm-filtro-info');
+  lista.innerHTML = '<div class="mm-empty">🔄 Buscando periódicas no período...</div>';
+  if (info) info.innerHTML = 'Buscando...';
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      if (!res || !res.ok) {
+        lista.innerHTML = '<div class="mm-empty">Erro: '+(res&&res.erro||'desconhecido')+'</div>';
+        if (info) info.innerHTML = '<strong>Erro:</strong> ' + (res&&res.erro||'desconhecido');
+        return;
+      }
+      window.__mcm.itens = res.linhas || [];
+      if (info) {
+        var s = window.__COMAP_SESSAO__ || {};
+        var reg = s.regiao ? ('região ' + s.regiao) : 'todas regiões';
+        info.innerHTML = '<strong>'+(res.linhas||[]).length+' periódica(s)</strong> abertas no período '
+                       + de.split('-').reverse().join('/') + ' → '
+                       + ate.split('-').reverse().join('/') + ' · ' + reg;
+      }
+      mcmRender();
+    })
+    .withFailureHandler(function(e){
+      lista.innerHTML = '<div class="mm-empty">Erro: '+(e.message||e)+'</div>';
+      if (info) info.innerHTML = '<strong>Erro:</strong> ' + (e.message||e);
+    })
+    .per_buscarPeriodicasDoPeriodo(de, ate, true, window.__COMAP_SESSAO__ || {});
+}
+
+function mcmRender() {
+  var lista = document.getElementById('mcm-lista');
+  var itens = window.__mcm.itens || [];
+  if (!itens.length) {
+    lista.innerHTML = '<div class="mm-empty">Nenhuma periódica nos dias selecionados.</div>';
+    document.getElementById('mcm-cont-total').textContent = '0';
+    document.getElementById('mcm-cont-marcadas').textContent = '0';
+    return;
+  }
+  var html = '';
+  itens.forEach(function(it){
+    var flagCls = it._flag === 'concluida' ? 'mm-flag-ok' :
+                  it._flag === 'atraso'    ? 'mm-flag-atr' : 'mm-flag-pend';
+    var flagLbl = it._flag === 'concluida' ? '✓ CONCLUÍDA' :
+                  it._flag === 'atraso'    ? '⚠ ATRASO'   : 'PENDENTE';
+    var disabledCls  = it._flag === 'concluida' ? ' disabled' : '';
+    var checkedAttr  = it._flag !== 'concluida' ? 'checked'  : '';
+    var disabledAttr = it._flag === 'concluida' ? 'disabled' : '';
+    var selecionado  = it._flag !== 'concluida' ? ' selecionado' : '';
+    var progFinal    = it.progFinal ? it.progFinal.split('-').reverse().join('/') : '—';
+
+    html +=
+      '<div class="mm-item' + disabledCls + selecionado + '" onclick="mcmToggleItem(this, event)" data-id="' + it.id + '">' +
+        '<div class="mm-item-check">' +
+          '<input type="checkbox" class="mcm-check" data-id="' + it.id + '" ' + checkedAttr + ' ' + disabledAttr + ' onclick="event.stopPropagation()" onchange="mcmAtualizarContagem(); mcmSyncCardSel(this)">' +
+        '</div>' +
+        '<div class="mm-item-info">' +
+          '<div class="mm-item-titulo">' + (it.comarca || '—') + ' &mdash; ' + (it.edificacao || '—') + '</div>' +
+          '<div class="mm-item-meta">' +
+            '<span><strong>Tipo:</strong> ' + (it.tipo || '—') + '</span>' +
+            '<span class="meta-sep">·</span>' +
+            '<span><strong>Cronograma:</strong> ' + progFinal + '</span>' +
+            '<span class="meta-sep">·</span>' +
+            '<span><strong>Grupo:</strong> ' + (it.grupo || '—') + '</span>' +
+            '<span class="meta-sep">·</span>' +
+            '<span><strong>Região:</strong> ' + (it.regiao || '—') + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<span class="mm-item-flag ' + flagCls + '">' + flagLbl + '</span>' +
+      '</div>';
+  });
+  lista.innerHTML = html;
+  document.getElementById('mcm-cont-total').textContent = itens.filter(function(i){ return i._flag !== 'concluida'; }).length;
+  mcmAtualizarContagem();
+}
+
+function mcmToggleItem(card, ev) {
+  if (card.classList.contains('disabled')) return;
+  var cb = card.querySelector('input.mcm-check');
+  if (!cb || cb.disabled) return;
+  cb.checked = !cb.checked;
+  mcmSyncCardSel(cb);
+  mcmAtualizarContagem();
+}
+
+function mcmSyncCardSel(cb) {
+  var card = cb.closest('.mm-item');
+  if (!card) return;
+  if (cb.checked) card.classList.add('selecionado');
+  else            card.classList.remove('selecionado');
+}
+
+function mcmToggleTodas() {
+  var todas = document.getElementById('mcm-todas').checked;
+  document.querySelectorAll('.mcm-check').forEach(function(cb){
+    if (!cb.disabled) {
+      cb.checked = todas;
+      mcmSyncCardSel(cb);
+    }
+  });
+  mcmAtualizarContagem();
+}
+
+function mcmAtualizarContagem() {
+  var marcadas = 0;
+  document.querySelectorAll('.mcm-check').forEach(function(cb){
+    if (cb.checked && !cb.disabled) marcadas++;
+  });
+  document.getElementById('mcm-cont-marcadas').textContent = marcadas;
+  document.getElementById('mcm-btn-confirmar').disabled = (marcadas === 0);
+}
+
+function fecharModalConclusaoMassa() {
+  document.getElementById('modal-conclusao-massa').classList.remove('show');
+}
+
+function confirmarConclusaoMassa() {
+  var ids = [];
+  document.querySelectorAll('.mcm-check').forEach(function(cb){
+    if (cb.checked && !cb.disabled) ids.push(cb.dataset.id);
+  });
+  if (!ids.length) { alert('Selecione ao menos uma periódica.'); return; }
+
+  var dataInicio    = document.getElementById('mcm-dataInicio').value;
+  var dataConclusao = document.getElementById('mcm-dataConclusao').value;
+  if (!dataInicio || !dataConclusao) {
+    alert('Erro: as datas não foram definidas. Volte ao calendário e marque os dias antes de concluir.');
+    return;
+  }
+
+  var radios = document.getElementsByName('mcm-atvp');
+  var atvpVal = 'NAO';
+  for (var i=0; i<radios.length; i++) { if (radios[i].checked) { atvpVal = radios[i].value; break; } }
+
+  var atividadeTxt = '';
+  if (atvpVal === 'SIM') {
+    atividadeTxt = document.getElementById('mcm-atividade').value.trim();
+    if (!atividadeTxt) {
+      alert('Você marcou "SIM" em Atividade Pendente. Descreva a atividade antes de concluir.');
+      document.getElementById('mcm-atividade').focus();
+      return;
+    }
+  }
+
+  var dadosComuns = {
+    dataInicio:        dataInicio,
+    dataConclusao:     dataConclusao,
+    medicao:           document.getElementById('mcm-medicao').value.trim(),
+    atividadePendente: atvpVal,
+    atividade:         atividadeTxt
+  };
+
+  var btn = document.getElementById('mcm-btn-confirmar');
+  btn.disabled = true;
+  btn.innerHTML = 'Salvando...';
+
+  google.script.run
+    .withSuccessHandler(function(res){
+      btn.disabled = false;
+      btn.innerHTML = '✓ Concluir Marcadas (<span id="mcm-cont-marcadas">0</span>)';
+      if (res && res.ok) {
+        alert('✓ ' + res.msg);
+        fecharModalConclusaoMassa();
+        if (typeof calCarregar === 'function') calCarregar();
+        if (typeof carregarLista === 'function') carregarLista();
+      } else {
+        alert('Erro: ' + (res && res.erro || 'desconhecido'));
+      }
+    })
+    .withFailureHandler(function(e){
+      btn.disabled = false;
+      btn.innerHTML = '✓ Concluir Marcadas (<span id="mcm-cont-marcadas">0</span>)';
+      alert('Erro: ' + (e.message || e));
+    })
+    .per_concluirEmMassa(ids, dadosComuns, window.__COMAP_SESSAO__ || {});
+}
+
+/* ──── MODAL LANÇAMENTO CSV ──── */
+function abrirModalLancamentoCSV() {
+  document.getElementById('csv-text').value = '';
+  document.getElementById('csv-resultado').innerHTML = '';
+  document.getElementById('modal-lancamento-csv').classList.add('show');
+}
+function fecharModalLancamentoCSV() {
+  document.getElementById('modal-lancamento-csv').classList.remove('show');
+}
+function csvCarregarExemplo() {
+  google.script.run
+    .withSuccessHandler(function(t){ document.getElementById('csv-text').value = t; })
+    .per_csvExemplo();
+}
+function confirmarLancamentoCSV() {
+  var csv = document.getElementById('csv-text').value;
+  if (!csv.trim()) { alert('Cole o CSV antes.'); return; }
+  var res = document.getElementById('csv-resultado');
+  res.innerHTML = '<div class="csv-result warn">Processando...</div>';
+  google.script.run
+    .withSuccessHandler(function(r){
+      if (!r) { res.innerHTML = '<div class="csv-result err">Sem resposta do servidor.</div>'; return; }
+      if (r.ok) {
+        var html = '<div class="csv-result ok"><strong>✓ ' + r.linhasInseridas + ' periódica(s) inseridas.</strong>';
+        if (r.erros && r.erros.length) html += '<br><br><strong>Linhas ignoradas (' + r.erros.length + '):</strong><br>' + r.erros.join('<br>');
+        html += '</div>';
+        res.innerHTML = html;
+        calCarregar();
+        if (typeof carregarLista === 'function') carregarLista();
+      } else {
+        var html = '<div class="csv-result err"><strong>✕ ' + (r.erro || 'Erro') + '</strong>';
+        if (r.headerLido) html += '<br><br>Cabeçalho lido: <code>' + r.headerLido.join(' | ') + '</code>';
+        if (r.erros && r.erros.length) html += '<br><br>' + r.erros.join('<br>');
+        html += '</div>';
+        res.innerHTML = html;
+      }
+    })
+    .withFailureHandler(function(e){
+      res.innerHTML = '<div class="csv-result err">Erro: ' + (e.message || e) + '</div>';
+    })
+    .per_lancarMassaCSV(csv, window.__COMAP_SESSAO__ || {});
+}
+
+
+/* ──── Toggle Atividade Pendente no form ──── */
+function toggleAtivPendente(sim) {
+  document.getElementById('atividadePendente').value = sim ? 'SIM' : 'NAO';
+  document.getElementById('grpAtividade').style.display = sim ? 'block' : 'none';
+  if (!sim) document.getElementById('atividade').value = '';
+}
+
+/* ──── Diagnóstico ──── */
+function mcmDiagnosticar() {
+  document.getElementById('diag-resultado').innerHTML = 'Clique em "Executar diagnóstico" para começar.';
+  document.getElementById('modal-diag').classList.add('show');
+}
+function mcmExecutarDiag() {
+  var box = document.getElementById('diag-resultado');
+  box.innerHTML = '🔄 Executando diagnóstico...';
+  google.script.run
+    .withSuccessHandler(function(res){
+      if (!res) { box.innerHTML = '<span style="color:#b91c1c;">Sem resposta do servidor.</span>'; return; }
+      if (!res.ok) {
+        box.innerHTML = '<span style="color:#b91c1c;"><strong>Erro:</strong> ' + (res.erro||'?') + '</span><br><br>' + (res.stack||'');
+        return;
+      }
+      var html = '';
+      html += '<div style="background:#e8f0fb;border-left:4px solid #003366;padding:10px 14px;border-radius:6px;margin-bottom:10px;font-family:Inter,sans-serif;">';
+      html += '<strong>Sessão:</strong> região = ' + res.regiaoSessao + ' (global: ' + res.global + ')<br>';
+      html += '<strong>Total na planilha:</strong> ' + res.totalLinhasPlanilha + ' linha(s) | <strong>Sua região:</strong> ' + res.totalNaRegiao + ' | <strong>Agendados:</strong> ' + res.totalAgendados + ' | <strong>Concluídas:</strong> ' + res.totalConcluidas;
+      html += '</div>';
+
+      if (!res.exemplos.length) {
+        html += '<div style="color:#b91c1c;">⚠ Nenhum registro na sua região. Cadastre uma periódica primeiro.</div>';
+      } else {
+        html += '<table style="width:100%;border-collapse:collapse;font-size:10px;font-family:Courier New,monospace;">';
+        html += '<thead><tr style="background:#003366;color:#fff;">' +
+                '<th style="padding:6px;">L</th>' +
+                '<th style="padding:6px;">ID</th>' +
+                '<th style="padding:6px;">Comarca/Edif.</th>' +
+                '<th style="padding:6px;">Status</th>' +
+                '<th style="padding:6px;">Prog.Inicial RAW</th>' +
+                '<th style="padding:6px;">Tipo</th>' +
+                '<th style="padding:6px;">ISO</th>' +
+                '<th style="padding:6px;">Prog.Final RAW</th>' +
+                '<th style="padding:6px;">ISO</th>' +
+                '</tr></thead><tbody>';
+        res.exemplos.forEach(function(e){
+          html += '<tr style="border-bottom:1px solid #e2e8f0;">' +
+                  '<td style="padding:5px;">' + e.linha + '</td>' +
+                  '<td style="padding:5px;">' + (e.id||'') + '</td>' +
+                  '<td style="padding:5px;">' + (e.comarca||'') + ' / ' + (e.edificacao||'') + '</td>' +
+                  '<td style="padding:5px;font-weight:700;">' + (e.status||'') + '</td>' +
+                  '<td style="padding:5px;color:#475569;">' + String(e.progInicial_RAW) + '</td>' +
+                  '<td style="padding:5px;color:#94a3b8;">' + e.progInicial_TIPO + '</td>' +
+                  '<td style="padding:5px;color:#1b7a3e;font-weight:700;">' + (e.progInicial_ISO || '(vazio)') + '</td>' +
+                  '<td style="padding:5px;color:#475569;">' + String(e.progFinal_RAW) + '</td>' +
+                  '<td style="padding:5px;color:#1b7a3e;font-weight:700;">' + (e.progFinal_ISO || '(vazio)') + '</td>' +
+                  '</tr>';
+        });
+        html += '</tbody></table>';
+        html += '<div style="background:#fdf6e8;border-left:4px solid #c5a059;padding:10px;border-radius:6px;margin-top:12px;font-family:Inter,sans-serif;font-size:11px;">'
+              + '<strong>💡 Como ler:</strong> as colunas <em>Prog.Inicial RAW</em> e <em>Prog.Final RAW</em> mostram exatamente o que está na planilha. Se a coluna <em>ISO</em> ao lado mostrar "(vazio)" mas o RAW tem valor, o parser está falhando. Compartilhe esse print pra eu corrigir.'
+              + '</div>';
+      }
+      box.innerHTML = html;
+    })
+    .withFailureHandler(function(e){
+      box.innerHTML = '<span style="color:#b91c1c;"><strong>Falha:</strong> ' + (e.message||e) + '</span>';
+    })
+    .per_diagnosticar(window.__COMAP_SESSAO__ || {}, 10);
+}
+
+/* ──── salvar() — preencher atividadePendente como SIM/NAO ──── */
+
+/* Inicializar calendário quando a página carrega */
+if (typeof window.__per_init_done === 'undefined') {
+  window.__per_init_done = true;
+  document.addEventListener('DOMContentLoaded', function(){
+    setTimeout(function(){
+      try { calInit(); } catch(e) { console.error('calInit erro:', e); }
+    }, 300);
+  });
+}
+
+</script>
+
+<!-- ═══ MODAL: CONCLUSÃO EM MASSA ═══ -->
+<div class="modal-massa" id="modal-conclusao-massa">
+  <div class="modal-massa-inner">
+    <div class="modal-massa-head">
+      <div>
+        <h3>📋 Concluir Periódicas em Massa</h3>
+        <div class="sub" id="mcm-sub">— dias selecionados</div>
+      </div>
+      <button class="modal-massa-close" onclick="fecharModalConclusaoMassa()">✕</button>
+    </div>
+    <div class="modal-massa-body">
+
+      <!-- ─── Filtro de período planejado ─── -->
+      <div class="mcm-filtro-bloco">
+        <div class="mcm-filtro-head">
+          <span>🔍 Período Planejado (PROG. INICIAL ↔ PROG. FINAL)</span>
+          <button class="mcm-cadeado" id="mcm-cadeado" onclick="mcmToggleCadeado()" title="Travar período como preferência">🔓</button>
+        </div>
+        <div class="mcm-filtro-grid">
+          <div class="mf-group">
+            <label>DE</label>
+            <input type="date" id="mcm-progDe">
+          </div>
+          <div class="mf-group">
+            <label>ATÉ</label>
+            <input type="date" id="mcm-progAte">
+          </div>
+          <button class="mcm-btn-atualizar" onclick="mcmAtualizarLista()">↻ Atualizar Lista</button>
+        </div>
+        <div class="mcm-filtro-info" id="mcm-filtro-info">Carregando...</div>
+      </div>
+
+      <div class="mm-info-box">
+        <strong>💡 Como funciona:</strong> a data de conclusão será automaticamente a dos dias
+        que você marcou no calendário. Marque as periódicas, opcionalmente informe medição e
+        atividade pendente, e clique em "Concluir Marcadas".
+      </div>
+
+      <!-- ─── Datas que serão registradas (readonly, derivadas do calendário) ─── -->
+      <div class="mm-datas-resumo">
+        <div class="mm-datas-resumo-icone">📅</div>
+        <div class="mm-datas-resumo-info">
+          <div class="mm-datas-resumo-label">Datas que serão registradas</div>
+          <div class="mm-datas-resumo-valor">
+            <span id="mcm-data-ini-fmt">—</span>
+            <span class="sep">→</span>
+            <span id="mcm-data-fim-fmt">—</span>
+          </div>
+        </div>
+        <input type="hidden" id="mcm-dataInicio">
+        <input type="hidden" id="mcm-dataConclusao">
+      </div>
+
+      <!-- ─── Medição (opcional) ─── -->
+      <div class="mf-grid-2" style="grid-template-columns: 1fr;">
+        <div class="mf-group">
+          <label>Medição (opcional)</label>
+          <input type="text" id="mcm-medicao" placeholder="ex: MAIO/2026" oninput="this.value=this.value.toUpperCase()">
+        </div>
+      </div>
+
+      <!-- ─── Atividade Pendente? SIM/NÃO ─── -->
+      <div class="mm-atvp-bloco">
+        <div class="mm-atvp-row">
+          <span class="mm-atvp-pergunta">Tem atividade pendente?</span>
+          <div class="mm-atvp-opcoes">
+            <label class="mm-atvp-opcao">
+              <input type="radio" name="mcm-atvp" value="SIM" onchange="mcmToggleAtvp(true)">
+              SIM
+            </label>
+            <label class="mm-atvp-opcao">
+              <input type="radio" name="mcm-atvp" value="NAO" checked onchange="mcmToggleAtvp(false)">
+              NÃO
+            </label>
+          </div>
+        </div>
+        <div class="mm-atvp-desc" id="mcm-atvp-desc">
+          <div class="mf-group" style="margin-bottom:0;">
+            <label>Descrição da atividade pendente (será gravada na coluna R de todas as marcadas)</label>
+            <textarea id="mcm-atividade" rows="3" placeholder="ex: Aguardando peças do fabricante para conclusão do reparo no portão eletrônico do bloco B."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Header "Marcar todas" ─── -->
+      <div class="mm-marcar-todas">
+        <div class="mm-marcar-todas-esq">
+          <input type="checkbox" id="mcm-todas" onchange="mcmToggleTodas()">
+          <label for="mcm-todas">Marcar todas</label>
+        </div>
+        <div class="mm-mt-contador">
+          <span id="mcm-cont-total">0</span> periódica(s) na lista
+        </div>
+      </div>
+
+      <!-- ─── Lista de periódicas ─── -->
+      <div class="mm-lista" id="mcm-lista">
+        <div class="mm-empty">Nenhuma periódica nos dias selecionados.</div>
+      </div>
+
+    </div>
+    <div class="modal-massa-foot">
+      <div style="flex:1"></div>
+      <button class="btn-secundario" onclick="fecharModalConclusaoMassa()">Cancelar</button>
+      <button class="btn-acao" id="mcm-btn-confirmar" onclick="confirmarConclusaoMassa()">✓ Concluir Marcadas (<span id="mcm-cont-marcadas">0</span>)</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- ═══ MODAL: DIAGNÓSTICO ═══ -->
+<div class="modal-massa" id="modal-diag">
+  <div class="modal-massa-inner" style="max-width:920px;">
+    <div class="modal-massa-head">
+      <div>
+        <h3>🔍 Diagnóstico — Dados na Planilha</h3>
+        <div class="sub">Primeiros 10 registros da sua região, com formato bruto e parseado</div>
+      </div>
+      <button class="modal-massa-close" onclick="document.getElementById('modal-diag').classList.remove('show')">✕</button>
+    </div>
+    <div class="modal-massa-body">
+      <div id="diag-resultado" style="font-family:'Courier New', monospace;font-size:11px;color:#334155;line-height:1.5;">Clique em "Executar diagnóstico" abaixo.</div>
+    </div>
+    <div class="modal-massa-foot">
+      <button class="btn-secundario" onclick="document.getElementById('modal-diag').classList.remove('show')">Fechar</button>
+      <button class="btn-acao" onclick="mcmExecutarDiag()">▶ Executar diagnóstico</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: LANÇAMENTO EM MASSA CSV ═══ -->
+<div class="modal-massa" id="modal-lancamento-csv">
+  <div class="modal-massa-inner">
+    <div class="modal-massa-head">
+      <div>
+        <h3>📋 Lançar Periódicas em Massa (CSV)</h3>
+        <div class="sub">Importação de várias periódicas via planilha colada</div>
+      </div>
+      <button class="modal-massa-close" onclick="fecharModalLancamentoCSV()">✕</button>
+    </div>
+    <div class="modal-massa-body">
+      <div class="mm-info-box">
+        <strong>Formato esperado:</strong> cabeçalho na primeira linha + uma linha por periódica.
+        Separador: <code>;</code> (ponto-e-vírgula) ou <code>,</code> (vírgula). Datas: <code>dd/MM/aaaa</code> ou <code>aaaa-MM-dd</code>.<br>
+        <strong>Obrigatórias:</strong> REGIAO, COMARCA, EDIFICACAO, GRUPO, TIPO_ATENDIMENTO, PROG_INICIAL, PROG_FINAL, CONTRATO.
+        <strong>Opcionais:</strong> MEDICAO, ATIVIDADE_PENDENTE.<br>
+        <button onclick="csvCarregarExemplo()" style="background:transparent;border:none;color:#c5a059;font-weight:700;cursor:pointer;font-size:11px;padding:4px 0;text-decoration:underline;font-family:inherit;">▼ Carregar exemplo</button>
+      </div>
+      <div class="mf-group">
+        <label>Cole o CSV abaixo</label>
+        <textarea id="csv-text" class="csv-textarea" placeholder="REGIAO;COMARCA;EDIFICACAO;GRUPO;TIPO_ATENDIMENTO;PROG_INICIAL;PROG_FINAL;CONTRATO;MEDICAO;ATIVIDADE_PENDENTE
+NORTE;MONTES CLAROS;NOVO FÓRUM;A;MANUTENÇÃO PERIÓDICA TRIMESTRAL;16/05/2026;15/06/2026;017/2026;MAIO/2026;Vistoria geral"></textarea>
+        <div class="csv-hint">Cada linha será cadastrada como uma periódica nova com status "AGENDADO".</div>
+      </div>
+      <div id="csv-resultado"></div>
+    </div>
+    <div class="modal-massa-foot">
+      <button class="btn-secundario" onclick="fecharModalLancamentoCSV()">Cancelar</button>
+      <button class="btn-acao" onclick="confirmarLancamentoCSV()">↥ Importar CSV</button>
+    </div>
+<script>
+/* ⬇ Helper Dropdowns COMAP — Região > Comarca > Edificação */
+(function(){
+  if (window.ComapDropdowns) return;
+  var C={_d:null,_l:false,_p:[],
+    init:function(cb){var s=this;if(s._d){if(cb)cb(s._d);return;}if(s._l){if(cb)s._p.push(cb);return;}s._l=true;
+      google.script.run.withSuccessHandler(function(r){s._l=false;s._d=(r&&r.ok)?r:{data:{},totalRegistros:0};if(cb)cb(s._d);s._p.forEach(function(f){try{f(s._d);}catch(e){}});s._p=[];})
+      .withFailureHandler(function(){s._l=false;s._d={data:{},totalRegistros:0};if(cb)cb(s._d);}).util_carregarTodasComarcas();},
+    _n:function(r){if(!r)return'';return r.toString().toUpperCase().replace(/\s+/g,'_').replace(/[ÁÀÃÂÄ]/g,'A').replace(/[ÉÊË]/g,'E').replace(/[ÍÎÏ]/g,'I').replace(/[ÓÔÕÖ]/g,'O').replace(/[ÚÛÜ]/g,'U').replace(/[Ç]/g,'C').trim();},
+    listarComarcasDaRegiao:function(r){if(!this._d)return[];var reg=this._n(r);var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca)s[d.comarca.toUpperCase()]=d.comarca;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarEdificacoesPorComarca:function(r,c){if(!this._d)return[];var reg=this._n(r);var co=(c||'').toString().trim().toUpperCase();if(!co)return[];var a=(this._d.data||{})[reg]||[];var s={};a.forEach(function(d){if(d.comarca.toUpperCase()===co&&d.edificacao)s[d.edificacao.toUpperCase()]=d.edificacao;});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    listarTodasComarcasGlobais:function(){if(!this._d)return[];var s={};var d=this._d.data||{};Object.keys(d).forEach(function(r){(d[r]||[]).forEach(function(x){if(x.comarca)s[x.comarca.toUpperCase()]=x.comarca;});});return Object.values(s).sort(function(a,b){return a.localeCompare(b,'pt-BR');});},
+    _popular:function(id,ops,ph){var el=document.getElementById(id);if(!el)return;var at=el.value;el.innerHTML='';var v=document.createElement('option');v.value='';v.textContent=ph||'Selecione...';el.appendChild(v);ops.forEach(function(o){var op=document.createElement('option');op.value=o;op.textContent=o;el.appendChild(op);});if(at){var aU=at.toUpperCase();for(var i=0;i<el.options.length;i++){if(el.options[i].value.toUpperCase()===aU){el.selectedIndex=i;break;}}}},
+    onRegiao:function(r,iC,iE){var s=this;var f=function(){s._popular(iC,s.listarComarcasDaRegiao(r),'Selecione a comarca...');if(iE)s._popular(iE,[],'Selecione a comarca primeiro');};if(!s._d)s.init(f);else f();},
+    onComarca:function(r,c,iE){var s=this;var f=function(){s._popular(iE,s.listarEdificacoesPorComarca(r,c),'Selecione a edificação...');};if(!s._d)s.init(f);else f();}
+  };
+  window.ComapDropdowns=C;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){C.init();});else C.init();
+})();
+</script>
+
+</body>
+</html>

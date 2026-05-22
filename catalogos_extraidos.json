@@ -1,0 +1,5986 @@
+{
+  "regioes": {
+    "NORTE": {
+      "l": "Norte",
+      "c": "#2563eb",
+      "bg": "#dbeafe"
+    },
+    "CENTRAL": {
+      "l": "Central",
+      "c": "#7c3aed",
+      "bg": "#ede9fe"
+    },
+    "LESTE": {
+      "l": "Leste",
+      "c": "#16a34a",
+      "bg": "#dcfce7"
+    },
+    "ZONA_MATA": {
+      "l": "Zona da Mata",
+      "c": "#b45309",
+      "bg": "#fef3c7"
+    },
+    "TRIANGULO": {
+      "l": "Triângulo",
+      "c": "#0891b2",
+      "bg": "#cffafe"
+    },
+    "SUL": {
+      "l": "Sul",
+      "c": "#be185d",
+      "bg": "#fce7f3"
+    },
+    "SUDOESTE": {
+      "l": "Sudoeste",
+      "c": "#65a30d",
+      "bg": "#ecfccb"
+    }
+  },
+  "grupos": {
+    "A": {
+      "rotulo": "Grupo A",
+      "sistemas": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "skip": {},
+      "periodos": {}
+    },
+    "B": {
+      "rotulo": "Grupo B",
+      "sistemas": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7"
+      ],
+      "skip": {
+        "1.10": 1
+      },
+      "periodos": {}
+    },
+    "C": {
+      "rotulo": "Grupo C",
+      "sistemas": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "skip": {
+        "1.10": 1,
+        "2.0": 0
+      },
+      "allowed": {
+        "1.1": 1,
+        "1.2": 1,
+        "1.3": 1,
+        "1.4": 1,
+        "1.5": 1,
+        "1.6": 1,
+        "1.7": 1,
+        "1.8": 1,
+        "1.9": 1,
+        "1.11": 1,
+        "1.12": 1,
+        "1.13": 1,
+        "2.1": 1,
+        "2.2": 1,
+        "2.3": 1,
+        "2.4": 1,
+        "2.5": 1,
+        "3.2": 1,
+        "3.9": 1,
+        "3.10": 1,
+        "3.12": 1,
+        "4.5": 1,
+        "4.6": 1,
+        "4.7": 1
+      },
+      "periodos": {
+        "1.1": 6,
+        "1.2": 6,
+        "1.3": 6,
+        "1.4": 6,
+        "1.5": 12,
+        "1.6": 12,
+        "1.7": 6,
+        "1.8": 12,
+        "1.9": 12,
+        "1.11": 12,
+        "1.12": 12,
+        "1.13": 12,
+        "2.1": 12,
+        "2.2": 12,
+        "2.3": 0,
+        "2.4": 0,
+        "2.5": 12,
+        "3.2": 6,
+        "3.9": 6,
+        "3.10": 12,
+        "3.12": 6,
+        "4.5": 6,
+        "4.6": 12,
+        "4.7": 12
+      }
+    }
+  },
+  "status": {
+    "pendente": {
+      "l": "Pendente",
+      "e": "&#9203;",
+      "c": "#94a3b8",
+      "bg": "#f1f5f9"
+    },
+    "conforme": {
+      "l": "Conforme",
+      "e": "&#9989;",
+      "c": "#16a34a",
+      "bg": "#dcfce7"
+    },
+    "nao_conforme": {
+      "l": "Não Conf.",
+      "e": "&#10060;",
+      "c": "#dc2626",
+      "bg": "#fee2e2"
+    },
+    "nao_aplicavel": {
+      "l": "N/A",
+      "e": "&#10134;",
+      "c": "#64748b",
+      "bg": "#f1f5f9"
+    },
+    "fora_periodo": {
+      "l": "Fora Per.",
+      "e": "&#128260;",
+      "c": "#d97706",
+      "bg": "#fef3c7"
+    },
+    "programado": {
+      "l": "Programado",
+      "e": "&#128203;",
+      "c": "#7c3aed",
+      "bg": "#ede9fe"
+    },
+    "executado": {
+      "l": "Executado",
+      "e": "&#9989;",
+      "c": "#16a34a",
+      "bg": "#dcfce7"
+    },
+    "nao_executado": {
+      "l": "Não Exec.",
+      "e": "&#10060;",
+      "c": "#dc2626",
+      "bg": "#fee2e2"
+    },
+    "em_execucao": {
+      "l": "Em Execução",
+      "e": "&#9881;",
+      "c": "#d97706",
+      "bg": "#fef3c7"
+    }
+  },
+  "tipos_formulario": {
+    "periodica": {
+      "l": "RITMP – Manutenção Periódica",
+      "c": "#16a34a",
+      "bg": "#dcfce7",
+      "i": "&#128295;",
+      "e": [
+        "Dados",
+        "Checklist",
+        "Materiais",
+        "Concluir"
+      ]
+    },
+    "ose": {
+      "l": "RITE – Emergencial",
+      "c": "#dc2626",
+      "bg": "#fee2e2",
+      "i": "&#9889;",
+      "e": [
+        "Dados",
+        "Sistemas",
+        "Sel. Atividades",
+        "Atividades",
+        "Materiais",
+        "Concluir"
+      ]
+    },
+    "programada": {
+      "l": "RITP – Programada",
+      "c": "#2563eb",
+      "bg": "#dbeafe",
+      "i": "&#128203;",
+      "e": [
+        "Dados",
+        "Sistemas",
+        "Sel. Atividades",
+        "Atividades",
+        "Materiais",
+        "Concluir"
+      ]
+    },
+    "fachada": {
+      "l": "Fachada",
+      "c": "#7c3aed",
+      "bg": "#ede9fe",
+      "i": "&#127963;",
+      "e": [
+        "Dados",
+        "Fachadas",
+        "Conclusao"
+      ]
+    },
+    "spda": {
+      "l": "SPDA",
+      "c": "#d97706",
+      "bg": "#fef3c7",
+      "i": "&#9889;",
+      "e": [
+        "Dados",
+        "Inspecao Visual",
+        "Medicoes",
+        "Conclusao"
+      ]
+    },
+    "prontuario": {
+      "l": "Laudos, prontuários e diagramas",
+      "c": "#0369a1",
+      "bg": "#e0f2fe",
+      "i": "&#9889;&#65039;",
+      "e": [
+        "Dados",
+        "Documentos",
+        "Concluir"
+      ]
+    },
+    "subestacao": {
+      "l": "Manutencao Subestacao Anexo B.1",
+      "c": "#b45309",
+      "bg": "#fef3c7",
+      "i": "&#9889;",
+      "e": [
+        "Dados",
+        "Checklist Sub",
+        "Concluir"
+      ]
+    },
+    "osp": {
+      "l": "OSP – Abertura",
+      "c": "#0f766e",
+      "bg": "#ccfbf1",
+      "i": "&#128221;",
+      "e": [
+        "Dados OSP",
+        "Sistemas",
+        "Sel. Atividades",
+        "Atividades",
+        "Materiais",
+        "Concluir"
+      ]
+    }
+  },
+  "sistemas": [
+    {
+      "id": "1",
+      "n": "1.0",
+      "nm": "Instalações Civis"
+    },
+    {
+      "id": "2",
+      "n": "2.0",
+      "nm": "Instalações Hidrossanitárias"
+    },
+    {
+      "id": "3",
+      "n": "3.0",
+      "nm": "SPCIP - Prevenção e Combate a Incêndio"
+    },
+    {
+      "id": "4",
+      "n": "4.0",
+      "nm": "Instalações e Sistemas Elétricos"
+    },
+    {
+      "id": "5",
+      "n": "5.0",
+      "nm": "Rede de Voz e Dados"
+    },
+    {
+      "id": "6",
+      "n": "6.0",
+      "nm": "Bombeamento e Motorizações"
+    },
+    {
+      "id": "7",
+      "n": "7.0",
+      "nm": "Infraestrutura de GLP"
+    }
+  ],
+  "atividades": {
+    "1": [
+      {
+        "id": "1.1",
+        "n": "1.1",
+        "nm": "Coberturas",
+        "d": "Inspecionar integridade de calhas, rufos, chapins, telhas, policarbonatos, cumeeiras, engradamentos, estruturas, telas protetoras, impermeabilizações, escadas de marinheiro, alçapões e plataformas. Executar reparos de vedações, fixações, emendas, soldas, corrosões. Limpeza/desentupimento de calhas e saídas pluviais.",
+        "p": 3
+      },
+      {
+        "id": "1.2",
+        "n": "1.2",
+        "nm": "Fachadas – inspeção visual",
+        "d": "Efetuar inspeção visual de integridade dos diversos elementos das fachadas, com vistas à identificação e eliminação de riscos.",
+        "p": 3
+      },
+      {
+        "id": "1.3",
+        "n": "1.3",
+        "nm": "Fachadas – esquadrias externas",
+        "d": "Inspecionar esquadrias externas (metálicas, madeira), grades, brises, toldos, vidros, fixações, ferragens, vedações, guarnições, borrachas, suportes de ar-condicionado. Executar ajustes e reparos de funcionalidade, segurança e estanqueidade.",
+        "p": 12
+      },
+      {
+        "id": "1.4",
+        "n": "1.4",
+        "nm": "Fachadas – revestimentos e percussão",
+        "d": "Inspecionar revestimentos externos, rebocos, acabamentos, fixações, juntas de dilatação e rejuntamentos. Realizar testes à percussão para identificar som cavo, desplacamentos, fissuras e trincas. Executar ajustes e reconstituições.",
+        "p": 12
+      },
+      {
+        "id": "1.5",
+        "n": "1.5",
+        "nm": "Fachadas – laudo técnico anual",
+        "d": "Elaborar laudo técnico anual certificando as condições de segurança das fachadas e seus elementos constituintes. (NBR 5674)",
+        "p": 12
+      },
+      {
+        "id": "1.6",
+        "n": "1.6",
+        "nm": "Alvenarias e elementos estruturais",
+        "d": "Inspecionar alvenarias, lajes, vigas, pilares, marquises e outros elementos estruturais, verificando fissuras, trincas, armações expostas e outras patologias.",
+        "p": 12
+      },
+      {
+        "id": "1.7",
+        "n": "1.7",
+        "nm": "Painéis, guarda-corpos e corrimãos",
+        "d": "Inspecionar painéis divisórios (madeira, vidro, granito, mármore), guarda-corpos, corrimãos e paredes de gesso. Executar ajustes de fixação e reparos para manutenção de funcionalidade e segurança.",
+        "p": 6
+      },
+      {
+        "id": "1.8",
+        "n": "1.8",
+        "nm": "Revestimentos internos – pisos, paredes e tetos",
+        "d": "Inspecionar revestimentos cerâmicos, porcelanatos, rebocos, pinturas e acabamentos de pisos, paredes e tetos. Verificar fissuras, trincas, desprendimentos e desgastes. Efetuar rejuntamentos necessários.",
+        "p": 12
+      },
+      {
+        "id": "1.9",
+        "n": "1.9",
+        "nm": "Forros",
+        "d": "Inspecionar integridade dos forros (gesso, fibra mineral, madeira, metálico e similares). Executar reparos e ajustes necessários à manutenção de funcionalidade e segurança.",
+        "p": 12
+      },
+      {
+        "id": "1.10",
+        "n": "1.10",
+        "nm": "Tablados, pisos elevados e assoalhos",
+        "d": "Inspecionar integridade de tablados, pisos elevados, assoalhos e similares. Executar reparos e ajustes necessários à manutenção de funcionalidade e segurança. (Grupo A)",
+        "p": 12
+      },
+      {
+        "id": "1.11",
+        "n": "1.11",
+        "nm": "Esquadrias internas",
+        "d": "Inspecionar esquadrias internas (metálicas, madeira), acessórios, vidros, ferragens, fechaduras, fixações e vedações. Executar reparos, ajustes e regulagens para manutenção de funcionalidade e segurança.",
+        "p": 12
+      },
+      {
+        "id": "1.12",
+        "n": "1.12",
+        "nm": "Áreas externas – muros e pisos",
+        "d": "Inspecionar muros, pisos externos, passeios, calçadas e tampas de caixas das áreas externas. Verificar patologias e executar reparos e ajustes de funcionalidade e segurança.",
+        "p": 6
+      },
+      {
+        "id": "1.13",
+        "n": "1.13",
+        "nm": "Áreas externas – gradis e portões",
+        "d": "Inspecionar gradis, alambrados, portões, portas de enrolar, coberturas de garagens, toldos, mastros e outros elementos das áreas externas. Verificar patologias, executar ajustes de fixação e reparos.",
+        "p": 12
+      }
+    ],
+    "2": [
+      {
+        "id": "2.1",
+        "n": "2.1",
+        "nm": "Água Fria – tubulações e reservatórios",
+        "d": "Inspecionar tubulações (barriletes, shafts, coberturas, áreas externas). Inspecionar reservatórios (superiores e inferiores), tampas, registros, flanges, boias e chaves-boia, extravasores. Reparar vazamentos, tratar corrosões, recompor telas de proteção.",
+        "p": 3
+      },
+      {
+        "id": "2.2",
+        "n": "2.2",
+        "nm": "Água Fria – torneiras, registros e válvulas",
+        "d": "Inspecionar torneiras, registros, válvulas de retenção, válvulas de descarga, duchas higiênicas, engates flexíveis e mecanismos de caixas acopladas. Executar reparos de vazamentos e substituir componentes danificados.",
+        "p": 3
+      },
+      {
+        "id": "2.3",
+        "n": "2.3",
+        "nm": "Louças e equipamentos sanitários",
+        "d": "Inspecionar vasos sanitários, mictórios, lavatórios, cubas, caixas acopladas e similares. Reparar vazamentos, substituir vedações, solucionar entupimentos, revisar fixações e complementar rejuntamentos.",
+        "p": 0
+      },
+      {
+        "id": "2.4",
+        "n": "2.4",
+        "nm": "Esgoto – ralos, grelhas e sifões",
+        "d": "Inspecionar ralos, grelhas, caixas sifonadas e sifões. Solucionar entupimentos e vazamentos. Substituir elementos/componentes danificados.",
+        "p": 0
+      },
+      {
+        "id": "2.5",
+        "n": "2.5",
+        "nm": "Esgoto – caixas de gordura e drenagem",
+        "d": "Inspecionar caixas de gordura, caixas de passagem, canaletas e drenos. Efetuar limpeza das caixas de gordura. Solucionar vazamentos e entupimentos.",
+        "p": 12
+      }
+    ],
+    "3": [
+      {
+        "id": "3.1",
+        "n": "3.1",
+        "nm": "Bombas de incêndio",
+        "d": "Inspecionar bombas de incêndio, quadros de comando, pressostatos, chaves de fluxo, manômetros e válvulas de retenção. Substituir peças danificadas. Executar testes de funcionamento (mínimo 15 min.), reparos e ajustes.",
+        "p": 3
+      },
+      {
+        "id": "3.2",
+        "n": "3.2",
+        "nm": "Iluminação de emergência",
+        "d": "Verificar integridade das centrais de iluminação de emergência, luminárias e blocos autônomos. Efetuar testes de funcionamento e substituir peças danificadas conforme instruções do fabricante.",
+        "p": 3
+      },
+      {
+        "id": "3.3",
+        "n": "3.3",
+        "nm": "Portas corta-fogo",
+        "d": "Verificar integridade das portas corta-fogo. Testar movimentação (abertura e fechamento automático). Verificar dobradiças, fechaduras, pinturas, folhas de porta e selo de especificação. Executar ajustes e reparos.",
+        "p": 3
+      },
+      {
+        "id": "3.4",
+        "n": "3.4",
+        "nm": "Hidrantes – tubulações e componentes",
+        "d": "Inspecionar tubulações, hidrantes e componentes (registros, portas, vidros, pinturas, sinalizações, tampas, adaptadores, chaves Storz, bicos, britas). Desobstruir acessos, revisar fixações/vedações, reparar vazamentos, substituir peças danificadas.",
+        "p": 3
+      },
+      {
+        "id": "3.5",
+        "n": "3.5",
+        "nm": "Hidrantes – mangueiras (inspeção NBR 12779)",
+        "d": "Inspecionar integridade e validade das mangueiras conforme NBR 12779. Verificar conservação, acesso/desobstrução e armazenagem/enrolamento. Providenciar reposição de mangueiras faltantes e substituição de peças danificadas.",
+        "p": 3
+      },
+      {
+        "id": "3.6",
+        "n": "3.6",
+        "nm": "Hidrantes – mangueiras (testes hidrostáticos)",
+        "d": "Executar manutenção com testes hidrostáticos com emissão de relatórios/certificados e substituições necessárias, conforme NBR 12779.",
+        "p": 12
+      },
+      {
+        "id": "3.7",
+        "n": "3.7",
+        "nm": "Sprinklers – inspeção",
+        "d": "Inspecionar tubulações, conexões, suportes, chuveiros, válvulas de controle, alarmes, manômetros, registros e placas de dados. Executar ensaios de alarmes, chaves de fluxo e bombas. Substituir peças danificadas.",
+        "p": 3
+      },
+      {
+        "id": "3.8",
+        "n": "3.8",
+        "nm": "Sprinklers – ensaios de drenos",
+        "d": "Efetuar ensaios de drenos, investigar eventuais obstruções e lubrificar válvulas.",
+        "p": 12
+      },
+      {
+        "id": "3.9",
+        "n": "3.9",
+        "nm": "Extintores – inspeção (NBR 12962)",
+        "d": "Inspecionar integridade e validade conforme NBR 12962. Verificar acesso/desobstrução, lacre, manômetro, cilindro, mangueira, difusor, pino de segurança e estado do suporte/abrigo. Substituir peças danificadas e repor extintores faltantes.",
+        "p": 3
+      },
+      {
+        "id": "3.10",
+        "n": "3.10",
+        "nm": "Extintores – manutenção e recarga (NBR 12962)",
+        "d": "Executar manutenção com testes e recargas, emissão de relatórios/certificados e substituições necessárias, conforme NBR 12962.",
+        "p": 12
+      },
+      {
+        "id": "3.11",
+        "n": "3.11",
+        "nm": "Alarme de incêndio (SDAI)",
+        "d": "Verificar integridade das centrais de alarme, botoeiras, acionadores manuais, sirenes, detectores de fumaça, sensores e indicadores. Aferir tensões e baterias. Efetuar testes, limpeza, substituição de peças, ajustes e correção de programações.",
+        "p": 3
+      },
+      {
+        "id": "3.12",
+        "n": "3.12",
+        "nm": "Sinalização de emergência",
+        "d": "Verificar estado de conservação das placas e pictogramas (E5, E8, S1-S12, P1, P4, M4, A5, E1-E3, M2). Corrigir fixações e posicionamentos. Repor placas faltantes.",
+        "p": 3
+      }
+    ],
+    "4": [
+      {
+        "id": "4.1",
+        "n": "4.1",
+        "nm": "Subestações – inspeção (a plena carga)",
+        "d": "Inspecionar transformadores, cubículos MT, chaves seccionadoras, TPs, TCs, relés, caixas de medição, muflas, barramentos, disjuntores, contatores, DPS e multimedidores. Realizar medições elétricas (tensão, corrente) e termográficas. Substituir componentes danificados. Elaborar e manter Prontuário NR-10.",
+        "p": 3
+      },
+      {
+        "id": "4.2",
+        "n": "4.2",
+        "nm": "Subestações – manutenção preventiva anual (Anexo B.1)",
+        "d": "Executar manutenção preventiva anual conforme Anexo B.1: transformadores (limpeza, óleo, ensaios), disjuntores (PVO/vácuo), chaves seccionadoras, óleo isolante (análise físico-química e cromatográfica), muflas, relés microprocessados, barramentos blindados, painéis principais e salas de subestações.",
+        "p": 12
+      },
+      {
+        "id": "4.3",
+        "n": "4.3",
+        "nm": "Sistema fotovoltaico – inspeção",
+        "d": "Inspecionar módulos fotovoltaicos (integridade e limpeza), cabeamento, conectores e terminais, estruturas de fixação, microinversores (LED de status), ECU-R (LED1 em funcionamento, LED2 conectado ao servidor) e monitoramento remoto online.",
+        "p": 3
+      },
+      {
+        "id": "4.4",
+        "n": "4.4",
+        "nm": "Sistema fotovoltaico – limpeza painéis",
+        "d": "Efetuar limpeza dos painéis fotovoltaicos em conformidade com as instruções do fabricante.",
+        "p": 12
+      },
+      {
+        "id": "4.5",
+        "n": "4.5",
+        "nm": "Quadros de distribuição – inspeção termográfica",
+        "d": "Inspecionar quadros, caixas, barramentos, disjuntores, fusíveis, DRs e DPS. Realizar medições termográficas e elétricas (tensão, corrente) a plena carga. Conferir compatibilidade entre condutores e proteções. Substituir componentes danificados.",
+        "p": 3
+      },
+      {
+        "id": "4.6",
+        "n": "4.6",
+        "nm": "Quadros de distribuição – manutenção anual",
+        "d": "Executar reaperto das conexões, ajustes, limpeza, medições elétricas (tensão/corrente) a plena carga, afixar etiqueta de manutenção, recompor identificações dos circuitos e avisos de segurança.",
+        "p": 12
+      },
+      {
+        "id": "4.7",
+        "n": "4.7",
+        "nm": "Iluminação, tomadas e no-breaks",
+        "d": "Inspecionar luminárias, lâmpadas, reatores, ignitores, capacitores, interruptores, postes, refletores, programadores horários, relés fotoelétricos, sensores de presença, tomadas e no-breaks. Substituir componentes danificados (lâmpadas, reatores, tomadas, placas).",
+        "p": 0
+      },
+      {
+        "id": "4.8",
+        "n": "4.8",
+        "nm": "SPDA – inspeção",
+        "d": "Inspecionar malha de captação, descidas aparentes, caixas de aterramento e equalização. Substituir elementos danificados e efetuar reaperto das conexões acessíveis.",
+        "p": 6
+      },
+      {
+        "id": "4.9",
+        "n": "4.9",
+        "nm": "SPDA – inspeção NBR 5419 (laudo)",
+        "d": "Efetuar inspeção do sistema conforme NBR 5419, com emissão de relatório/laudo técnico específico e testes de continuidade.",
+        "p": 12
+      }
+    ],
+    "5": [
+      {
+        "id": "5.1",
+        "n": "5.1",
+        "nm": "Telefonia fixa – manutenção",
+        "d": "Ativar ramais/troncos/funcionalidades, atualizar software/firmware, adequar cabeamento, reparar tomadas e plugues telefônicos, reparar placas analógicas/digitais, substituir patch cords, fio jumper, fio FI, módulos de proteção avariados e executar transferência de ramais/linhas.",
+        "p": 3
+      },
+      {
+        "id": "5.2",
+        "n": "5.2",
+        "nm": "Cabeamento estruturado (voz/dados) – inspeção",
+        "d": "Inspecionar integridade e funcionalidade da infraestrutura de cabeamento (UTP, fibras, cabos telefônicos), CPDs, salas de telecomunicações, DGs, patch panels, DIOs, organizadores, patch cords, racks e protetores de linha. Executar ajustes e substituir componentes danificados.",
+        "p": 3
+      },
+      {
+        "id": "5.3",
+        "n": "5.3",
+        "nm": "Cabeamento e telefonia – limpeza anual",
+        "d": "Efetuar limpeza interna e externa de aparelhos e central telefônica. Limpeza e organização de racks e DGs.",
+        "p": 12
+      }
+    ],
+    "6": [
+      {
+        "id": "6.1",
+        "n": "6.1",
+        "nm": "Bombas de abastecimento e drenagem",
+        "d": "Inspecionar bombas de abastecimento (recalque) de água, de drenagens de esgoto e de águas pluviais, comandos e acessórios. Efetuar testes de funcionamento com medições elétricas (tensão e corrente), verificar alternância das bombas reservas, executar reparos e ajustes.",
+        "p": 3
+      },
+      {
+        "id": "6.2",
+        "n": "6.2",
+        "nm": "Motorizações de portões e portas automatizadas",
+        "d": "Inspecionar motores, braços de acionamento, comandos, sensores e acessórios de portões e portas automatizadas. Efetuar testes de funcionamento, lubrificar componentes, executar reparos e ajustes.",
+        "p": 3
+      }
+    ],
+    "7": [
+      {
+        "id": "7.1",
+        "n": "7.1",
+        "nm": "GLP – centrais e tubulações",
+        "d": "Inspecionar centrais de distribuição, tubulações, registros, válvulas (abastecimento, regulagem, segurança, bloqueio, alívio), manômetros, mangueiras de pressão, pinturas e sinalizações. Verificar ventilação dos abrigos e condições de acesso. Substituir peças danificadas, reparar vedações e fixações.",
+        "p": 3
+      }
+    ]
+  },
+  "materiais_periodica": [
+    {
+      "c": "6.1.1.1",
+      "d": "Telha fibrocimento E=6mm",
+      "u": "m²",
+      "v": 56.75
+    },
+    {
+      "c": "6.1.1.2",
+      "d": "Telha fibrocimento E=8mm",
+      "u": "m²",
+      "v": 68.08
+    },
+    {
+      "c": "6.1.1.3",
+      "d": "Telha cerâmica",
+      "u": "m²",
+      "v": 168.14
+    },
+    {
+      "c": "6.1.1.4",
+      "d": "Telha metálica zincada E=0,65mm",
+      "u": "m²",
+      "v": 123.58
+    },
+    {
+      "c": "6.1.1.5",
+      "d": "Telha metálica sanduíche PU",
+      "u": "m²",
+      "v": 208.58
+    },
+    {
+      "c": "6.1.1.6",
+      "d": "Telha translúcida polipropileno E=1,1mm",
+      "u": "m²",
+      "v": 117.53
+    },
+    {
+      "c": "6.1.1.7",
+      "d": "Chapa policarbonato alveolar E=10mm",
+      "u": "m²",
+      "v": 325.63
+    },
+    {
+      "c": "6.1.1.8",
+      "d": "Cumeeira fibrocimento E=6mm",
+      "u": "m",
+      "v": 91
+    },
+    {
+      "c": "6.1.1.9",
+      "d": "Cumeeira fibrocimento E=8mm",
+      "u": "m",
+      "v": 130.14
+    },
+    {
+      "c": "6.1.1.10",
+      "d": "Cumeeira cerâmica",
+      "u": "m",
+      "v": 57.06
+    },
+    {
+      "c": "6.1.1.11",
+      "d": "Cumeeira galvanizada trapezoidal E=0,50mm",
+      "u": "m",
+      "v": 98.1
+    },
+    {
+      "c": "6.1.1.12",
+      "d": "Rufo/Contra rufo galvanizado desen.35cm",
+      "u": "m",
+      "v": 60.46
+    },
+    {
+      "c": "6.1.1.13",
+      "d": "Calha galvanizada desen.75cm",
+      "u": "m",
+      "v": 186.92
+    },
+    {
+      "c": "6.1.1.14",
+      "d": "Chapim galvanizado desen.55cm",
+      "u": "m",
+      "v": 120.14
+    },
+    {
+      "c": "6.1.2.1",
+      "d": "Argamassa polimérica",
+      "u": "m²",
+      "v": 39.54
+    },
+    {
+      "c": "6.1.2.2",
+      "d": "Manta asfáltica aluminizada E=3mm",
+      "u": "m²",
+      "v": 127.52
+    },
+    {
+      "c": "6.1.2.3",
+      "d": "Manta líquida acrílica 1kg/m²",
+      "u": "m²",
+      "v": 56.27
+    },
+    {
+      "c": "6.1.3.1",
+      "d": "Placa forro fibra mineral E=14mm NRC≥0,70",
+      "u": "m²",
+      "v": 102.29
+    },
+    {
+      "c": "6.1.4.1",
+      "d": "Braço articulado alumínio 400mm janela máximo-ar",
+      "u": "Un",
+      "v": 154.18
+    },
+    {
+      "c": "6.1.4.2",
+      "d": "Fecho alumínio janela máximo-ar 95mm",
+      "u": "Un",
+      "v": 50.61
+    },
+    {
+      "c": "6.1.4.3",
+      "d": "Chapa alumínio escovado E=1mm",
+      "u": "m²",
+      "v": 224.04
+    },
+    {
+      "c": "6.1.4.4",
+      "d": "Perfil L alumínio 5,6x3,0cm junta dilatação",
+      "u": "m",
+      "v": 384.66
+    },
+    {
+      "c": "6.1.4.5",
+      "d": "Perfil alumínio esquadrias E=1,5mm",
+      "u": "m",
+      "v": 97.94
+    },
+    {
+      "c": "6.1.5.1",
+      "d": "Mola reforçada 50mm porta enrolar até 4,50m",
+      "u": "Un",
+      "v": 287.96
+    },
+    {
+      "c": "6.1.6.1",
+      "d": "Fechadura reforçada cromada alavanca ≥11,5cm",
+      "u": "Un",
+      "v": 281.08
+    },
+    {
+      "c": "6.1.6.2",
+      "d": "Fechadura interna simples",
+      "u": "Un",
+      "v": 193.54
+    },
+    {
+      "c": "6.1.6.3",
+      "d": "Trinco latão 50mm",
+      "u": "Un",
+      "v": 35.02
+    },
+    {
+      "c": "6.1.6.4",
+      "d": "Cremona latão 110mm",
+      "u": "Un",
+      "v": 98.8
+    },
+    {
+      "c": "6.1.6.5",
+      "d": "Acionador basculante ferro 125mm",
+      "u": "Un",
+      "v": 30.1
+    },
+    {
+      "c": "6.1.6.6",
+      "d": "Dobradiça aço 3½\"x3\"",
+      "u": "Un",
+      "v": 49.38
+    },
+    {
+      "c": "6.1.6.7",
+      "d": "Roldana aço 2\"",
+      "u": "Un",
+      "v": 45.45
+    },
+    {
+      "c": "6.1.6.8",
+      "d": "Roldana nylon 2\"",
+      "u": "Un",
+      "v": 63.87
+    },
+    {
+      "c": "6.1.6.9",
+      "d": "Fechadura fecho tarjeta livre/ocupado",
+      "u": "Un",
+      "v": 124.26
+    },
+    {
+      "c": "6.1.6.10",
+      "d": "Fechadura porta divisória tubular",
+      "u": "Un",
+      "v": 203.38
+    },
+    {
+      "c": "6.1.6.11",
+      "d": "Fixador de porta aço cromado",
+      "u": "Un",
+      "v": 31.68
+    },
+    {
+      "c": "6.1.6.12",
+      "d": "Veda-porta",
+      "u": "Un",
+      "v": 318.68
+    },
+    {
+      "c": "6.1.6.13",
+      "d": "Mola hidráulica aérea porta madeira",
+      "u": "Un",
+      "v": 285.42
+    },
+    {
+      "c": "6.1.7.1",
+      "d": "Espelho cristal E=4mm",
+      "u": "m²",
+      "v": 401.1
+    },
+    {
+      "c": "6.1.7.2",
+      "d": "Fechadura porta vidro temperado 18x12x12cm",
+      "u": "Un",
+      "v": 154.18
+    },
+    {
+      "c": "6.1.7.3",
+      "d": "Puxador porta vidro temperado",
+      "u": "Par",
+      "v": 326.47
+    },
+    {
+      "c": "6.1.7.4",
+      "d": "Dobradiça porta vidro temperado 130x50mm",
+      "u": "Un",
+      "v": 86.94
+    },
+    {
+      "c": "6.1.7.5",
+      "d": "Mola piso porta vidro temperado",
+      "u": "Un",
+      "v": 1182.14
+    },
+    {
+      "c": "6.1.7.6",
+      "d": "Trinco porta vidro temperado",
+      "u": "Un",
+      "v": 49.11
+    },
+    {
+      "c": "6.1.8.1",
+      "d": "Massa corrida PVA",
+      "u": "KG",
+      "v": 4.72
+    },
+    {
+      "c": "6.1.8.2",
+      "d": "Massa acrílica",
+      "u": "KG",
+      "v": 8.48
+    },
+    {
+      "c": "6.1.8.3",
+      "d": "Tinta acrílica",
+      "u": "L",
+      "v": 22.15
+    },
+    {
+      "c": "6.1.8.4",
+      "d": "Tinta acrílica semi-brilho (barrado)",
+      "u": "L",
+      "v": 50.54
+    },
+    {
+      "c": "6.1.8.5",
+      "d": "Tinta esmalte sintético (barrado)",
+      "u": "L",
+      "v": 57.22
+    },
+    {
+      "c": "6.1.8.6",
+      "d": "Tinta esmalte sintético esquadria madeira",
+      "u": "L",
+      "v": 57.22
+    },
+    {
+      "c": "6.1.8.7",
+      "d": "Tinta esmalte sintético esquadria metálica",
+      "u": "L",
+      "v": 58.34
+    },
+    {
+      "c": "6.1.8.8",
+      "d": "Tinta resina acrílica",
+      "u": "L",
+      "v": 58.3
+    },
+    {
+      "c": "6.1.8.9",
+      "d": "Fundo anticorrosivo (zarcão)",
+      "u": "L",
+      "v": 64.91
+    },
+    {
+      "c": "6.1.8.10",
+      "d": "Verniz esquadria madeira",
+      "u": "L",
+      "v": 46.97
+    },
+    {
+      "c": "6.1.9.1",
+      "d": "Areia",
+      "u": "KG",
+      "v": 0.2
+    },
+    {
+      "c": "6.1.9.2",
+      "d": "Cimento",
+      "u": "KG",
+      "v": 0.94
+    },
+    {
+      "c": "6.1.9.3",
+      "d": "Argamassa ACIII",
+      "u": "KG",
+      "v": 2.59
+    },
+    {
+      "c": "6.1.9.4",
+      "d": "Rejunte",
+      "u": "KG",
+      "v": 4.95
+    },
+    {
+      "c": "6.1.9.5",
+      "d": "Fita adesiva antiderrapante",
+      "u": "m",
+      "v": 19.95
+    },
+    {
+      "c": "6.2.1.1",
+      "d": "Registro gaveta bruto 3/4\"",
+      "u": "Un",
+      "v": 69.98
+    },
+    {
+      "c": "6.2.1.2",
+      "d": "Registro gaveta bruto 1\"",
+      "u": "Un",
+      "v": 110.47
+    },
+    {
+      "c": "6.2.1.3",
+      "d": "Registro gaveta bruto 1¼\"",
+      "u": "Un",
+      "v": 150.56
+    },
+    {
+      "c": "6.2.1.4",
+      "d": "Registro gaveta bruto 1½\"",
+      "u": "Un",
+      "v": 190.07
+    },
+    {
+      "c": "6.2.1.5",
+      "d": "Registro gaveta bruto 2\"",
+      "u": "Un",
+      "v": 264.76
+    },
+    {
+      "c": "6.2.1.6",
+      "d": "Registro gaveta bruto 2½\"",
+      "u": "Un",
+      "v": 549.08
+    },
+    {
+      "c": "6.2.2.1",
+      "d": "Base registro pressão ½\"",
+      "u": "Un",
+      "v": 79.48
+    },
+    {
+      "c": "6.2.2.2",
+      "d": "Base registro pressão ¾\"",
+      "u": "Un",
+      "v": 71.26
+    },
+    {
+      "c": "6.2.3",
+      "d": "Acabamento cromado para registro",
+      "u": "Un",
+      "v": 41.98
+    },
+    {
+      "c": "6.2.4",
+      "d": "Válvula descarga 1½\"",
+      "u": "Un",
+      "v": 140.31
+    },
+    {
+      "c": "6.2.5",
+      "d": "Acabamento cromado anti-vandalismo válvula descarga",
+      "u": "Un",
+      "v": 346.17
+    },
+    {
+      "c": "6.2.6",
+      "d": "Acabamento metálico válvula descarga",
+      "u": "Un",
+      "v": 69
+    },
+    {
+      "c": "6.2.7",
+      "d": "Reparo válvula descarga 1¼\"-1½\"",
+      "u": "Un",
+      "v": 88.37
+    },
+    {
+      "c": "6.2.8",
+      "d": "Válvula descarga mictório anti-vandalismo 3/4\"",
+      "u": "Un",
+      "v": 982.31
+    },
+    {
+      "c": "6.2.9",
+      "d": "Válvula descarga eletrônica mictório 3/4\"",
+      "u": "Un",
+      "v": 2883.49
+    },
+    {
+      "c": "6.2.11",
+      "d": "Válvula escoamento cromada lavatório",
+      "u": "Un",
+      "v": 64.08
+    },
+    {
+      "c": "6.2.12",
+      "d": "Válvula escoamento cromada pia",
+      "u": "Un",
+      "v": 103.41
+    },
+    {
+      "c": "6.2.13",
+      "d": "Válvula escoamento cromada tanque",
+      "u": "Un",
+      "v": 130.26
+    },
+    {
+      "c": "6.2.14",
+      "d": "Torneira lavatório mesa cromada ½\"",
+      "u": "Un",
+      "v": 86.28
+    },
+    {
+      "c": "6.2.15",
+      "d": "Torneira pressão lavatório anti-vandalismo ½\"",
+      "u": "Un",
+      "v": 434.5
+    },
+    {
+      "c": "6.2.16",
+      "d": "Torneira pressão pia parede cromada ½\"",
+      "u": "Un",
+      "v": 86.8
+    },
+    {
+      "c": "6.2.17",
+      "d": "Torneira pressão tanque parede ½\"",
+      "u": "Un",
+      "v": 136.47
+    },
+    {
+      "c": "6.2.18",
+      "d": "Torneira jardim parede ½\"",
+      "u": "Un",
+      "v": 93.12
+    },
+    {
+      "c": "6.2.19",
+      "d": "Reparo para torneira",
+      "u": "Un",
+      "v": 57.25
+    },
+    {
+      "c": "6.2.20",
+      "d": "Ligação cromada flexível malha aço 40cm",
+      "u": "Un",
+      "v": 76.01
+    },
+    {
+      "c": "6.2.21",
+      "d": "Ducha higiênica manual registro ½\" 1,20m",
+      "u": "Un",
+      "v": 342.64
+    },
+    {
+      "c": "6.2.22",
+      "d": "Gatilho ducha higiênica manual",
+      "u": "Un",
+      "v": 123.68
+    },
+    {
+      "c": "6.2.23",
+      "d": "Kit reparo descarga caixa acoplada",
+      "u": "Un",
+      "v": 245.98
+    },
+    {
+      "c": "6.2.24",
+      "d": "Assento plástico vaso sanitário",
+      "u": "Un",
+      "v": 446.68
+    },
+    {
+      "c": "6.2.25",
+      "d": "Sifão PVC inteligente pia/lavatório",
+      "u": "Un",
+      "v": 12.66
+    },
+    {
+      "c": "6.2.26",
+      "d": "Tubo ligação bacia sanitária cromado DN38",
+      "u": "Un",
+      "v": 45.78
+    },
+    {
+      "c": "6.2.27.1",
+      "d": "Tubo PVC soldável água fria Ø20mm",
+      "u": "m",
+      "v": 4.68
+    },
+    {
+      "c": "6.2.27.2",
+      "d": "Tubo PVC soldável água fria Ø25mm",
+      "u": "m",
+      "v": 5.28
+    },
+    {
+      "c": "6.2.27.3",
+      "d": "Tubo PVC soldável água fria Ø32mm",
+      "u": "m",
+      "v": 11.4
+    },
+    {
+      "c": "6.2.27.4",
+      "d": "Tubo PVC soldável água fria Ø50mm",
+      "u": "m",
+      "v": 19.62
+    },
+    {
+      "c": "6.2.27.5",
+      "d": "Tubo PVC soldável água fria Ø60mm",
+      "u": "m",
+      "v": 32.28
+    },
+    {
+      "c": "6.2.29.1",
+      "d": "Tubo PVC esgoto/pluvial Ø40mm",
+      "u": "m",
+      "v": 8.49
+    },
+    {
+      "c": "6.2.29.2",
+      "d": "Tubo PVC esgoto/pluvial Ø50mm",
+      "u": "m",
+      "v": 14.02
+    },
+    {
+      "c": "6.2.29.3",
+      "d": "Tubo PVC esgoto/pluvial Ø75mm",
+      "u": "m",
+      "v": 18.4
+    },
+    {
+      "c": "6.2.29.4",
+      "d": "Tubo PVC esgoto/pluvial Ø100mm",
+      "u": "m",
+      "v": 19.44
+    },
+    {
+      "c": "6.2.31.1",
+      "d": "Tubo PVC reforçado esgoto Ø150mm",
+      "u": "m",
+      "v": 50.8
+    },
+    {
+      "c": "6.2.35.1",
+      "d": "Caixa sifonada PVC 100x100x50mm",
+      "u": "Un",
+      "v": 28.54
+    },
+    {
+      "c": "6.2.35.2",
+      "d": "Caixa sifonada PVC 150x185x75mm",
+      "u": "Un",
+      "v": 81.76
+    },
+    {
+      "c": "6.2.36",
+      "d": "Ralo seco cilíndrico",
+      "u": "Un",
+      "v": 22.97
+    },
+    {
+      "c": "6.2.37.1",
+      "d": "Ralo semi-esférico abacaxi 100mm",
+      "u": "Un",
+      "v": 21.98
+    },
+    {
+      "c": "6.2.37.2",
+      "d": "Ralo semi-esférico abacaxi 150mm",
+      "u": "Un",
+      "v": 51.64
+    },
+    {
+      "c": "6.2.38",
+      "d": "Grelha e porta grelha piso 15x15cm",
+      "u": "Un",
+      "v": 55.68
+    },
+    {
+      "c": "6.2.39.1",
+      "d": "Caixa d'água polietileno 500L",
+      "u": "Un",
+      "v": 368.72
+    },
+    {
+      "c": "6.2.39.2",
+      "d": "Caixa d'água polietileno 1000L",
+      "u": "Un",
+      "v": 609.7
+    },
+    {
+      "c": "6.2.40",
+      "d": "Torneira bóia alta pressão 3/4\" (DN20)",
+      "u": "Un",
+      "v": 54.5
+    },
+    {
+      "c": "6.2.41",
+      "d": "Torneira bóia alta pressão 1¼\" (DN32)",
+      "u": "Un",
+      "v": 127.07
+    },
+    {
+      "c": "6.2.42",
+      "d": "Chave bóia bombeamento",
+      "u": "Un",
+      "v": 65.19
+    },
+    {
+      "c": "6.3.2.1.1",
+      "d": "Disjuntor monopolar DIN 16A curva C 3kA",
+      "u": "Un",
+      "v": 11.89
+    },
+    {
+      "c": "6.3.2.1.2",
+      "d": "Disjuntor monopolar DIN 20A curva C 3kA",
+      "u": "Un",
+      "v": 13.35
+    },
+    {
+      "c": "6.3.2.1.3",
+      "d": "Disjuntor monopolar DIN 32A curva C 3kA",
+      "u": "Un",
+      "v": 14.51
+    },
+    {
+      "c": "6.3.2.2.1",
+      "d": "Disjuntor monopolar NEMA 15A 5kA",
+      "u": "Un",
+      "v": 33.61
+    },
+    {
+      "c": "6.3.2.2.2",
+      "d": "Disjuntor monopolar NEMA 20A 5kA",
+      "u": "Un",
+      "v": 33.61
+    },
+    {
+      "c": "6.3.2.3.1",
+      "d": "Disjuntor bipolar DIN 2x20A curva C 3kA",
+      "u": "Un",
+      "v": 51.11
+    },
+    {
+      "c": "6.3.2.3.2",
+      "d": "Disjuntor bipolar DIN 2x25A curva C 3kA",
+      "u": "Un",
+      "v": 54.84
+    },
+    {
+      "c": "6.3.2.3.3",
+      "d": "Disjuntor bipolar DIN 2x63A curva C 3kA",
+      "u": "Un",
+      "v": 57.11
+    },
+    {
+      "c": "6.3.2.5.1",
+      "d": "Disjuntor tripolar DIN 3x40A curva C 5kA",
+      "u": "Un",
+      "v": 58.92
+    },
+    {
+      "c": "6.3.2.5.2",
+      "d": "Disjuntor tripolar DIN 3x50A curva C 5kA",
+      "u": "Un",
+      "v": 66.49
+    },
+    {
+      "c": "6.3.2.5.3",
+      "d": "Disjuntor tripolar DIN 3x63A curva C 5kA",
+      "u": "Un",
+      "v": 58.92
+    },
+    {
+      "c": "6.3.2.6.1",
+      "d": "Disjuntor tripolar DIN 3x80A 10kA",
+      "u": "Un",
+      "v": 229.8
+    },
+    {
+      "c": "6.3.2.6.2",
+      "d": "Disjuntor tripolar DIN 3x100A 10kA",
+      "u": "Un",
+      "v": 231.74
+    },
+    {
+      "c": "6.3.2.6.3",
+      "d": "Disjuntor tripolar DIN 3x125A 10kA",
+      "u": "Un",
+      "v": 361.23
+    },
+    {
+      "c": "6.3.2.11.1",
+      "d": "IDR bipolar 2x40A 30mA",
+      "u": "Un",
+      "v": 227.52
+    },
+    {
+      "c": "6.3.2.12.1",
+      "d": "IDR tetrapolar 4x40A 30mA",
+      "u": "Un",
+      "v": 273.05
+    },
+    {
+      "c": "6.3.2.12.2",
+      "d": "IDR tetrapolar 4x63A 30mA",
+      "u": "Un",
+      "v": 299.26
+    },
+    {
+      "c": "6.3.2.12.3",
+      "d": "IDR tetrapolar 4x80A 30mA",
+      "u": "Un",
+      "v": 420.51
+    },
+    {
+      "c": "6.3.2.15",
+      "d": "DPS trilho DIN 40kA 275V classe 2",
+      "u": "Un",
+      "v": 43.57
+    },
+    {
+      "c": "6.3.2.16",
+      "d": "DPS trilho DIN 25kA 275V classe 1",
+      "u": "Un",
+      "v": 155.2
+    },
+    {
+      "c": "6.3.3.1.1",
+      "d": "Cabo cobre flexível 450/750V #2,5mm²",
+      "u": "m",
+      "v": 3.46
+    },
+    {
+      "c": "6.3.3.1.2",
+      "d": "Cabo cobre flexível 450/750V #4,0mm²",
+      "u": "m",
+      "v": 5.69
+    },
+    {
+      "c": "6.3.3.1.3",
+      "d": "Cabo cobre flexível 450/750V #6,0mm²",
+      "u": "m",
+      "v": 6.52
+    },
+    {
+      "c": "6.3.3.1.4",
+      "d": "Cabo cobre flexível 450/750V #10mm²",
+      "u": "m",
+      "v": 11.68
+    },
+    {
+      "c": "6.3.3.1.5",
+      "d": "Cabo cobre flexível 450/750V #16mm²",
+      "u": "m",
+      "v": 17.41
+    },
+    {
+      "c": "6.3.3.2.1",
+      "d": "Cabo cobre flexível 1kV 90°C #4,0mm²",
+      "u": "m",
+      "v": 5.25
+    },
+    {
+      "c": "6.3.3.2.2",
+      "d": "Cabo cobre flexível 1kV 90°C #16mm²",
+      "u": "m",
+      "v": 19.99
+    },
+    {
+      "c": "6.3.3.2.3",
+      "d": "Cabo cobre flexível 1kV 90°C #25mm²",
+      "u": "m",
+      "v": 32.4
+    },
+    {
+      "c": "6.3.4.1.1",
+      "d": "Eletroduto aço carbono 3/4\"",
+      "u": "m",
+      "v": 20.74
+    },
+    {
+      "c": "6.3.4.1.2",
+      "d": "Eletroduto aço carbono 1\"",
+      "u": "m",
+      "v": 29.82
+    },
+    {
+      "c": "6.3.4.5.1",
+      "d": "Eletroduto PVC rígido rosqueável 3/4\"",
+      "u": "m",
+      "v": 6.75
+    },
+    {
+      "c": "6.3.4.5.2",
+      "d": "Eletroduto PVC rígido rosqueável 1\"",
+      "u": "m",
+      "v": 10.55
+    },
+    {
+      "c": "6.3.4.14.1",
+      "d": "Canaleta PVC antichama 20x10x2100mm",
+      "u": "Un",
+      "v": 10.5
+    },
+    {
+      "c": "6.3.5.1",
+      "d": "Interruptor 1 tecla simples 10A/250V",
+      "u": "Un",
+      "v": 8.09
+    },
+    {
+      "c": "6.3.5.2",
+      "d": "Interruptor 2 teclas simples 10A/250V",
+      "u": "Un",
+      "v": 16.63
+    },
+    {
+      "c": "6.3.5.3",
+      "d": "Interruptor 3 teclas simples 10A/250V",
+      "u": "Un",
+      "v": 19.88
+    },
+    {
+      "c": "6.3.5.4",
+      "d": "Interruptor bipolar 10A/250V",
+      "u": "Un",
+      "v": 22.87
+    },
+    {
+      "c": "6.3.5.5",
+      "d": "Interruptor bipolar 20A/250V",
+      "u": "Un",
+      "v": 48.01
+    },
+    {
+      "c": "6.3.5.8",
+      "d": "Tomada padrão brasileiro 20A NBR14136",
+      "u": "Un",
+      "v": 18.28
+    },
+    {
+      "c": "6.3.5.9",
+      "d": "Tomada RJ45 categoria 5E",
+      "u": "Un",
+      "v": 13.64
+    },
+    {
+      "c": "6.3.5.10",
+      "d": "Tomada RJ45 categoria 6",
+      "u": "Un",
+      "v": 39.03
+    },
+    {
+      "c": "6.3.5.11",
+      "d": "Tomada telefonia RJ11",
+      "u": "Un",
+      "v": 23.26
+    },
+    {
+      "c": "6.3.5.23",
+      "d": "Caixa 2x4\" embutir PVC antichamas",
+      "u": "Un",
+      "v": 3.59
+    },
+    {
+      "c": "6.3.5.24",
+      "d": "Caixa 4x4\" embutir PVC antichamas",
+      "u": "Un",
+      "v": 7.14
+    },
+    {
+      "c": "6.3.6.1",
+      "d": "Luminária arandela uso externo IP66 E27",
+      "u": "Un",
+      "v": 239.54
+    },
+    {
+      "c": "6.3.6.2",
+      "d": "Projetor LED 50W IP65 bivolt",
+      "u": "Un",
+      "v": 42.1
+    },
+    {
+      "c": "6.3.6.3",
+      "d": "Projetor LED 100W IP65 bivolt",
+      "u": "Un",
+      "v": 57.22
+    },
+    {
+      "c": "6.3.6.4",
+      "d": "Projetor LED 200W IP65 bivolt",
+      "u": "Un",
+      "v": 168.39
+    },
+    {
+      "c": "6.3.7.4",
+      "d": "Lâmpada LED T5 11W base G5",
+      "u": "Un",
+      "v": 16.88
+    },
+    {
+      "c": "6.3.7.5",
+      "d": "Lâmpada LED T5 20W base G5",
+      "u": "Un",
+      "v": 36.39
+    },
+    {
+      "c": "6.3.7.6",
+      "d": "Lâmpada LED T8 11W base G13",
+      "u": "Un",
+      "v": 19.95
+    },
+    {
+      "c": "6.3.7.7",
+      "d": "Lâmpada LED T8 20W base G13",
+      "u": "Un",
+      "v": 16.1
+    },
+    {
+      "c": "6.3.7.8",
+      "d": "Lâmpada bulbo LED 7W E27",
+      "u": "Un",
+      "v": 6.08
+    },
+    {
+      "c": "6.3.7.9",
+      "d": "Lâmpada bulbo LED 11W E27",
+      "u": "Un",
+      "v": 6.57
+    },
+    {
+      "c": "6.3.7.10",
+      "d": "Lâmpada ultra bulbo LED 40W E27",
+      "u": "Un",
+      "v": 43.16
+    },
+    {
+      "c": "6.3.7.11",
+      "d": "Lâmpada ultra bulbo LED 80W E40",
+      "u": "Un",
+      "v": 212.68
+    },
+    {
+      "c": "6.3.7.12",
+      "d": "Lâmpada LED tubular HO 240cm T8 40W",
+      "u": "Un",
+      "v": 61.04
+    },
+    {
+      "c": "6.3.7.16",
+      "d": "Reator driver LED 14-18W bivolt",
+      "u": "Un",
+      "v": 20.74
+    },
+    {
+      "c": "6.3.7.17",
+      "d": "Reator driver LED 19-24W bivolt",
+      "u": "Un",
+      "v": 32.17
+    },
+    {
+      "c": "6.3.7.18",
+      "d": "Reator driver LED 25-36W bivolt",
+      "u": "Un",
+      "v": 36.76
+    },
+    {
+      "c": "6.3.7.19",
+      "d": "Relé fotoelétrico 1000W bivolt",
+      "u": "Un",
+      "v": 44.03
+    },
+    {
+      "c": "6.3.7.22",
+      "d": "Sensor presença bivolt 360° uso interno",
+      "u": "Un",
+      "v": 53.08
+    },
+    {
+      "c": "6.4.3.1",
+      "d": "Extintor CO₂ 6kg",
+      "u": "Un",
+      "v": 661.24
+    },
+    {
+      "c": "6.4.3.2",
+      "d": "Extintor ABC 8kg",
+      "u": "Un",
+      "v": 289.33
+    },
+    {
+      "c": "6.4.3.3",
+      "d": "Extintor sobre rodas BC 50kg",
+      "u": "Un",
+      "v": 3070.76
+    },
+    {
+      "c": "6.4.3.4",
+      "d": "Abrigo metálico extintor ≥10kg vermelho",
+      "u": "Un",
+      "v": 254.57
+    },
+    {
+      "c": "6.4.3.5",
+      "d": "Suporte piso para extintor",
+      "u": "Un",
+      "v": 49.67
+    },
+    {
+      "c": "6.4.3.6",
+      "d": "Suporte parede para extintor",
+      "u": "Un",
+      "v": 8.58
+    },
+    {
+      "c": "6.4.4.1",
+      "d": "Mangueira incêndio NBR11861 tipo2 1½\" 15m",
+      "u": "Un",
+      "v": 638.71
+    },
+    {
+      "c": "6.4.4.2",
+      "d": "Mangueira incêndio NBR11861 tipo2 1½\" 20m",
+      "u": "Un",
+      "v": 761.55
+    },
+    {
+      "c": "6.4.4.3",
+      "d": "Mangueira incêndio NBR11861 tipo2 2½\" 15m",
+      "u": "Un",
+      "v": 856.6
+    },
+    {
+      "c": "6.4.4.4",
+      "d": "Mangueira incêndio NBR11861 tipo2 2½\" 20m",
+      "u": "Un",
+      "v": 1078.78
+    },
+    {
+      "c": "6.4.4.5",
+      "d": "Adaptador Storz 2½\"x1½\" latão",
+      "u": "Un",
+      "v": 65.99
+    },
+    {
+      "c": "6.4.4.6",
+      "d": "Adaptador Storz 2½\"x2½\" latão",
+      "u": "Un",
+      "v": 84.32
+    },
+    {
+      "c": "6.4.4.7",
+      "d": "Esguicho tronco cônico 1½\"",
+      "u": "Un",
+      "v": 74.98
+    },
+    {
+      "c": "6.4.4.8",
+      "d": "Esguicho tronco cônico 2½\"",
+      "u": "Un",
+      "v": 124.65
+    },
+    {
+      "c": "6.4.4.9",
+      "d": "Chave conexão engate Storz dupla",
+      "u": "Un",
+      "v": 18.32
+    },
+    {
+      "c": "6.4.4.10",
+      "d": "Tampão cego hidrante passeio 2½\"",
+      "u": "Un",
+      "v": 140.6
+    },
+    {
+      "c": "6.4.4.11",
+      "d": "Registro globo angular hidrante 45° 2½\"",
+      "u": "Un",
+      "v": 192.47
+    },
+    {
+      "c": "6.4.4.14",
+      "d": "Pressostato IP-30",
+      "u": "Un",
+      "v": 507.01
+    },
+    {
+      "c": "6.4.4.15",
+      "d": "Manômetro de processo",
+      "u": "Un",
+      "v": 341.86
+    },
+    {
+      "c": "6.4.5.1",
+      "d": "Acionador manual endereçável alarme incêndio",
+      "u": "Un",
+      "v": 163.81
+    },
+    {
+      "c": "6.4.5.2",
+      "d": "Avisador audiovisual 100dB endereçável",
+      "u": "Un",
+      "v": 252.1
+    },
+    {
+      "c": "6.4.5.3",
+      "d": "Sirene alta potência 24Vcc 120dB",
+      "u": "Un",
+      "v": 104.87
+    },
+    {
+      "c": "6.4.6.1",
+      "d": "Placa sinalização E5 extintor 30x30cm fotolum.",
+      "u": "Un",
+      "v": 51.31
+    },
+    {
+      "c": "6.4.6.2",
+      "d": "Placa sinalização E8 hidrante 30x30cm fotolum.",
+      "u": "Un",
+      "v": 51.31
+    },
+    {
+      "c": "6.4.6.3",
+      "d": "Placa sinalização S1 saída emergência direita 40x20cm",
+      "u": "Un",
+      "v": 42.01
+    },
+    {
+      "c": "6.4.6.4",
+      "d": "Placa sinalização S2 saída emergência esquerda 40x20cm",
+      "u": "Un",
+      "v": 42.01
+    },
+    {
+      "c": "6.4.6.10",
+      "d": "Placa sinalização S12 saída emergência 40x20cm",
+      "u": "Un",
+      "v": 42.01
+    },
+    {
+      "c": "6.4.6.11",
+      "d": "Placa sinalização P1 proibido fumar 30x30cm",
+      "u": "Un",
+      "v": 51.31
+    },
+    {
+      "c": "6.4.6.13",
+      "d": "Placa sinalização M4 porta corta-fogo fechada",
+      "u": "Un",
+      "v": 32.26
+    },
+    {
+      "c": "6.4.6.14",
+      "d": "Placa sinalização A5 risco choque elétrico",
+      "u": "Un",
+      "v": 51.31
+    },
+    {
+      "c": "6.4.7.1",
+      "d": "Dobradiça porta corta-fogo",
+      "u": "Un",
+      "v": 66.27
+    },
+    {
+      "c": "6.4.7.2",
+      "d": "Fechadura porta corta-fogo",
+      "u": "Un",
+      "v": 308.99
+    },
+    {
+      "c": "6.4.8.2",
+      "d": "Luminária emergência LED 24V",
+      "u": "Un",
+      "v": 52.87
+    },
+    {
+      "c": "6.4.8.3",
+      "d": "Luminária emergência bloco autônomo",
+      "u": "Un",
+      "v": 32.21
+    },
+    {
+      "c": "6.4.9.1",
+      "d": "Bateria chumbo ácido 12V/2,3Ah",
+      "u": "Un",
+      "v": 100.48
+    },
+    {
+      "c": "6.4.9.2",
+      "d": "Bateria chumbo ácido 12V/7Ah",
+      "u": "Un",
+      "v": 122.57
+    },
+    {
+      "c": "6.4.9.3",
+      "d": "Bateria chumbo ácido 12V/9Ah",
+      "u": "Un",
+      "v": 216.07
+    },
+    {
+      "c": "6.4.9.4",
+      "d": "Bateria chumbo ácido 12V/18Ah",
+      "u": "Un",
+      "v": 301.86
+    },
+    {
+      "c": "6.4.9.5",
+      "d": "Bateria chumbo ácido 12V/45Ah",
+      "u": "Un",
+      "v": 949.84
+    },
+    {
+      "c": "6.4.9.6",
+      "d": "Bateria chumbo ácido 6V/4,5Ah",
+      "u": "Un",
+      "v": 77.27
+    },
+    {
+      "c": "6.5.1.1",
+      "d": "Bomba centrífuga trifásica 1,5CV 220V 9900L/h",
+      "u": "Un",
+      "v": 5168.83
+    },
+    {
+      "c": "6.5.1.2",
+      "d": "Bomba centrífuga trifásica 3CV 220V 21000L/h",
+      "u": "Un",
+      "v": 5437.85
+    },
+    {
+      "c": "6.5.1.3",
+      "d": "Bomba centrífuga trifásica 5CV 220V 14600L/h",
+      "u": "Un",
+      "v": 6856.39
+    },
+    {
+      "c": "6.5.1.4",
+      "d": "Bomba centrífuga trifásica 7,5CV 220V 35000L/h",
+      "u": "Un",
+      "v": 8188.54
+    },
+    {
+      "c": "6.5.1.5",
+      "d": "Bomba submersível trifásica 0,5CV águas servidas",
+      "u": "Un",
+      "v": 2773.78
+    },
+    {
+      "c": "6.6.1",
+      "d": "Kit automatizador portão deslizante",
+      "u": "Un",
+      "v": 955.42
+    },
+    {
+      "c": "6.6.2",
+      "d": "Kit automatizador portão pivotante",
+      "u": "Un",
+      "v": 3185.1
+    },
+    {
+      "c": "6.6.3",
+      "d": "Placa motor portão universal bivolt",
+      "u": "Un",
+      "v": 170.54
+    },
+    {
+      "c": "6.6.4",
+      "d": "Cremalheira portão deslizante aço galvanizado",
+      "u": "m",
+      "v": 104.93
+    },
+    {
+      "c": "6.7.1",
+      "d": "Regulador pressão 1° estágio 9kg/h c/ manômetro",
+      "u": "Un",
+      "v": 390.92
+    },
+    {
+      "c": "6.7.2",
+      "d": "Regulador pressão 2° estágio 9kg/h",
+      "u": "Un",
+      "v": 183.93
+    },
+    {
+      "c": "6.7.3",
+      "d": "Mangote flexível pig tail ½\"",
+      "u": "Un",
+      "v": 41.22
+    },
+    {
+      "c": "6.7.4",
+      "d": "Mangueira flexível ligação aparelhos 80cm ½\"",
+      "u": "Un",
+      "v": 25.19
+    },
+    {
+      "c": "5.3.1.1",
+      "d": "Manutenção/recarga extintor AP 10L",
+      "u": "Un",
+      "v": 34.77
+    },
+    {
+      "c": "5.3.1.3",
+      "d": "Manutenção/recarga extintor CO₂ 4kg",
+      "u": "Un",
+      "v": 74.51
+    },
+    {
+      "c": "5.3.1.4",
+      "d": "Manutenção/recarga extintor CO₂ 6kg",
+      "u": "Un",
+      "v": 105.55
+    },
+    {
+      "c": "5.3.1.6",
+      "d": "Manutenção/recarga extintor PQS BC 4kg",
+      "u": "Un",
+      "v": 37.25
+    },
+    {
+      "c": "5.3.1.8",
+      "d": "Manutenção/recarga extintor PQS BC 6kg",
+      "u": "Un",
+      "v": 43.46
+    },
+    {
+      "c": "5.3.1.12",
+      "d": "Manutenção/recarga extintor ABC 4kg",
+      "u": "Un",
+      "v": 48.71
+    },
+    {
+      "c": "5.3.1.14",
+      "d": "Manutenção/recarga extintor ABC 6kg",
+      "u": "Un",
+      "v": 73.07
+    },
+    {
+      "c": "5.3.1.15",
+      "d": "Manutenção/recarga extintor ABC 8kg",
+      "u": "Un",
+      "v": 91.34
+    },
+    {
+      "c": "5.3.2.1",
+      "d": "Manutenção/teste mangueira incêndio 15m",
+      "u": "Un",
+      "v": 24.84
+    },
+    {
+      "c": "5.3.2.2",
+      "d": "Manutenção/teste mangueira incêndio 20m",
+      "u": "Un",
+      "v": 24.84
+    },
+    {
+      "c": "4.9",
+      "d": "Diária técnica ICD",
+      "u": "Diária",
+      "v": 380.61
+    },
+    {
+      "c": "7.1",
+      "d": "Transporte manutenções periódicas",
+      "u": "km",
+      "v": 2.93
+    },
+    {
+      "c": "7.2",
+      "d": "Transporte atendimentos periódicos complementares",
+      "u": "km",
+      "v": 2.72
+    },
+    {
+      "c": "7.3",
+      "d": "Transporte atendimentos corretivos emergenciais",
+      "u": "km",
+      "v": 2.73
+    },
+    {
+      "c": "7.4",
+      "d": "Transporte intervenções técnicas programadas",
+      "u": "km",
+      "v": 6.46
+    }
+  ],
+  "materiais_programada": [
+    {
+      "c": "4.1.1.1",
+      "d": "Retirada telha fibrocimento, kalhetão e metálica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.1.2",
+      "d": "Retirada telha cerâmica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.1.3",
+      "d": "Retirada chapa policarbonato",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.1.4",
+      "d": "Retirada rufo e chapim",
+      "u": "M"
+    },
+    {
+      "c": "4.1.1.5",
+      "d": "Retirada cumeeira e calha",
+      "u": "M"
+    },
+    {
+      "c": "4.1.1.6",
+      "d": "Retirada engradamento madeira telha cerâmica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.1.7",
+      "d": "Retirada engradamento madeira telha fibrocimento",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.1.8",
+      "d": "Retirada ripa em madeira",
+      "u": "M"
+    },
+    {
+      "c": "4.1.2.1",
+      "d": "Retirada forro de madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.2.2",
+      "d": "Demolição forro de gesso",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.1",
+      "d": "Retirada revestimento melamínico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.2",
+      "d": "Demolição revestimento pedra (granito/mármore/ardósia)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.3",
+      "d": "Demolição revestimento cerâmico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.4",
+      "d": "Demolição de alvenaria",
+      "u": "M3"
+    },
+    {
+      "c": "4.1.3.5",
+      "d": "Demolição reboco/emboço",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.6",
+      "d": "Retirada manta asfáltica em reservatório de concreto",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.1",
+      "d": "Retirada esquadria metálica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.2",
+      "d": "Retirada esquadria em madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.3",
+      "d": "Retirada porta em madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.4",
+      "d": "Retirada divisória",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.5",
+      "d": "Retirada vidro em esquadria",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.1",
+      "d": "Retirada piso bloquete/intertravado",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.2",
+      "d": "Retirada piso taco de madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.3",
+      "d": "Demolição piso cerâmico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.4",
+      "d": "Demolição piso vinílico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.5",
+      "d": "Demolição piso em pedras",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.6",
+      "d": "Demolição contrapiso",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.7",
+      "d": "Demolição piso em concreto",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.6.1",
+      "d": "Retirada vaso sanitário",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.6.2",
+      "d": "Retirada mictório",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.6.3",
+      "d": "Retirada lavatório/tanque",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.7.1",
+      "d": "Telha fibrocimento E=6mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.2",
+      "d": "Telha fibrocimento E=8mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.3",
+      "d": "Telha fibrocimento kalhetão E=8mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.4",
+      "d": "Telha cerâmica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.5",
+      "d": "Telha metálica zincada E=0,65mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.6",
+      "d": "Telha metálica sanduíche PU",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.7",
+      "d": "Telha translúcida polipropileno E=1,1mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.8",
+      "d": "Chapa policarbonato alveolar E=10mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.9",
+      "d": "Cumeeira fibrocimento E=6mm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.10",
+      "d": "Cumeeira fibrocimento E=8mm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.13",
+      "d": "Rufo em fibrocimento E=6mm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.14",
+      "d": "Rufo/contra rufo galvanizado desen.35cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.15",
+      "d": "Calha galvanizada desen.75cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.16",
+      "d": "Chapim galvanizado desen.55cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.18",
+      "d": "Engradamento madeira telha cerâmica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.19",
+      "d": "Engradamento madeira telha fibrocimento",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.20",
+      "d": "Engradamento metálico aço estrutural",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.21",
+      "d": "Ripa de madeira para telha cerâmica",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.22",
+      "d": "Lona impermeável antichama anti-mofo toldo",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.7.24",
+      "d": "Espícula anti-pombo policarbonato",
+      "u": "M"
+    },
+    {
+      "c": "4.1.8.1",
+      "d": "Impermeabilização argamassa polimérica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.8.2",
+      "d": "Impermeabilização manta asfáltica aluminizada E=3mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.8.3",
+      "d": "Impermeabilização manta asfáltica armada E=4mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.8.4",
+      "d": "Impermeabilização manta líquida acrílica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.8.5",
+      "d": "Camada regularização sob impermeabilização E=3cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.8.6",
+      "d": "Camada proteção mecânica sobre impermeabilização E=3cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.8.8",
+      "d": "Manta térmica telhado 2 faces refletividade ≥90%",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.9.1",
+      "d": "Forro gesso acartonado",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.9.2",
+      "d": "Forro gesso em placa 60x60cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.9.3",
+      "d": "Forro régua madeira angelim L=10cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.9.4",
+      "d": "Placa forro fibra mineral E=14mm NRC≥0,70",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.1",
+      "d": "Alvenaria tijolo cerâmico furado E=9cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.2",
+      "d": "Alvenaria tijolo cerâmico furado E=14cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.3",
+      "d": "Alvenaria bloco concreto E=14cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.4",
+      "d": "Execução chapisco",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.6",
+      "d": "Execução reboco",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.7",
+      "d": "Revestimento cerâmico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.8",
+      "d": "Revestimento granito E=2cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.10",
+      "d": "Revestimento laminado decorativo alta pressão",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.12",
+      "d": "Parede gesso dry-wall tipo ST (seco)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.13",
+      "d": "Parede gesso dry-wall tipo RU (úmido)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.14",
+      "d": "Divisória antichama E=35mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.15",
+      "d": "Porta completa divisória painel antichama c/ fechadura",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.10.16",
+      "d": "Bancada granito incl. testeira e rodabanca",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.19",
+      "d": "Tratamento trinca alvenaria c/ tela galvanizada",
+      "u": "M"
+    },
+    {
+      "c": "4.1.11.1",
+      "d": "Porta veneziana em alumínio",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.11.2",
+      "d": "Janela máximo-ar em alumínio",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.11.3",
+      "d": "Suporte alumínio ar condicionado janela",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.11.4",
+      "d": "Braço articulado alumínio janela máximo-ar",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.11.9",
+      "d": "Brise microperfurado 60° inclusive porta painel",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.12.1",
+      "d": "Grade proteção ferro 15x30cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.12.4",
+      "d": "Guarda-corpo metálico aço pintado H=1,10m",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.5",
+      "d": "Corrimão aço pintado 1½\"",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.6",
+      "d": "Guarda-corpo inox sem corrimão H=110cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.7",
+      "d": "Corrimão inox",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.8",
+      "d": "Escada áreas internas",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.9",
+      "d": "Escada marinheiro externa com gaiola",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.10",
+      "d": "Alçapão metálico 65x65cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.12.12",
+      "d": "Tampa metálica chapa xadrez galvanizada E=6mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.13.1",
+      "d": "Porta sólida 82x210/80x210cm com marco, alizares e ferragens",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.13.2.1",
+      "d": "Porta prancheta 60x210cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.13.2.2",
+      "d": "Porta prancheta 70x210cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.13.2.3",
+      "d": "Porta prancheta 80x210cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.13.2.4",
+      "d": "Porta prancheta 90x210cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.13.2.6",
+      "d": "Porta MDF fórmica c/ fecho livre/ocupado",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.13.2.7",
+      "d": "Alizar madeira L=7cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.13.2.8",
+      "d": "Marco madeira ajustável L=14-18cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.14.1",
+      "d": "Fechadura reforçada cromada",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.14.2",
+      "d": "Fechadura interna simples",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.14.3",
+      "d": "Trinco latão 50mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.14.6",
+      "d": "Dobradiça aço",
+      "u": "CJ"
+    },
+    {
+      "c": "4.1.14.7",
+      "d": "Trilho aço",
+      "u": "M"
+    },
+    {
+      "c": "4.1.14.8",
+      "d": "Guia aço",
+      "u": "M"
+    },
+    {
+      "c": "4.1.14.9",
+      "d": "Roldana aço 2\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.14.13",
+      "d": "Veda-porta",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.14.14",
+      "d": "Mola hidráulica aérea porta madeira",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.15.1",
+      "d": "Aplicação fundo preparador",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.2",
+      "d": "Aplicação selador acrílico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.3",
+      "d": "Emassamento base PVA (massa corrida)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.4",
+      "d": "Emassamento base acrílica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.5",
+      "d": "Textura acrílica tipo grafiato",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.6",
+      "d": "Pintura interna acrílica (alvenaria)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.7",
+      "d": "Pintura interna acrílica (teto)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.8",
+      "d": "Pintura externa acrílica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.11",
+      "d": "Pintura esmalte sintético esquadria madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.12",
+      "d": "Pintura esmalte sintético esquadria metálica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.13",
+      "d": "Fundo anticorrosivo superfície metálica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.14",
+      "d": "Verniz esquadria madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.1",
+      "d": "Contrapiso E=3cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.2",
+      "d": "Piso cimentado natado E=3cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.3",
+      "d": "Piso concreto FCK≥15MPA E=10cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.7",
+      "d": "Piso elevado monolítico massa autonivelante",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.8",
+      "d": "Piso cerâmico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.9",
+      "d": "Piso porcelanato",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.11",
+      "d": "Piso granito E=2cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.16",
+      "d": "Piso vinílico E=2mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.17",
+      "d": "Piso vinílico réguas padrão amadeirado",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.22",
+      "d": "Rodapé madeira H=7cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.23",
+      "d": "Rodapé cerâmica H=7cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.24",
+      "d": "Rodapé porcelanato H=10cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.28",
+      "d": "Soleira granito",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.33",
+      "d": "Raspação, calafetação e sinteco piso madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.17.1",
+      "d": "Hidrojateamento",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.17.4",
+      "d": "Tapume compensado resinado E=14mm H=2,20m",
+      "u": "M2"
+    },
+    {
+      "c": "4.2.1.1",
+      "d": "Registro gaveta bruto 3/4\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.1.2",
+      "d": "Registro gaveta bruto 1\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.1.3",
+      "d": "Registro gaveta bruto 1¼\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.1.4",
+      "d": "Registro gaveta bruto 1½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.4",
+      "d": "Válvula descarga 1½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.8",
+      "d": "Válvula descarga mictório anti-vandalismo 3/4\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.11",
+      "d": "Válvula escoamento cromada lavatório",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.14",
+      "d": "Torneira lavatório mesa cromada ½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.15",
+      "d": "Torneira pressão lavatório anti-vandalismo ½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.16",
+      "d": "Torneira pressão pia parede cromada ½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.21",
+      "d": "Mictório c/ sifão integrado",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.22",
+      "d": "Bacia sanitária sifonada convencional",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.23",
+      "d": "Bacia sanitária para caixa acoplada",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.24",
+      "d": "Bacia sanitária deficiente físico",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.26",
+      "d": "Caixa acoplada à bacia sanitária",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.27",
+      "d": "Lavatório louça sem coluna",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.28",
+      "d": "Lavatório com coluna suspensa",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.30",
+      "d": "Tanque cerâmico com coluna",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.31",
+      "d": "Ducha higiênica manual registro ½\" 1,20m",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.33",
+      "d": "Kit reparo descarga caixa acoplada",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.37.1",
+      "d": "Tubo PVC soldável água fria Ø20mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.37.2",
+      "d": "Tubo PVC soldável água fria Ø25mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.37.3",
+      "d": "Tubo PVC soldável água fria Ø32mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.37.4",
+      "d": "Tubo PVC soldável água fria Ø50mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.38.1",
+      "d": "Tubo PVC esgoto/pluvial Ø40mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.38.2",
+      "d": "Tubo PVC esgoto/pluvial Ø50mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.38.3",
+      "d": "Tubo PVC esgoto/pluvial Ø75mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.38.4",
+      "d": "Tubo PVC esgoto/pluvial Ø100mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.46.1",
+      "d": "Caixa d'água polietileno 500L",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.46.2",
+      "d": "Caixa d'água polietileno 1000L",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.52",
+      "d": "Caixa inspeção esgoto 60x60 ferro fundido",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.7",
+      "d": "No-Break 1000-1200VA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.10.1",
+      "d": "Transformador óleo 150KVA trifásico 13,8/0,22kV",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.10.2",
+      "d": "Transformador óleo 300KVA trifásico 13,8/0,22kV",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.1.1",
+      "d": "Disjuntor monopolar DIN 16A curva C 3kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.1.2",
+      "d": "Disjuntor monopolar DIN 20A curva C 3kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.3.1",
+      "d": "Disjuntor bipolar DIN 2x20A curva C 3kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.5.1",
+      "d": "Disjuntor tripolar DIN 3x40A curva C 5kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.6.1",
+      "d": "Disjuntor tripolar DIN 3x80A 10kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.6.2",
+      "d": "Disjuntor tripolar DIN 3x100A 10kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.6.3",
+      "d": "Disjuntor tripolar DIN 3x125A 10kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.7.1",
+      "d": "Disjuntor tripolar caixa moldada 3x160A 65kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.21",
+      "d": "QDC sobrepor trifásico 44 pos. monop. 100A",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.22",
+      "d": "QDC sobrepor trifásico 70 pos. monop. 225A",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.4.1.1",
+      "d": "Cabo cobre flexível 450/750V #2,5mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.2",
+      "d": "Cabo cobre flexível 450/750V #4,0mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.3",
+      "d": "Cabo cobre flexível 450/750V #6,0mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.4",
+      "d": "Cabo cobre flexível 450/750V #10mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.5",
+      "d": "Cabo cobre flexível 450/750V #16mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.1.1",
+      "d": "Eletroduto aço carbono 3/4\" c/ acessórios",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.1.2",
+      "d": "Eletroduto aço carbono 1\" c/ acessórios",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.3.1",
+      "d": "Eletroduto PVC rígido rosqueável 3/4\"",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.3.2",
+      "d": "Eletroduto PVC rígido rosqueável 1\"",
+      "u": "M"
+    },
+    {
+      "c": "4.3.6.1",
+      "d": "Interruptor 1 tecla simples 10A/250V",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.6.8",
+      "d": "Tomada padrão brasileiro 20A NBR14136",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.1.1",
+      "d": "Luminária sobrepor 2 lâmpadas T8 60cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.1.2",
+      "d": "Luminária sobrepor 2 lâmpadas T8 120cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.2.2",
+      "d": "Luminária embutir 2 lâmpadas T8 120cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.7",
+      "d": "Projetor LED 50W IP65",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.8",
+      "d": "Projetor LED 100W IP65",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.9",
+      "d": "Projetor LED 200W IP65",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.10",
+      "d": "Poste aço galvanizado reto 3m chumbado",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.11",
+      "d": "Poste aço galvanizado reto 6m",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.6",
+      "d": "Lâmpada LED tubular T8 11W base G13",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.7",
+      "d": "Lâmpada LED tubular T8 20W base G13",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.8",
+      "d": "Lâmpada bulbo LED 7W base E27",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.9",
+      "d": "Lâmpada bulbo LED 11W base E27",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.1.1",
+      "d": "Extintor CO2 6kg",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.1.2",
+      "d": "Extintor ABC 8kg",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.1.3",
+      "d": "Extintor sobre rodas BC 50kg",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.1.4",
+      "d": "Abrigo metálico extintor ≥10kg vermelho",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.1",
+      "d": "Mangueira incêndio NBR11861 tipo 2 Ø1½\" 15m",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.2",
+      "d": "Mangueira incêndio NBR11861 tipo 2 Ø1½\" 20m",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.3",
+      "d": "Mangueira incêndio NBR11861 tipo 2 Ø2½\" 15m",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.11",
+      "d": "Registro globo angular hidrante 45° 2½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.3.4",
+      "d": "Central alarme incêndio endereçável classe B 100 disp.",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.4.1",
+      "d": "Dobradiça porta corta-fogo",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.4.2",
+      "d": "Fechadura porta corta-fogo",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.5.1",
+      "d": "Central iluminação emergência 24Vcc 1800W",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.5.2",
+      "d": "Luminária emergência LED 24V",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.1",
+      "d": "Bomba centrífuga trifásica 1,5CV 220V vazão mín.9900L/h",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.2",
+      "d": "Bomba centrífuga trifásica 3CV 220V vazão mín.21000L/h",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.3",
+      "d": "Bomba centrífuga trifásica 5CV 220V vazão mín.14600L/h",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.4",
+      "d": "Bomba centrífuga trifásica 7,5CV 220V vazão mín.35000L/h",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.5",
+      "d": "Bomba centrífuga submersível ½CV águas servidas",
+      "u": "UN"
+    },
+    {
+      "c": "4.6.1",
+      "d": "Kit automatizador portão deslizante",
+      "u": "UN"
+    },
+    {
+      "c": "4.6.2",
+      "d": "Kit automatizador portão pivotante",
+      "u": "UN"
+    },
+    {
+      "c": "4.6.3",
+      "d": "Placa motor portão universal bivolt",
+      "u": "UN"
+    },
+    {
+      "c": "4.6.4",
+      "d": "Cremalheira portão deslizante aço galvanizado",
+      "u": "M"
+    },
+    {
+      "c": "4.7.1",
+      "d": "Regulador pressão 1° estágio 9kg/h c/ manômetro Ø½\" NTP",
+      "u": "UN"
+    },
+    {
+      "c": "4.7.2",
+      "d": "Regulador pressão 2° estágio 9kg/h Ø½\" NTP",
+      "u": "UN"
+    },
+    {
+      "c": "4.7.3",
+      "d": "Mangote flexível pig tail Ø½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.7.4",
+      "d": "Mangueira flexível aparelhos 80cm Ø½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.8.1",
+      "d": "Módulo fotovoltaico 600-720Wp (vida útil 25 anos)",
+      "u": "UN"
+    },
+    {
+      "c": "4.8.2",
+      "d": "Microinversor trifásico YC1000-3-220 AP Systems",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.2.1",
+      "d": "Retirada forro de madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.2.2",
+      "d": "Demolição forro de gesso",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.1",
+      "d": "Retirada revestimento melamínico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.2",
+      "d": "Demolição revestimento pedra (granito/mármore/ardósia)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.3",
+      "d": "Demolição revestimento cerâmico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.4",
+      "d": "Demolição de alvenaria",
+      "u": "M3"
+    },
+    {
+      "c": "4.1.3.5",
+      "d": "Demolição reboco/emboço",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.3.6",
+      "d": "Retirada manta asfáltica em reservatório de concreto",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.1",
+      "d": "Retirada esquadria metálica",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.2",
+      "d": "Retirada esquadria em madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.3",
+      "d": "Retirada porta em madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.4",
+      "d": "Retirada divisória",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.4.5",
+      "d": "Retirada vidro em esquadria",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.1",
+      "d": "Retirada piso bloquete de concreto / intertravado",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.2",
+      "d": "Retirada piso taco de madeira",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.3",
+      "d": "Demolição piso cerâmico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.4",
+      "d": "Demolição piso vinílico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.5",
+      "d": "Demolição piso em pedras (granito, mármore, ardósia)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.6",
+      "d": "Demolição contrapiso",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.5.7",
+      "d": "Demolição piso em concreto",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.6.1",
+      "d": "Retirada vaso sanitário",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.6.2",
+      "d": "Retirada mictório",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.6.3",
+      "d": "Retirada lavatório/tanque",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.7.11",
+      "d": "Cumeeira cerâmica",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.12",
+      "d": "Cumeeira galvanizada trapezoidal E=0,50mm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.17",
+      "d": "Chapim em concreto pré-moldado E=2cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.7.23",
+      "d": "Tela para sombrite polietileno cobertura veículos",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.8.7",
+      "d": "Fita anticorrosiva PVC autoadesiva L≥100mm proteção mecânica/elétrica",
+      "u": "M"
+    },
+    {
+      "c": "4.1.8.8",
+      "d": "Manta térmica telhado 2 faces refletividade ≥90%",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.9.3",
+      "d": "Forro régua madeira angelim L=10cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.5",
+      "d": "Execução de emboço",
+      "u": "M3"
+    },
+    {
+      "c": "4.1.10.9",
+      "d": "Revestimento mármore E=2cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.11",
+      "d": "Revestimento lambri madeira ipê champanhe réguas 10cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.10.17",
+      "d": "Execução de elementos em concreto armado",
+      "u": "M3"
+    },
+    {
+      "c": "4.1.10.18",
+      "d": "Recuperação com argamassa fluida alta resistência >40MPa",
+      "u": "M3"
+    },
+    {
+      "c": "4.1.10.20",
+      "d": "Vedação de vão com espuma de poliéster E=3cm L=3cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.10.21",
+      "d": "Bate maca em madeira angelim L=10cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.10.22",
+      "d": "Cantoneira de alumínio abas iguais 1\" E=3/16\"",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.2",
+      "d": "Tela para gradil metálico",
+      "u": "M"
+    },
+    {
+      "c": "4.1.12.3",
+      "d": "Poste (montante) para gradil metálico H=2,43m",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.12.11",
+      "d": "Bate rodas metálico 1,60m",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.12.13",
+      "d": "Tela metálica fina tipo passarinho/pinteiro",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.12.14",
+      "d": "Chapa lisa 16",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.12.15",
+      "d": "Perfil industrial em aço para esquadrias E=2mm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.13.2.5",
+      "d": "Porta maciça para verniz 80x210cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.13.2.9",
+      "d": "Porta para shaft em madeira com revestimento laminado",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.9",
+      "d": "Pintura acrílica semi-brilho para parede (barrado)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.10",
+      "d": "Pintura esmalte sintético para parede (barrado)",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.15",
+      "d": "Pintura em piso de concreto",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.15.16",
+      "d": "Pintura faixa de demarcação resina acrílica/vinílica",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.4",
+      "d": "Piso bloquete de concreto intertravado vazado",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.5",
+      "d": "Piso bloquete de concreto maciço sextavado",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.6",
+      "d": "Placa sistema piso elevado (concreto e aço) 0,60x0,60",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.10",
+      "d": "Piso em ardósia",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.12",
+      "d": "Piso em mármore E=2cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.13",
+      "d": "Piso em marmorite E=8mm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.14",
+      "d": "Piso pedra calçada portuguesa em mosaico",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.15",
+      "d": "Piso pedra São Tomé quartzito E≥2cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.18",
+      "d": "Piso em taco 7x21cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.19",
+      "d": "Piso podotátil em ladrilho hidráulico alerta/direcional",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.20",
+      "d": "Piso em ladrilho hidráulico E≥2cm",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.21",
+      "d": "Piso de borracha tipo moeda",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.25",
+      "d": "Rodapé em mármore H=10cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.26",
+      "d": "Rodapé em granito H=10cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.27",
+      "d": "Rodapé em ardósia H=10cm",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.29",
+      "d": "Soleira em mármore",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.16.30",
+      "d": "Meio fio em concreto armado",
+      "u": "M"
+    },
+    {
+      "c": "4.1.16.31",
+      "d": "Bate rodas em concreto",
+      "u": "UN"
+    },
+    {
+      "c": "4.1.16.34",
+      "d": "Piso podotátil de borracha direcional/alerta",
+      "u": "M2"
+    },
+    {
+      "c": "4.1.17.2",
+      "d": "Escavação manual de vala para inspeção de patologias",
+      "u": "M3"
+    },
+    {
+      "c": "4.1.17.3",
+      "d": "Reaterro compactado",
+      "u": "M3"
+    },
+    {
+      "c": "4.1.17.5",
+      "d": "Tela de proteção de fachada",
+      "u": "M2"
+    },
+    {
+      "c": "4.2.6",
+      "d": "Acabamento metálico cromado para válvula de descarga",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.10.1",
+      "d": "Válvula retenção horizontal bronze 1\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.10.2",
+      "d": "Válvula retenção horizontal bronze 1½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.10.3",
+      "d": "Válvula retenção horizontal bronze 2\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.10.4",
+      "d": "Válvula retenção horizontal bronze 2½\"",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.21",
+      "d": "Mictório com sifão integrado",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.22",
+      "d": "Bacia sanitária sifonada convencional",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.23",
+      "d": "Bacia sanitária para caixa acoplada",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.24",
+      "d": "Bacia sanitária convencional para deficiente físico",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.25",
+      "d": "Bacia sanitária turca com sifão integrado",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.26",
+      "d": "Caixa acoplada à bacia sanitária",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.27",
+      "d": "Lavatório em louça sem coluna",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.28",
+      "d": "Lavatório com coluna suspensa",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.29",
+      "d": "Cuba de embutir oval",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.30",
+      "d": "Tanque cerâmico com coluna",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.34",
+      "d": "Assento plástico para vaso sanitário",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.35",
+      "d": "Sifão de PVC inteligente para pia/lavatório",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.36",
+      "d": "Tubo de ligação bacia sanitária cromado DN38",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.39.1",
+      "d": "Tubo PVC rígido reforçado esgoto/pluvial Ø150mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.40.1",
+      "d": "Luva de correr PVC água fria Ø50mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.40.2",
+      "d": "Luva de correr PVC água fria Ø60mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.41.1",
+      "d": "Luva de correr PVC reforçado esgoto Ø75mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.41.2",
+      "d": "Luva de correr PVC reforçado esgoto Ø100mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.41.3",
+      "d": "Luva de correr PVC reforçado esgoto Ø150mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.42.1",
+      "d": "Caixa sifonada PVC 100x100x50mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.42.2",
+      "d": "Caixa sifonada PVC 150x185x75mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.43",
+      "d": "Ralo seco cilíndrico",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.44.1",
+      "d": "Ralo semi-esférico abacaxi 100mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.44.2",
+      "d": "Ralo semi-esférico abacaxi 150mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.45",
+      "d": "Grelha e porta grelha de piso 15x15cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.46.1",
+      "d": "Caixa d'água polietileno 500L",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.46.2",
+      "d": "Caixa d'água polietileno 1000L",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.47",
+      "d": "Torneira bóia alta pressão 3/4\" (DN20)",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.48",
+      "d": "Torneira bóia alta pressão 1¼\" (DN32)",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.49",
+      "d": "Chave bóia para comando de bombeamento",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.50.1",
+      "d": "Adaptador soldável com flanges caixa d'água 25mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.50.2",
+      "d": "Adaptador soldável com flanges caixa d'água 32mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.50.3",
+      "d": "Adaptador soldável com flanges caixa d'água 60mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.51",
+      "d": "Mangueira cristal transparente D=25mm c/ conexões",
+      "u": "M"
+    },
+    {
+      "c": "4.2.52",
+      "d": "Caixa inspeção esgoto 60x60 ferro fundido",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.53",
+      "d": "Canaleta coletora água pluvial grelha ferro fundido D=80cm",
+      "u": "M"
+    },
+    {
+      "c": "4.2.54",
+      "d": "Caixa passagem esgoto polipropileno DN100",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.55",
+      "d": "Aspersor spray emergente pop-up 15cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.56",
+      "d": "Aspersor spray emergente pop-up 30cm",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.57",
+      "d": "Aspersor rotor 6\" emergente por ação d'água",
+      "u": "UN"
+    },
+    {
+      "c": "4.2.58",
+      "d": "Aspersor rotor 12\" emergente por ação d'água",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.1",
+      "d": "Transformador de potencial TP 13,8kV TS 230/115V 1000VA classe 0,3P75",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.2",
+      "d": "Transformador de corrente TC 15kV 800A classe 0,3C100 relação 800:5",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.3",
+      "d": "Tapete isolante elétrico classe 2 20kV",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.4",
+      "d": "Luva borracha isolamento elétrico classe 2 20kV",
+      "u": "PAR"
+    },
+    {
+      "c": "4.3.1.5",
+      "d": "Óleo mineral isolante MT (transformadores/disjuntores)",
+      "u": "L"
+    },
+    {
+      "c": "4.3.1.6",
+      "d": "Relé sobrecorrente microprocessado 50/50N 51/51N",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.8",
+      "d": "Chave seccionadora tripolar 15kV abertura sem carga 630A",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.9",
+      "d": "Chave seccionadora tripolar 15kV abertura sob carga 630A com base NH",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.10.1",
+      "d": "Transformador óleo 150kVA trifásico 13,8/0,22kV",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.10.2",
+      "d": "Transformador óleo 300kVA trifásico 13,8/0,22kV",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.11.1",
+      "d": "Cabo cobre MT 20kV NBR7286 25mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.1.11.2",
+      "d": "Cabo cobre MT 20kV NBR7286 35mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.1.11.3",
+      "d": "Cabo cobre MT 20kV NBR7286 50mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.1.12",
+      "d": "Terminal modular MT (mufla) 20kV externo/interno",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.1.13.1",
+      "d": "Barramento cobre rígido nu MT vergalhão 1/4\" (#20mm²)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.1.13.2",
+      "d": "Barramento cobre rígido nu MT vergalhão 3/8\" (#50mm²)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.2.1.1",
+      "d": "Caixa padrão entrada energia BT CM-2",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.2.1.2",
+      "d": "Caixa padrão entrada energia BT CM-3",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.2.1.3",
+      "d": "Caixa padrão entrada energia BT CM-14",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.2.2.1",
+      "d": "Poste metálico padrão entrada energia PA2",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.2.2.2",
+      "d": "Poste metálico padrão entrada energia PA3",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.2.2.3",
+      "d": "Poste metálico padrão entrada energia PA5",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.2.2.4",
+      "d": "Poste metálico padrão entrada energia PA6",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.2.3",
+      "d": "TC padrão entrada BT relação 200:5 classe 1% 600V",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.2.1",
+      "d": "Disjuntor monopolar NEMA 15A 5kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.2.2",
+      "d": "Disjuntor monopolar NEMA 20A 5kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.4.1",
+      "d": "Disjuntor bipolar NEMA 2x20A 5kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.4.2",
+      "d": "Disjuntor bipolar NEMA 2x25A 5kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.7.1",
+      "d": "Disjuntor tripolar caixa moldada 3x160A 65kA IEC60947-2",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.7.2",
+      "d": "Disjuntor tripolar caixa moldada 3x300A 65kA IEC60947-2",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.8.1",
+      "d": "Disjuntor tripolar caixa moldada 3x160A 10kA IEC60947",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.8.2",
+      "d": "Disjuntor tripolar caixa moldada 3x200A 10kA IEC60947",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.9.1",
+      "d": "Disjuntor tripolar NEMA 3x40A 5kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.9.2",
+      "d": "Disjuntor tripolar NEMA 3x60A 5kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.10.1",
+      "d": "Disjuntor tripolar NEMA 3x120A 10kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.10.2",
+      "d": "Disjuntor tripolar NEMA 3x150A 10kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.10.3",
+      "d": "Disjuntor tripolar NEMA 3x200A 10kA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.11.1",
+      "d": "IDR bipolar 2x40A 30mA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.12.1",
+      "d": "IDR tetrapolar 4x40A 30mA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.12.2",
+      "d": "IDR tetrapolar 4x63A 30mA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.12.3",
+      "d": "IDR tetrapolar 4x80A 30mA",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.13",
+      "d": "Caixa sobrepor PVC 4 disjuntores DIN",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.15",
+      "d": "DPS trilho DIN 40kA 275V classe 2",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.16",
+      "d": "DPS trilho DIN 25kA 275V classe 1",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.17",
+      "d": "Pente barramento trifásico 100A 20 posições monopolares",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.18",
+      "d": "Kit barramento trifásico N+T 150A 44 posições monopolares",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.19",
+      "d": "Kit barramento trifásico N+T 225A 70 posições monopolares",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.20",
+      "d": "Barramento cobre neutro/terra 20 posições 150A",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.21",
+      "d": "QDC sobrepor trifásico 44 posições monopolares 100A IP40",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.22",
+      "d": "QDC sobrepor trifásico 70 posições monopolares 225A IP40",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.23",
+      "d": "QDC sobrepor trifásico 269A 18 pinos barramentos neutro por linha",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.24",
+      "d": "Programador horário 20 memórias trilho DIN 1 saída relé",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.28",
+      "d": "Relé térmico sobrecarga tripolar 25A para contator",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.29",
+      "d": "Botão de comando 22mm IP40 1NA+1NF",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.30",
+      "d": "Multimedidor grandezas elétricas para painel com memória de massa",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.31",
+      "d": "Sinaleiro LED 22mm 220V IP65",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.33",
+      "d": "Relé proteção falta de fase e inversão trilho DIN",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.34",
+      "d": "Ventilador painéis elétricos venezianas ABS filtros IP54",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.35",
+      "d": "Fusível cartucho porcelana 10x38 20A",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.3.36",
+      "d": "Fusível diazed 4A",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.4.1.1",
+      "d": "Cabo cobre unipolar flexível 450/750V #2,5mm² (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.2",
+      "d": "Cabo cobre unipolar flexível 450/750V #4,0mm² (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.3",
+      "d": "Cabo cobre unipolar flexível 450/750V #6,0mm² (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.4",
+      "d": "Cabo cobre unipolar flexível 450/750V #10mm² (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.1.5",
+      "d": "Cabo cobre unipolar flexível 450/750V #16mm² (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.2.4",
+      "d": "Cabo cobre unipolar flexível 1kV 90°C #50mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.2.5",
+      "d": "Cabo cobre unipolar flexível 1kV 90°C #70mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.2.6",
+      "d": "Cabo cobre unipolar flexível 1kV 90°C #120mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.2.7",
+      "d": "Cabo cobre unipolar flexível 1kV 90°C #240mm²",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.5.1",
+      "d": "Cabo lógico UTP 4 pares LSZH categoria 5E (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.5.2",
+      "d": "Cabo lógico UTP 4 pares LSZH categoria 6 (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.6.1",
+      "d": "Patch-cord UTP 2m categoria 5E",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.4.6.2",
+      "d": "Patch-cord UTP 2m categoria 6",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.4.7.1",
+      "d": "Cabo telefônico externo CTP-APL 10 pares",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.7.2",
+      "d": "Cabo telefônico externo CTP-APL 20 pares",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.7.3",
+      "d": "Cabo telefônico externo CTP-APL 50 pares",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.8.1",
+      "d": "Cabo telefônico interno CI 10 pares",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.8.2",
+      "d": "Cabo telefônico interno CI 20 pares",
+      "u": "M"
+    },
+    {
+      "c": "4.3.4.8.3",
+      "d": "Cabo telefônico interno CI 50 pares",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.1.1",
+      "d": "Eletroduto aço carbono 3/4\" c/ acessórios (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.1.2",
+      "d": "Eletroduto aço carbono 1\" c/ acessórios (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.1.3",
+      "d": "Eletroduto aço carbono 1¼\" c/ acessórios (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.2.1",
+      "d": "Eletroduto aço galvanizado fogo 1½\" c/ acessórios",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.2.2",
+      "d": "Eletroduto aço galvanizado fogo 2\" c/ acessórios",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.2.3",
+      "d": "Eletroduto aço galvanizado fogo 2½\" c/ acessórios",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.4.1",
+      "d": "Eletroduto flexível sealtube 3/4\" (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.4.2",
+      "d": "Eletroduto flexível sealtube 1\" (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.3.5.9.2",
+      "d": "Canaleta PVC antichama 50x20x2100mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.5.9.3",
+      "d": "Canaleta PVC antichama 110x20x2100mm",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.6.6",
+      "d": "Interruptor 1 tecla paralela three way c/ placa 10A/250V (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.6.13",
+      "d": "Placa PVC 2x4\" 2 teclas interruptor simples/paralelo (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.6.14",
+      "d": "Placa PVC 2x4\" 3 teclas interruptor simples/paralelo (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.1.1",
+      "d": "Luminária sobrepor 2 lâmpadas T8 60cm soquete antivibratório",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.1.2",
+      "d": "Luminária sobrepor 2 lâmpadas T8 120cm soquete antivibratório",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.2.1",
+      "d": "Luminária embutir 2 lâmpadas T8 60cm soquete antivibratório",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.2.2",
+      "d": "Luminária embutir 2 lâmpadas T8 120cm soquete antivibratório",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.3",
+      "d": "Luminária embutir forro modulado 2 lâmpadas tubo LED c/ cabo 1,5mm²",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.4",
+      "d": "Luminária pétala uso externo em poste IP66 LED 100W bivolt",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.5",
+      "d": "Luminária embutir forro modular 2 lâmpadas tubo LED 1,5mm²",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.7.6",
+      "d": "Luminária embutir forro modular 4 lâmpadas tubo LED 1,5mm²",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.1",
+      "d": "Lâmpada multi vapor metálico 150W/220V base E40",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.2",
+      "d": "Lâmpada vapor de sódio 250W/220V base E40",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.3",
+      "d": "Lâmpada vapor de sódio 400W/220V base E40",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.13",
+      "d": "Reator lâmpada vapor metálico 150W/220V externo",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.14",
+      "d": "Reator lâmpada vapor sódio 250W/220V poste/projetor",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.15",
+      "d": "Reator lâmpada vapor sódio 400W/220V poste/projetor",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.20",
+      "d": "Relé temporizador partida estrela-triângulo 220V 3-30s",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.8.21",
+      "d": "Base acoplamento relé fotoelétrico suporte aço galvanizado",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.9.1",
+      "d": "Certificação ponto cabeamento estruturado cat5e/cat6 c/ identificações",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.9.2",
+      "d": "Patch panel 1U 24 posições cat.5E",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.9.3",
+      "d": "Patch panel 1U 24 posições cat.6",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.9.4",
+      "d": "Guia cabos horizontal alta densidade 1U 19\" 24 cabos",
+      "u": "UN"
+    },
+    {
+      "c": "4.3.9.5",
+      "d": "Régua tomadas 2P+T 10A 250V para rack 8 saídas NBR14136",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.3",
+      "d": "Mangueira incêndio NBR11861 tipo 2 Ø2½\" 15m (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.4",
+      "d": "Mangueira incêndio NBR11861 tipo 2 Ø2½\" 20m (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.5",
+      "d": "Adaptador Storz 2½\"x1½\" latão (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.6",
+      "d": "Adaptador Storz 2½\"x2½\" latão (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.7",
+      "d": "Esguicho tronco cônico 1½\" (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.8",
+      "d": "Esguicho tronco cônico 2½\" (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.14",
+      "d": "Pressostato IP-30 (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.15",
+      "d": "Manômetro de processo (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.16.1",
+      "d": "Tubulação aço galvanizado NBR5580 2½\" DN65mm",
+      "u": "M"
+    },
+    {
+      "c": "4.4.2.16.2",
+      "d": "Tubulação aço galvanizado NBR5580 4\" DN100mm",
+      "u": "M"
+    },
+    {
+      "c": "4.4.2.17",
+      "d": "Tampa ferro fundido hidrante de recalque",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.18",
+      "d": "Chuveiro automático tipo pendente resposta rápida",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.2.19",
+      "d": "Chuveiro automático tipo em pé resposta rápida",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.3.4",
+      "d": "Central alarme incêndio endereçável classe B 100 dispositivos",
+      "u": "UN"
+    },
+    {
+      "c": "4.4.5.1",
+      "d": "Central iluminação emergência 24Vcc 1800W",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.1",
+      "d": "Bomba centrífuga trifásica 1,5CV 220V vazão mín.9900L/h (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.2",
+      "d": "Bomba centrífuga trifásica 3CV 220V vazão mín.21000L/h (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.3",
+      "d": "Bomba centrífuga trifásica 5CV 220V vazão mín.14600L/h (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.4",
+      "d": "Bomba centrífuga trifásica 7,5CV 220V vazão mín.35000L/h (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.5.1.5",
+      "d": "Bomba submersível ½CV águas servidas 2200L/h (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.6.3",
+      "d": "Placa motor portão universal bivolt (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.6.4",
+      "d": "Cremalheira portão deslizante aço galvanizado (instalação)",
+      "u": "M"
+    },
+    {
+      "c": "4.7.1",
+      "d": "Regulador pressão 1° estágio 9kg/h c/ manômetro Ø½\" NTP (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.7.2",
+      "d": "Regulador pressão 2° estágio 9kg/h Ø½\" NTP (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.7.3",
+      "d": "Mangote flexível pig tail Ø½\" (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.7.4",
+      "d": "Mangueira flexível aparelhos 80cm Ø½\" (instalação)",
+      "u": "UN"
+    },
+    {
+      "c": "4.8.1",
+      "d": "Módulo fotovoltaico 600-720Wp vida útil 25 anos IEC61730/61215",
+      "u": "UN"
+    },
+    {
+      "c": "4.8.2",
+      "d": "Microinversor trifásico YC1000-3-220 AP Systems 900W IP67",
+      "u": "UN"
+    },
+    {
+      "c": "4.8.3",
+      "d": "ECU-R AP Systems unidade comunicação microinversores",
+      "u": "UN"
+    },
+    {
+      "c": "4.9",
+      "d": "Diária (conforme índice ICD)",
+      "u": "DIÁRIA"
+    }
+  ],
+  "materiais_emergencial_exclusivos": [
+    {
+      "c": "3.1",
+      "d": "Atendimento corretivo emergencial em comarca polo",
+      "u": "UN"
+    },
+    {
+      "c": "3.2",
+      "d": "Atendimento corretivo emergencial nas demais comarcas",
+      "u": "UN"
+    }
+  ],
+  "edificacoes": {
+    "NORTE": {
+      "Montes Claros": [
+        {
+          "com": "Montes Claros",
+          "edif": "Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Bocaiúva",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Brasília de Minas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Coração de Jesus",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Diamantina",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Diamantina",
+          "edif": "Antigo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Espinosa",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Francisco Sá",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Grão Mogol",
+          "edif": "Fórum / Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Itamarandiba",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Jaíba",
+          "edif": "Fórum / Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Janaúba",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Janaúba",
+          "edif": "Antigo JESP – Arquivo",
+          "grp": "B"
+        },
+        {
+          "com": "Manga",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Montalvânia",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Monte Azul",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Porteirinha",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Rio Pardo de Minas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "São João da Ponte",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Itamarandiba",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Manga",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Porteirinha",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ],
+      "Teófilo Otoni": [
+        {
+          "com": "Teófilo Otoni",
+          "edif": "Fórum/Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Águas Formosas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Almenara",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Almenara",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Araçuaí",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Araçuaí",
+          "edif": "Padre Paraíso – Novo Fórum Digital",
+          "grp": "B"
+        },
+        {
+          "com": "Capelinha",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Carlos Chagas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Itambacuri",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Jacinto",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Jequitinhonha",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Malacacheta",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Medina",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Minas Novas",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Nanuque",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Novo Cruzeiro",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Pedra Azul",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Salinas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Salinas",
+          "edif": "Setores do Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "São João do Paraíso",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Taiobeiras",
+          "edif": "Fórum / Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Turmalina",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Águas Formosas",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Jacinto",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Malacacheta",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Medina",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Salinas",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ],
+      "Paracatu": [
+        {
+          "com": "Paracatu",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Arinos",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Arinos",
+          "edif": "CEJUSC",
+          "grp": "B"
+        },
+        {
+          "com": "Bonfinópolis de Minas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Buenópolis",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Buritis",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Corinto",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Curvelo",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Januária",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "João Pinheiro",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Pirapora",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "São Francisco",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "São Romão",
+          "edif": "Fórum / Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Três Marias",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Unai",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Várzea da Palma",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Buritis",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Corinto",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Januária",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "São Francisco",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Três Marias",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Várzea da Palma",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ]
+    },
+    "CENTRAL": {
+      "Contagem": [
+        {
+          "com": "Contagem",
+          "edif": "Fórum / Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Ibirité",
+          "edif": "Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Nova Lima",
+          "edif": "Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Ribeirão das Neves",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Santa Luzia",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Bonfim",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Brumadinho",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Caeté",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Contagem",
+          "edif": "Arquivos",
+          "grp": "B"
+        },
+        {
+          "com": "Esmeraldas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ibirité",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ibirité",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Ibirité",
+          "edif": "Novo Setores do Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ibirité",
+          "edif": "Zonas Eleitorais",
+          "grp": "B"
+        },
+        {
+          "com": "Igarapé",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Juatuba",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Mateus Leme",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Sabará",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Sabará",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Brumadinho",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Esmeraldas",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ],
+      "Sete Lagoas": [
+        {
+          "com": "Sete Lagoas",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Vespasiano",
+          "edif": "Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Jaboticatubas",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Lagoa Santa",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Matozinhos",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Paraopeba",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Pedro Leopoldo",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Sete Lagoas",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Vespasiano",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Vespasiano",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Vespasiano",
+          "edif": "CEJUSC",
+          "grp": "B"
+        },
+        {
+          "com": "Jaboticatubas",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Sete Lagoas",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ],
+      "Betim": [
+        {
+          "com": "Betim",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Betim",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Betim",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ]
+    },
+    "LESTE": {
+      "Governador Valadares": [
+        {
+          "com": "Caratinga",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Governador Valadares",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Governador Valadares",
+          "edif": "Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Manhuaçu",
+          "edif": "Fórum / Novo Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Aimorés",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Conselheiro Pena",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Galiléia",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Governador Valadares",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Inhapim",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ipanema",
+          "edif": "Fórum/Ampliação",
+          "grp": "B"
+        },
+        {
+          "com": "Itanhomi",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Lajinha",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Manhumirim",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Mantena",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Mutum",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Resplendor",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Santa Maria do Suaçuí",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "São João Evangelista",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "São João Evangelista",
+          "edif": "Coluna (Fórum Digital)",
+          "grp": "B"
+        },
+        {
+          "com": "Tarumirim",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Conselheiro Pena",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Governador Valadares",
+          "edif": "Arquivo / Dep. de bens apreendidos",
+          "grp": "C"
+        },
+        {
+          "com": "Manhumirim",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Mantena",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "São João Evangelista",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ],
+      "Ipatinga": [
+        {
+          "com": "Ipatinga",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Açucena",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Coronel Fabriciano",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Guanhães",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ipatinga",
+          "edif": "JESP",
+          "grp": "B"
+        },
+        {
+          "com": "Mesquita",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Peçanha",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Rio Vermelho",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Sabinópolis",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Serro",
+          "edif": "Antigo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Serro",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Timóteo",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Virginópolis",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ipatinga",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Sabinópolis",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Timóteo",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ],
+      "Itabira": [
+        {
+          "com": "Itabira",
+          "edif": "Fórum",
+          "grp": "A"
+        },
+        {
+          "com": "Abre Campo",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Alvinópolis",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Barão de Cocais",
+          "edif": "Novo Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Conceição do Mato Dentro",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ferros",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Jequeri",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "João Monlevade",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Nova Era",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Ponte Nova",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Raul Soares",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Rio Casca",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Rio Piracicaba",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Santa Bárbara",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "São Domingos do Prata",
+          "edif": "Fórum",
+          "grp": "B"
+        },
+        {
+          "com": "Alvinópolis",
+          "edif": "Arquivo / Dep. de bens apreendidos",
+          "grp": "C"
+        },
+        {
+          "com": "João Monlevade",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Ponte Nova",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Raul Soares",
+          "edif": "Arquivo",
+          "grp": "C"
+        },
+        {
+          "com": "Santa Bárbara",
+          "edif": "Arquivo",
+          "grp": "C"
+        }
+      ]
+    }
+  },
+  "prontuario_itens": [
+    {
+      "id": "PE01",
+      "n": "1",
+      "nm": "Prontuário de Instalações Elétricas",
+      "validade": 12
+    },
+    {
+      "id": "PE02",
+      "n": "2",
+      "nm": "Laudo de SPDA (ABNT NBR 5419)",
+      "validade": 12
+    },
+    {
+      "id": "PE03",
+      "n": "3",
+      "nm": "Laudo de Fachada (NBR 5674)",
+      "validade": 12
+    },
+    {
+      "id": "PE04",
+      "n": "4",
+      "nm": "Diagrama Unifilar",
+      "validade": 12
+    }
+  ],
+  "subestacao_secoes": [
+    {
+      "id": "A",
+      "n": "Segurança e NR-10",
+      "sempre": true,
+      "itens": [
+        {
+          "id": "chk_seg_nr10",
+          "d": "Procedimentos de segurança NR-10 executados (credenciamento, EPI, LOTO)"
+        },
+        {
+          "id": "chk_seg_aterramento_temp",
+          "d": "Aterramento temporário instalado antes dos serviços"
+        },
+        {
+          "id": "chk_seg_desenergizacao",
+          "d": "Instalação desenergizada, aterrada e sinalizada"
+        },
+        {
+          "id": "chk_seg_concessionaria",
+          "d": "Contato e agendamento com concessionária local realizado"
+        },
+        {
+          "id": "chk_seg_cargas_deslig",
+          "d": "Todas as cargas elétricas desligadas antes da manobra"
+        },
+        {
+          "id": "chk_seg_prontuario_nr10",
+          "d": "Prontuário de Instalações Elétricas (NR-10) verificado e atualizado"
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "n": "Transformadores",
+      "sempre": true,
+      "itens": [
+        {
+          "id": "chk_tr_desconexao",
+          "d": "Entrada e saída de energia desconectadas"
+        },
+        {
+          "id": "chk_tr_limpeza",
+          "d": "Limpeza completa de isoladores, suportes, abas, parafusos e aletas"
+        },
+        {
+          "id": "chk_tr_inspecao_ext",
+          "d": "Inspeção minuciosa do exterior do transformador e adjacências"
+        },
+        {
+          "id": "chk_tr_vazamentos",
+          "d": "Verificação e ausência de vazamentos de óleo"
+        },
+        {
+          "id": "chk_tr_trincas_buchas",
+          "d": "Buchas inspecionadas — sem trincas, fissuras ou contaminações"
+        },
+        {
+          "id": "chk_tr_instrumentos",
+          "d": "Instrumentos e acessórios inspecionados (termômetros, indicadores de nível)"
+        },
+        {
+          "id": "chk_tr_reaperto",
+          "d": "Reaperto de todas as conexões elétricas"
+        },
+        {
+          "id": "chk_tr_aterramento_conexoes",
+          "d": "Conexões de aterramento verificadas"
+        },
+        {
+          "id": "chk_tr_iso_cc",
+          "d": "Ensaio de resistência de isolamento (corrente contínua)"
+        },
+        {
+          "id": "chk_tr_ohmica",
+          "d": "Ensaio de resistência ôhmica dos enrolamentos (variação ≤ 3%)"
+        },
+        {
+          "id": "chk_tr_ttr",
+          "d": "Ensaio da relação de transformação (TTR)"
+        },
+        {
+          "id": "chk_tr_oleo_coleta",
+          "d": "[ANUAL] Óleo coletado para análise antes da manutenção",
+          "anual": true
+        },
+        {
+          "id": "chk_tr_oleo_analise_fq",
+          "d": "[ANUAL] Análise físico-química (rigidez dielétrica, teor de água, fator de potência, índice de neutralização, tensão interfacial, densidade, cor)",
+          "anual": true
+        },
+        {
+          "id": "chk_tr_oleo_cromatografia",
+          "d": "[ANUAL] Análise cromatográfica (C₂H₂, C₂H₄, H₂, CO, CO₂, CH₄)",
+          "anual": true
+        },
+        {
+          "id": "chk_tr_oleo_nivel",
+          "d": "[ANUAL] Nível de óleo verificado e complementado",
+          "anual": true
+        },
+        {
+          "id": "chk_tr_prateamento",
+          "d": "[ANUAL] Pontos de contato com desgaste de camada prateada tratados",
+          "anual": true
+        },
+        {
+          "id": "chk_tr_reconexao",
+          "d": "Entradas e saídas reconectadas após ensaios"
+        }
+      ]
+    },
+    {
+      "id": "CD",
+      "n": "Disjuntores de Média Tensão",
+      "sempre": true,
+      "itens": [
+        {
+          "id": "chk_dj_inspecao_ext",
+          "d": "Inspeção externa e limpeza geral"
+        },
+        {
+          "id": "chk_dj_mecanismo",
+          "d": "Mecanismo de comando inspecionado, limpo e lubrificado"
+        },
+        {
+          "id": "chk_dj_conexoes",
+          "d": "Conexões reapertadas com torque adequado"
+        },
+        {
+          "id": "chk_dj_oleo_pvo",
+          "d": "[PVO] Óleo mineral parafínico substituído (ABNT IEC 60296)",
+          "pvo": true
+        },
+        {
+          "id": "chk_dj_grandezas",
+          "d": "Grandezas elétricas características ensaiadas"
+        },
+        {
+          "id": "chk_dj_resist_contato",
+          "d": "Resistência de contato ensaiada (R, S, T)"
+        },
+        {
+          "id": "chk_dj_iso",
+          "d": "Resistência de isolamento ensaiada (aberto e fechado)"
+        },
+        {
+          "id": "chk_dj_operacao",
+          "d": "Operação do disjuntor testada (abertura e fechamento)"
+        },
+        {
+          "id": "chk_dj_reles",
+          "d": "Relés primários ajustados"
+        }
+      ]
+    },
+    {
+      "id": "E",
+      "n": "Chaves Seccionadoras",
+      "sempre": true,
+      "itens": [
+        {
+          "id": "chk_sc_inspecao",
+          "d": "Inspeção e limpeza geral da chave"
+        },
+        {
+          "id": "chk_sc_contatos",
+          "d": "Contatos desoxidados e polidos"
+        },
+        {
+          "id": "chk_sc_lubrificacao",
+          "d": "Partes articuladas lubrificadas"
+        },
+        {
+          "id": "chk_sc_resist_contato",
+          "d": "Resistência de contato ensaiada (R1-R2, S1-S2, T1-T2)"
+        },
+        {
+          "id": "chk_sc_iso",
+          "d": "Resistência de isolamento ensaiada (aberta e fechada)"
+        },
+        {
+          "id": "chk_sc_conexoes",
+          "d": "Conexões elétricas reapertadas"
+        },
+        {
+          "id": "chk_sc_molas",
+          "d": "Pressão das molas ajustada"
+        },
+        {
+          "id": "chk_sc_teste",
+          "d": "Operação da chave testada"
+        }
+      ]
+    },
+    {
+      "id": "G",
+      "n": "Muflas",
+      "anual": true,
+      "itens": [
+        {
+          "id": "chk_muf_visual",
+          "d": "Inspeção visual de todas as muflas"
+        },
+        {
+          "id": "chk_muf_termico",
+          "d": "Medições com termômetro digital e imagens térmicas"
+        },
+        {
+          "id": "chk_muf_limpeza",
+          "d": "Limpeza executada"
+        },
+        {
+          "id": "chk_muf_iso",
+          "d": "Testes de isolamento realizados"
+        }
+      ]
+    },
+    {
+      "id": "H",
+      "n": "Relés Secundários",
+      "anual": true,
+      "abrigada": true,
+      "itens": [
+        {
+          "id": "chk_rel_operacional",
+          "d": "Condições operacionais de funcionamento verificadas"
+        },
+        {
+          "id": "chk_rel_nobreak",
+          "d": "Nobreak verificado — baterias testadas e substituídas se necessário"
+        },
+        {
+          "id": "chk_rel_configuracao",
+          "d": "Relés com perda de configuração reconfigurados"
+        }
+      ]
+    },
+    {
+      "id": "I",
+      "n": "Barramentos Blindados",
+      "anual": true,
+      "abrigada": true,
+      "itens": [
+        {
+          "id": "chk_bb_visual",
+          "d": "Inspeção visual em toda extensão dos barramentos, cofres, pluglins e conexões"
+        },
+        {
+          "id": "chk_bb_torque",
+          "d": "Reaperto com torquímetro em emendas, cofres, derivações e conexões"
+        },
+        {
+          "id": "chk_bb_limpeza",
+          "d": "Limpeza com soprador em toda extensão (remoção de poeira)"
+        },
+        {
+          "id": "chk_bb_termico",
+          "d": "Medições termográficas para pontos de aquecimento"
+        }
+      ]
+    },
+    {
+      "id": "J",
+      "n": "Painéis Principais",
+      "anual": true,
+      "abrigada": true,
+      "itens": [
+        {
+          "id": "chk_pan_limpeza_geral",
+          "d": "Limpeza geral de barramentos, cubículos/celas, isoladores e painéis"
+        },
+        {
+          "id": "chk_pan_reaperto",
+          "d": "Conexões elétricas (inclusive aterramento) reapertadas com torque adequado"
+        },
+        {
+          "id": "chk_pan_limpeza_dependencias",
+          "d": "Dependências onde os painéis estão instalados limpas"
+        },
+        {
+          "id": "chk_pan_parafusos",
+          "d": "Parafusos, conectores e terminais faltantes supridos"
+        },
+        {
+          "id": "chk_pan_corrosao",
+          "d": "Corrosões tratadas e pintura de proteção aplicada"
+        },
+        {
+          "id": "chk_pan_termico",
+          "d": "Inspeção com termômetro digital para pontos de aquecimento"
+        },
+        {
+          "id": "chk_pan_iluminacao",
+          "d": "Iluminação interna dos painéis mantida em condições adequadas"
+        },
+        {
+          "id": "chk_pan_coolers",
+          "d": "Coolers/exaustores inspecionados e em perfeito funcionamento"
+        }
+      ]
+    },
+    {
+      "id": "K",
+      "n": "Sala da Subestação",
+      "abrigada": true,
+      "itens": [
+        {
+          "id": "chk_sala_limpeza",
+          "d": "Limpeza das áreas internas, portas, portões, grades e pisos"
+        },
+        {
+          "id": "chk_sala_grades_portas",
+          "d": "Grades, suportes metálicos, portas e portões — reparos de segurança executados"
+        },
+        {
+          "id": "chk_sala_cadeados",
+          "d": "Cadeados nas portas, portões e grades inspecionados e repostos"
+        },
+        {
+          "id": "chk_sala_ilum_geral",
+          "d": "Iluminação geral e de emergência inspecionadas — lâmpadas substituídas"
+        },
+        {
+          "id": "chk_sala_limpeza_sup",
+          "d": "Limpeza da parte superior das cabines e painéis executada"
+        },
+        {
+          "id": "chk_sala_conectores",
+          "d": "Conectores e terminais faltantes repostos"
+        }
+      ]
+    },
+    {
+      "id": "DOC",
+      "n": "Documentação e Relatório",
+      "sempre": true,
+      "itens": [
+        {
+          "id": "chk_rel_fotos",
+          "d": "Relatório fotográfico elaborado"
+        },
+        {
+          "id": "chk_rel_valores",
+          "d": "Valores dos ensaios registrados no relatório técnico"
+        },
+        {
+          "id": "chk_rel_conformidades",
+          "d": "Conformidades e não conformidades documentadas"
+        },
+        {
+          "id": "chk_rel_corretivos",
+          "d": "Serviços corretivos detectados documentados"
+        },
+        {
+          "id": "chk_rel_religacao",
+          "d": "Instalação reenergizada — todas as cargas restabelecidas"
+        },
+        {
+          "id": "chk_rel_fiscalizacao",
+          "d": "Relatório a entregar à Fiscalização em até 10 dias úteis"
+        }
+      ]
+    }
+  ],
+  "usuarios_legados": [
+    {
+      "id": "u1",
+      "nome": "Edenias Gonzaga Leão",
+      "mat": "P0155070",
+      "pin": "0872",
+      "reg": "NORTE",
+      "cargo": "Apoio Técnico",
+      "polo": "Montes Claros",
+      "ativo": true
+    },
+    {
+      "id": "u2",
+      "nome": "Túlio Heleno L. Lobato",
+      "mat": "T2183-2",
+      "pin": "2183",
+      "reg": "NORTE",
+      "cargo": "Fiscal",
+      "polo": "Montes Claros",
+      "ativo": true
+    },
+    {
+      "id": "u3",
+      "nome": "Jarém Guarany Gomes Jr.",
+      "mat": "T006387-5",
+      "pin": "6387",
+      "reg": "CENTRAL",
+      "cargo": "Fiscal",
+      "polo": "Contagem",
+      "ativo": true
+    },
+    {
+      "id": "u4",
+      "nome": "Luís Cláudio F. Cunha",
+      "mat": "600.94701",
+      "pin": "4701",
+      "reg": "CENTRAL",
+      "cargo": "Fiscal",
+      "polo": "Betim",
+      "ativo": true
+    },
+    {
+      "id": "u5",
+      "nome": "Márcia Gomes Alvarenga",
+      "mat": "T008172-9",
+      "pin": "8172",
+      "reg": "LESTE",
+      "cargo": "Fiscal",
+      "polo": "Gov. Valadares",
+      "ativo": true
+    },
+    {
+      "id": "u6",
+      "nome": "Guilherme A. Alencar",
+      "mat": "P0094702",
+      "pin": "4702",
+      "reg": "LESTE",
+      "cargo": "Fiscal",
+      "polo": "Ipatinga",
+      "ativo": true
+    },
+    {
+      "id": "u7",
+      "nome": "Rui Cassiano R. Lima",
+      "mat": "P0117128",
+      "pin": "7128",
+      "reg": "LESTE",
+      "cargo": "Fiscal",
+      "polo": "Itabira",
+      "ativo": true
+    },
+    {
+      "id": "u8",
+      "nome": "José Agostinho H. R. Assunção",
+      "mat": "",
+      "pin": "8001",
+      "reg": "ZONA_MATA",
+      "cargo": "Fiscal",
+      "polo": "Juiz de Fora",
+      "ativo": true
+    },
+    {
+      "id": "u9",
+      "nome": "Thiago Abreu",
+      "mat": "",
+      "pin": "9001",
+      "reg": "ZONA_MATA",
+      "cargo": "Fiscal",
+      "polo": "Juiz de Fora",
+      "ativo": true
+    },
+    {
+      "id": "u10",
+      "nome": "Alisson Cruz Pereira",
+      "mat": "8546-4",
+      "pin": "5461",
+      "reg": "TRIANGULO",
+      "cargo": "Fiscal",
+      "polo": "",
+      "ativo": true
+    },
+    {
+      "id": "u11",
+      "nome": "Flávio Ferreira Ribeiro",
+      "mat": "60130718",
+      "pin": "3071",
+      "reg": "TRIANGULO",
+      "cargo": "Fiscal",
+      "polo": "",
+      "ativo": true
+    },
+    {
+      "id": "u12",
+      "nome": "Raphael Alan Ferreira",
+      "mat": "P0115765",
+      "pin": "1157",
+      "reg": "SUL",
+      "cargo": "Fiscal",
+      "polo": "",
+      "ativo": true
+    },
+    {
+      "id": "u13",
+      "nome": "Diego Henrique C. Oliveira",
+      "mat": "P0128696",
+      "pin": "2869",
+      "reg": "SUL",
+      "cargo": "Fiscal",
+      "polo": "",
+      "ativo": true
+    },
+    {
+      "id": "u14",
+      "nome": "Vanderlúcio de Jesus Ferreira",
+      "mat": "",
+      "pin": "7743",
+      "reg": "SUDOESTE",
+      "cargo": "Fiscal",
+      "polo": "",
+      "ativo": true
+    },
+    {
+      "id": "u15",
+      "nome": "Taciano de Paula Costa Bastos",
+      "mat": "",
+      "pin": "9254",
+      "reg": "SUDOESTE",
+      "cargo": "Fiscal",
+      "polo": "",
+      "ativo": true
+    }
+  ]
+}
